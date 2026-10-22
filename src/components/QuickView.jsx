@@ -80,6 +80,10 @@ export default function QuickView() {
           )}
           {soldOut ? (
             <span className="absolute top-4 start-4 bg-ink/85 px-3 py-1 text-xs">אזל מהמלאי</span>
+          ) : quickView.badge ? (
+            <span className="absolute top-4 start-4 max-w-[70%] bg-ink/85 px-3 py-1 text-start text-xs leading-5 text-gold-soft">
+              {quickView.badge}
+            </span>
           ) : off > 0 ? (
             <span dir="ltr" className="absolute top-4 start-4 bg-gold px-3 py-1 text-xs font-semibold text-[#16120b]">
               -{off}%
@@ -93,13 +97,22 @@ export default function QuickView() {
             {quickView.name}
           </h2>
           <p className="mt-3 text-xs tracking-[0.16em] text-muted">{quickView.brand}</p>
-          <div className="mt-4">
-            <Stars value={quickView.rating} reviews={quickView.reviews} />
-          </div>
+          {typeof quickView.rating === "number" && (
+            <div className="mt-4">
+              <Stars value={quickView.rating} reviews={quickView.reviews} />
+            </div>
+          )}
           <div className="mt-5">
             <Price price={offer.price} compareAt={offer.compareAt} size="lg" />
           </div>
           <p className="mt-4 text-sm leading-7 text-ivory/75">{quickView.blurb}</p>
+          {quickView.features?.length > 0 && (
+            <ul className="mt-4 list-disc space-y-2 ps-5 text-sm leading-7 text-ivory/75">
+              {quickView.features.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
 
           <dl className="mt-6 grid grid-cols-2 gap-px bg-white/10 text-sm">
             {specs.map(([label, value]) => (

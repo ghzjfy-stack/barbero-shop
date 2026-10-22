@@ -46,15 +46,17 @@ function ProductCard({ product }) {
             />
           )}
         </button>
-        <div className="pointer-events-none absolute top-3 start-3 flex flex-col items-start gap-2">
+        <div className="pointer-events-none absolute top-3 start-3 flex max-w-[calc(100%-3.25rem)] flex-col items-start gap-2">
           {soldOut ? (
             <span className="bg-ink/85 px-2.5 py-1 text-[11px] text-ivory">אזל</span>
+          ) : product.badge ? (
+            <span className="bg-ink/85 px-2.5 py-1 text-start text-[11px] leading-4 text-gold-soft">
+              {product.badge}
+            </span>
           ) : off > 0 ? (
             <span dir="ltr" className="bg-gold px-2.5 py-1 text-[11px] font-semibold text-[#16120b]">
               -{off}%
             </span>
-          ) : product.badge ? (
-            <span className="bg-ink/85 px-2.5 py-1 text-[11px] text-gold-soft">{product.badge}</span>
           ) : null}
         </div>
         <button
@@ -78,9 +80,11 @@ function ProductCard({ product }) {
           </button>
         </h3>
         <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
-        <div className="mt-3">
-          <Stars value={product.rating} reviews={product.reviews} />
-        </div>
+        {typeof product.rating === "number" && (
+          <div className="mt-3">
+            <Stars value={product.rating} reviews={product.reviews} />
+          </div>
+        )}
         {product.variants && (
           <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
             {product.variants.map((variant) => (
@@ -134,7 +138,7 @@ export default function Catalog() {
     .sort((a, b) => {
       if (sort === "priceAsc") return fromPrice(a) - fromPrice(b);
       if (sort === "priceDesc") return fromPrice(b) - fromPrice(a);
-      if (sort === "rating") return b.rating - a.rating;
+      if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
       return 0;
     });
 
