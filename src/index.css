@@ -1,0 +1,251 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Heebo", "Segoe UI", Arial, sans-serif;
+  --font-display: "Frank Ruhl Libre", David, "Times New Roman", serif;
+  --color-ink: #090909;
+  --color-ivory: #f4f1ea;
+  --color-gold: #c6a15b;
+  --color-gold-soft: #e4d2a2;
+  --color-muted: #a39e93;
+  --color-charcoal: #141416;
+  --color-slate: #101114;
+  --color-line: rgba(198, 161, 91, 0.28);
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+  background: #090909;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(1200px 500px at 100% -10%, rgba(198, 161, 91, 0.08), transparent 55%),
+    #090909;
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+::selection {
+  background: #c6a15b;
+  color: #14110c;
+}
+
+:focus-visible {
+  outline: 1px solid #e4d2a2;
+  outline-offset: 3px;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(198, 161, 91, 0.45) transparent;
+}
+
+section[id],
+footer[id] {
+  scroll-margin-top: 7.75rem;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+}
+
+.marquee {
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+
+.marquee:hover .marquee-track,
+.marquee:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+@media (min-width: 48rem) {
+  .desktop-hide {
+    display: none !important;
+  }
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.7s ease both;
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.6);
+  }
+  70% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.badge-pop {
+  animation: pop 0.35s ease;
+}
+
+.btn-gold,
+.btn-ghost,
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.btn-gold {
+  background: #c6a15b;
+  color: #16120b;
+  font-weight: 600;
+}
+
+.btn-gold:hover {
+  background: #e4d2a2;
+}
+
+.btn-gold:active,
+.btn-ghost:active {
+  transform: translateY(1px);
+}
+
+.btn-gold:disabled,
+.btn-ghost:disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+
+.btn-ghost {
+  border: 1px solid rgba(228, 210, 162, 0.4);
+  color: #f4f1ea;
+  background: transparent;
+}
+
+.btn-ghost:hover {
+  border-color: #c6a15b;
+  background: rgba(198, 161, 91, 0.08);
+}
+
+.btn-text {
+  color: #e4d2a2;
+  background: transparent;
+}
+
+.btn-text:hover {
+  color: #f4f1ea;
+}
+
+.icon-btn {
+  position: relative;
+  display: grid;
+  height: 2.75rem;
+  width: 2.75rem;
+  place-items: center;
+  color: #f4f1ea;
+}
+
+.icon-btn:hover {
+  color: #e4d2a2;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.02);
+  color: #f4f1ea;
+  padding: 0.9rem 1rem;
+  font: inherit;
+}
+
+.field::placeholder {
+  color: #8a847a;
+}
+
+.field:focus-visible {
+  outline: none;
+  border-color: #c6a15b;
+}
+
+.chip {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #d9d3c7;
+  background: transparent;
+  white-space: nowrap;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.92rem;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: #c6a15b;
+  background: #c6a15b;
+  color: #16120b;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .marquee-track,
+  .rise,
+  .badge-pop {
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
