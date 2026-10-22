@@ -151,7 +151,7 @@ export default function CartDrawer() {
             </label>
             {errors.agree && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.agree}</p>}
             <p className="mt-4 text-xs leading-6 text-muted">
-              ההזמנה נשמרת במכשיר זה בלבד ואינה נשלחת לסליקה.
+              התשלום מתבצע בביט בלבד. ההזמנה נשמרת במכשיר זה בלבד ואינה נשלחת לסליקה.
             </p>
             <div className="mt-auto grid gap-2 pt-6">
               <button type="submit" className="btn-gold h-12">
@@ -266,9 +266,9 @@ export default function CartDrawer() {
                 disabled={store.lines.length === 0}
                 onClick={() => store.setCheckoutStep("details")}
               >
-                לתשלום מאובטח
+                תשלום בביט
               </button>
-              <p className="mt-3 text-center text-[11px] text-muted">יבוא מקורי · אחריות רשמית · משלוח לכל הארץ</p>
+              <p className="mt-3 text-center text-[11px] text-muted">מקבלים ביט בלבד · יבוא מקורי · אחריות רשמית</p>
             </footer>
           </>
         )}

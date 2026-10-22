@@ -116,11 +116,9 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-xs text-muted">© {year} BARBERO. כל הזכויות שמורות.</p>
-          <div className="flex flex-wrap items-center gap-2" dir="ltr" aria-label="אמצעי תשלום">
-            <PayText>VISA</PayText>
-            <Mastercard />
-            <PayText>Apple Pay</PayText>
-            <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-3 text-sm font-semibold text-black">
+          <div className="flex flex-wrap items-center gap-3" aria-label="אמצעי תשלום">
+            <span className="text-xs text-muted">תשלום בביט בלבד</span>
+            <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-3 text-sm font-semibold text-black" dir="ltr">
               bit
             </span>
           </div>
@@ -130,21 +128,3 @@ export default function Footer() {
   );
 }
 
-function PayText({ children }) {
-  return (
-    <span className="grid h-8 place-items-center border border-white/20 px-2.5 text-[11px] font-semibold tracking-wide text-ivory">
-      {children}
-    </span>
-  );
-}
-
-function Mastercard() {
-  return (
-    <span className="grid h-8 w-12 place-items-center border border-white/20" aria-label="Mastercard">
-      <span className="relative h-4 w-7" aria-hidden="true">
-        <span className="absolute top-0 left-0 h-4 w-4 rounded-full bg-[#eb001b]" />
-        <span className="absolute top-0 left-3 h-4 w-4 rounded-full bg-[#f79e1b] mix-blend-screen" />
-      </span>
-    </span>
-  );
-}
