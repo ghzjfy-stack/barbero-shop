@@ -5,11 +5,6 @@ import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
 
-function modelCount(count) {
-  if (count === 1) return "דגם אחד";
-  return `${count} דגמים`;
-}
-
 function ProductCard({ product }) {
   const { addToCart, openQuickView, toggleWish, isWished } = useStore();
   const [variantId, setVariantId] = useState(product.variants?.[0]?.id);
@@ -149,8 +144,7 @@ export default function Catalog() {
         <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div>
             <p className="mb-3 text-xs text-gold">הקולקציה</p>
-            <h2 className="font-display text-4xl leading-tight sm:text-5xl">מכונות וטיפוח נבחרים</h2>
-            <p className="mt-3 text-sm text-muted">{modelCount(visible.length)}</p>
+            <h2 className="font-display text-4xl leading-tight sm:text-5xl">קולקציית פרימיום לתספורת וגילוח</h2>
           </div>
           <label className="text-sm text-muted">
             <span className="sr-only">מיון</span>

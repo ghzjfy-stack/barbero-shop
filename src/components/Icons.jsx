@@ -124,6 +124,16 @@ export function IconTruck({ className }) {
   );
 }
 
+export function IconBox({ className }) {
+  return (
+    <Svg className={className}>
+      <path d="M3.5 8 12 4.5 20.5 8 12 11.5 3.5 8Z" />
+      <path d="M3.5 8v8L12 19.5 20.5 16V8" />
+      <path d="M12 11.5V19.5" />
+    </Svg>
+  );
+}
+
 export function IconBolt({ className }) {
   return (
     <Svg className={className}>
@@ -172,6 +182,7 @@ export function Stars({ value, reviews }) {
 
 const trustIcons = {
   truck: IconTruck,
+  box: IconBox,
   bolt: IconBolt,
   globe: IconGlobe,
   shield: IconShield,

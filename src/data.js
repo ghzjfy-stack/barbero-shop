@@ -1,10 +1,9 @@
 export const announcements = [
   "100% יבוא מקורי מארה״ב",
-  "משלוח מהיר לכל הארץ",
-  "אחריות רשמית",
-  "מתח אוניברסלי 100V–240V",
-  "החלפה נוחה תוך 14 יום",
-  "תשלום בביט בלבד",
+  "משלוחים לכל הארץ (7–14 ימי עסקים)",
+  "תשלום מאובטח ב-Bit",
+  "החזרה/החלפה תוך 14 ימים באריזה מקורית וסגורה בלבד",
+  "אחריות ושירות לקוחות בעברית",
 ];
 
 export const FREE_SHIPPING = 499;
@@ -15,33 +14,24 @@ export function shippingFeeFor(subtotal) {
   return 0;
 }
 
-export const categories = [
-  "הכל",
-  "מכונות תספורת",
-  "מכונות גילוח",
-  "טרימרים",
-  "גילוח ידני",
-  "טיפוח",
-];
+export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח"];
 
 export const navLinks = [
   { label: "קולקציה", href: "#collection" },
   { label: "מכונות תספורת", href: "#collection", category: "מכונות תספורת" },
-  { label: "גילוח", href: "#collection", category: "מכונות גילוח" },
-  { label: "טיפוח", href: "#collection", category: "טיפוח" },
   { label: "אודות", href: "#about" },
 ];
 
 export const trustItems = [
   {
     icon: "truck",
-    title: "משלוח מהיר",
-    text: "משלוח ישיר מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב צמוד.",
+    title: "משלוח בינלאומי",
+    text: "משלוח ישיר מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב.",
   },
   {
-    icon: "bolt",
-    title: "מתח אוניברסלי 100V–240V",
-    text: "המכונות מגיעות מוכנות לשקע הישראלי. בלי ממיר, בלי מתאם, ובלי הפתעות בהפעלה הראשונה.",
+    icon: "box",
+    title: "אריזה מקורית",
+    text: "מוצרים חדשים באריזה מקורית וסגורה מהיצרן.",
   },
   {
     icon: "globe",
@@ -50,8 +40,8 @@ export const trustItems = [
   },
   {
     icon: "shield",
-    title: "אחריות רשמית",
-    text: "אחריות יבואן מלאה ושירות לקוחות בעברית. אם משהו לא יושב נכון, יש למי לפנות.",
+    title: "אחריות ושירות",
+    text: "אחריות מלאה ושירות לקוחות בעברית לכל פנייה.",
   },
 ];
 
@@ -115,27 +105,6 @@ export const pages = {
 
 export const products = [
   {
-    id: "magic-clip",
-    name: "מכונת תספורת מג׳יק קליפ",
-    brand: "Wahl",
-    category: "מכונות תספורת",
-    rating: 4.9,
-    reviews: 286,
-    sku: "BRB-W-MC",
-    voltage: "100–240V",
-    origin: "ארה״ב",
-    badge: "רב־מכר",
-    stock: 14,
-    image:
-      "https://images.unsplash.com/photo-1512690459411-b9245aed614b?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "להב מדורג, מנוע שקט ומשקל שמחזיק מעמד במשמרת שלמה. הבחירה של מספרות שמבקשות קו נקי בלי רעש מיותר.",
-    variants: [
-      { id: "cord", label: "עם כבל", price: 589 },
-      { id: "cordless", label: "אלחוטי", price: 749, compareAt: 829 },
-    ],
-  },
-  {
     id: "wahl-senior",
     name: "מכונת תספורת Wahl Cordless Senior 5-Star",
     brand: "Wahl",
@@ -158,123 +127,10 @@ export const products = [
       "מכונת תספורת אלחוטית מקצועית מסדרת 5-Star. גוף מתכת מחוזק, מנוע עוצמתי ולהב מבוקש לדירוגים מדויקים (Fade). אחיזה נוחה וארגונומית לעבודה ממושכת.",
   },
   {
-    id: "andis-master",
-    name: "מכונת תספורת מאסטר",
-    brand: "Andis",
-    category: "מכונות תספורת",
-    rating: 4.8,
-    reviews: 194,
-    sku: "BRB-A-MS",
-    voltage: "100–240V",
-    origin: "ארה״ב",
-    badge: null,
-    stock: 9,
-    price: 629,
-    image:
-      "https://images.unsplash.com/photo-1621605815971-fbc98d665033?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "מכונת כבל קלאסית עם ידית חלקה והתנגדות להב מדויקת. בנויה לעבודה יומיומית, לא לטרנד של עונה.",
-  },
-  {
-    id: "series-9",
-    name: "מכונת גילוח סדרה 9 פרו",
-    brand: "Braun",
-    category: "מכונות גילוח",
-    rating: 4.9,
-    reviews: 412,
-    sku: "BRB-B-S9",
-    voltage: "100–240V",
-    origin: "ארה״ב",
-    badge: "פרימיום",
-    stock: 7,
-    image:
-      "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "גילוח צמוד בתנועה אחת, עם ראש גמיש שעוקב אחרי קו הלסת. נטענת, ומוכנה לשקע ישראלי.",
-    variants: [
-      { id: "graphite", label: "גרפיט", price: 1490, compareAt: 1690 },
-      { id: "gold", label: "זהב", price: 1690 },
-    ],
-  },
-  {
-    id: "arc5",
-    name: "מכונת גילוח ארק 5",
-    brand: "Panasonic",
-    category: "מכונות גילוח",
-    rating: 4.7,
-    reviews: 155,
-    sku: "BRB-P-A5",
-    voltage: "100–240V",
-    origin: "ארה״ב",
-    badge: null,
-    stock: 11,
-    price: 989,
-    compareAt: 1120,
-    image:
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "להב יפני ומנוע לינארי. לגילוח קרוב שנשאר שקט גם בבוקר השני, בלי לגרד את העור.",
-  },
-  {
-    id: "goldfx",
-    name: "טרימר קווי מתאר גולד",
-    brand: "BaBylissPRO",
-    category: "טרימרים",
-    rating: 4.8,
-    reviews: 203,
-    sku: "BRB-BB-FX",
-    voltage: "100–240V",
-    origin: "ארה״ב",
-    badge: null,
-    stock: 16,
-    price: 469,
-    image:
-      "https://images.unsplash.com/photo-1517832606299-7ae9b720a186?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "טרימר צר לקווי זקן, פיאות ודיוק סביב האוזן. להב בציפוי זהב שמחליק על העור.",
-  },
-  {
-    id: "merkur",
-    name: "סכין גילוח בטיחותי 34C",
-    brand: "Merkur",
-    category: "גילוח ידני",
-    rating: 4.9,
-    reviews: 98,
-    sku: "BRB-M-34C",
-    voltage: null,
-    origin: "גרמניה",
-    badge: null,
-    stock: 3,
-    price: 189,
-    image:
-      "https://images.unsplash.com/photo-1582095133179-bfd08e2fc6b3?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "סכין בטיחותי בשלושה חלקים, ראש סגור ומשקל נכון. למי שמעדיף טקס על פני חיפזון.",
-  },
-  {
-    id: "proraso",
-    name: "ערכת טיפוח זקן קלאסית",
-    brand: "Proraso",
-    category: "טיפוח",
-    rating: 4.8,
-    reviews: 240,
-    sku: "BRB-PR-ST",
-    voltage: null,
-    origin: "איטליה",
-    badge: null,
-    stock: 20,
-    price: 169,
-    compareAt: 210,
-    image:
-      "https://images.unsplash.com/photo-1621607512214-68297480165e?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "קצף, שמן ובלם מרענן בניחוח קלאסי. ערכה שלמה לזקן שמטופח, בלי ברק מוגזם.",
-  },
-  {
     id: "fast-feed",
     name: "מכונת תספורת Wahl 5-Star Detailer Li",
     brand: "Wahl",
-    category: "מכונות תספורת",
+    category: "טרימרים ומכונות גילוח",
     rating: 4.6,
     reviews: 88,
     sku: "BRB-W-DL",

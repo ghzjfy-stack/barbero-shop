@@ -30,7 +30,7 @@ export default function Footer() {
             <p className="text-sm">עדכונים על הקולקציה</p>
             {status === "done" ? (
               <p className="mt-3 text-sm leading-7 text-gold-soft" role="status">
-                תודה. עדכונים על הקולקציה יישמרו לכתובת הזו במכשיר בלבד.
+                תודה שנרשמת! נעדכן אותך ראשון על דגמים חדשים ומבצעים בלעדיים.
               </p>
             ) : (
               <form className="mt-3 flex" onSubmit={subscribe} noValidate>
