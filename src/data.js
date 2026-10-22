@@ -14,12 +14,7 @@ export function shippingFeeFor(subtotal) {
   return 0;
 }
 
-export const categories = [
-  "הכל",
-  "מכונות תספורת",
-  "טרימרים ומכונות גילוח",
-  "טיפוח זקן וגוף עמיד למים (Body & Beard Grooming)",
-];
+export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח"];
 
 export const navLinks = [
   { label: "קולקציה", href: "#collection" },
@@ -123,6 +118,7 @@ export const products = [
     price: 550,
     frame: "studio",
     image: "/products/wahl-senior-hero.webp",
+    hoverImage: "/products/wahl-senior.webp",
     images: [
       "/products/wahl-senior-hero.webp",
       "/products/wahl-senior.webp",
@@ -144,6 +140,7 @@ export const products = [
     badge: null,
     stock: 0,
     price: 499,
+    frame: "studio",
     image:
       "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?auto=format&fit=crop&w=1000&q=80",
     blurb:
@@ -163,6 +160,8 @@ export const products = [
     compareAt: 520,
     frame: "studio",
     image: "/vanish.jpg",
+    hoverImage: "/vanish-hover.jpg",
+    images: ["/vanish.jpg", "/vanish-hover.jpg"],
     blurb:
       "מכונת גילוח רשת כפולה מקצועית להחלקה מלאה (Zero Finish), עיצוב קווי צוואר וזקן, וגילוח קרקפת חלק ללא גירויים.",
     features: [
@@ -178,7 +177,7 @@ export const products = [
     id: "wahl-aqua",
     name: "Wahl Aqua Blade Lithium Ion Wet / Dry Trimmer",
     brand: "Wahl",
-    category: "טיפוח זקן וגוף עמיד למים (Body & Beard Grooming)",
+    category: "טרימרים ומכונות גילוח",
     sku: "9899-100",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
@@ -188,6 +187,8 @@ export const products = [
     compareAt: 620,
     frame: "studio",
     image: "/aqua.jpg",
+    hoverImage: "/aqua-hover.jpg",
+    images: ["/aqua.jpg", "/aqua-hover.jpg"],
     blurb:
       "מכונת טיפוח ועיצוב זקן וגוף עמידה במים לחלוטין (100% Waterproof), עם להבי פלדה קרובים במיוחד לשימוש במקלחת ובשטיפה מלאה תחת הברז.",
     features: [

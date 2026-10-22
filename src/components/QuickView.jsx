@@ -52,16 +52,14 @@ export default function QuickView() {
         >
           <IconClose />
         </button>
-        <div className={`relative flex min-h-72 flex-col ${frame.box}`}>
-          <ProductImage
-            src={activePhoto}
-            alt={quickView.name}
-            className={
-              frame.studio
-                ? "h-full max-h-[46svh] w-full flex-1 object-contain p-6 sm:max-h-none sm:min-h-0"
-                : "h-full max-h-[46svh] w-full flex-1 object-cover sm:max-h-none sm:min-h-0"
-            }
-          />
+        <div className={`relative flex flex-col ${frame.box}`}>
+          <div className="aspect-square w-full">
+            <ProductImage
+              src={activePhoto}
+              alt={quickView.name}
+              className="h-full w-full object-contain"
+            />
+          </div>
           {gallery.length > 1 && (
             <div className="flex gap-2 p-3" role="group" aria-label="גלריית המוצר">
               {gallery.map((src, index) => (

@@ -14,15 +14,14 @@ function ProductCard({ product }) {
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
   const frame = imageFrame(product);
-  const gallery = product.images?.length ? product.images : [product.image];
-  const hoverImage = gallery[1];
+  const hoverImage = product.hoverImage || product.images?.[1];
   const photoClass = frame.studio
-    ? "h-full w-full object-contain p-5 transition duration-500"
-    : "h-full w-full object-cover brightness-[.78] saturate-[.8] transition duration-500";
+    ? "h-full w-full object-contain transition duration-500"
+    : "h-full w-full object-cover transition duration-500";
 
   return (
     <article className="group flex flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
-      <div className={`relative aspect-[3/4] overflow-hidden ${frame.box}`}>
+      <div className={`relative aspect-square overflow-hidden ${frame.box}`}>
         <button
           type="button"
           className="absolute inset-0"
@@ -30,7 +29,7 @@ function ProductCard({ product }) {
           aria-label={`מבט מהיר: ${product.name}`}
         >
           <ProductImage
-            src={gallery[0]}
+            src={product.image}
             alt={product.name}
             className={
               hoverImage
