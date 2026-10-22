@@ -51,6 +51,7 @@ export default function Header() {
     openWish,
     openSearch,
     goToCategory,
+    category,
   } = useStore();
   const [solid, setSolid] = useState(false);
   const path = usePathname();
@@ -73,20 +74,25 @@ export default function Header() {
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-4 lg:gap-8">
           <Logo />
-          <nav className="hidden items-center gap-4 md:flex lg:gap-6" aria-label="ראשי">
-            {navLinks.map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                aria-current={link.href === "/about" && path === "/about" ? "page" : undefined}
-                onClick={(event) => onNavClick(event, link, { goToCategory })}
-                className={`text-sm transition-colors hover:text-gold-soft ${
-                  link.href === "/about" && path === "/about" ? "text-gold-soft" : "text-ivory/85"
-                }`}
-              >
-                {link.label}
-              </a>
-            ))}
+          <nav className="hidden items-center gap-3 md:flex lg:gap-6" aria-label="ראשי">
+            {navLinks.map((link) => {
+              const current =
+                (link.href === "/about" && path === "/about") ||
+                (link.category && path !== "/about" && category === link.category);
+              return (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  aria-current={current ? "page" : undefined}
+                  onClick={(event) => onNavClick(event, link, { goToCategory })}
+                  className={`text-[13px] whitespace-nowrap transition-colors hover:text-gold-soft lg:text-sm ${
+                    current ? "text-gold-soft" : "text-ivory/85"
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </nav>
         </div>
 
@@ -94,7 +100,7 @@ export default function Header() {
           <button type="button" className="icon-btn" aria-label="חיפוש" aria-expanded={searchOpen} onClick={openSearch}>
             <IconSearch />
           </button>
-          <button type="button" className="icon-btn" aria-label="רשימת משאלות" aria-expanded={wishOpen} onClick={openWish}>
+          <button type="button" className="icon-btn" aria-label="המועדפים שלי" aria-expanded={wishOpen} onClick={openWish}>
             <IconHeart />
             <CountBadge count={wishCount} />
           </button>

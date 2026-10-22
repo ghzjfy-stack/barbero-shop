@@ -5,7 +5,7 @@ import { IconClose } from "./Icons";
 import { Logo } from "./Header";
 
 export default function MobileMenu() {
-  const { menuOpen, setMenuOpen, goToCategory, openSearch, openInfo } = useStore();
+  const { menuOpen, setMenuOpen, goToCategory, openSearch, openInfo, category } = useStore();
   const path = usePathname();
 
   return (
@@ -29,19 +29,24 @@ export default function MobileMenu() {
           </button>
         </div>
         <nav className="mt-10 flex flex-col" aria-label="נייד">
-          {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              aria-current={link.href === "/about" && path === "/about" ? "page" : undefined}
-              onClick={(event) => onNavClick(event, link, { goToCategory, closeMenu: () => setMenuOpen(false) })}
-              className={`border-b border-white/10 py-4 font-display text-4xl ${
-                link.href === "/about" && path === "/about" ? "text-gold-soft" : ""
-              }`}
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const current =
+              (link.href === "/about" && path === "/about") ||
+              (link.category && path !== "/about" && category === link.category);
+            return (
+              <a
+                key={link.label}
+                href={link.href}
+                aria-current={current ? "page" : undefined}
+                onClick={(event) => onNavClick(event, link, { goToCategory, closeMenu: () => setMenuOpen(false) })}
+                className={`border-b border-white/10 py-4 font-display text-[1.85rem] leading-tight sm:text-4xl ${
+                  current ? "text-gold-soft" : ""
+                }`}
+              >
+                {link.label}
+              </a>
+            );
+          })}
         </nav>
         <div className="mt-auto flex flex-col gap-3 pb-4">
           <button type="button" className="btn-ghost h-12" onClick={openSearch}>

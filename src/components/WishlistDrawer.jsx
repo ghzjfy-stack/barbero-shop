@@ -10,11 +10,11 @@ export default function WishlistDrawer() {
   const items = wishlist.map((id) => findProduct(id)).filter(Boolean);
 
   return (
-    <Drawer open={wishOpen} onClose={closeWish} label="רשימת משאלות">
+    <Drawer open={wishOpen} onClose={closeWish} label="המועדפים שלי">
       <header className="flex items-center justify-between border-b border-white/10 px-5 py-4">
         <div>
           <p className="text-[11px] text-gold">שמורים אצלכם</p>
-          <h2 className="font-display text-3xl leading-none">משאלות</h2>
+          <h2 className="font-display text-3xl leading-tight">המועדפים שלי</h2>
         </div>
         <button type="button" className="icon-btn" aria-label="סגירה" onClick={closeWish}>
           <IconClose />

@@ -170,10 +170,13 @@ export function IconShield({ className }) {
 
 export function Stars({ value, reviews }) {
   const rounded = Math.round(value);
+  const count = typeof reviews === "number" ? reviews.toLocaleString("he-IL") : null;
   return (
-    <div className="flex items-center gap-2" aria-label={`דירוג ${value} מתוך 5`}>
-      <span className="text-xs text-muted tabular-nums">{value.toFixed(1)}</span>
-      <span className="flex" dir="ltr">
+    <div
+      className="flex h-5 items-center gap-1.5 whitespace-nowrap"
+      aria-label={count ? `דירוג ${value} מתוך 5, ${count} מדרגים` : `דירוג ${value} מתוך 5`}
+    >
+      <span className="flex shrink-0" dir="ltr">
         {Array.from({ length: 5 }, (_, index) => (
           <IconStar
             key={index}
@@ -181,9 +184,8 @@ export function Stars({ value, reviews }) {
           />
         ))}
       </span>
-      {typeof reviews === "number" && (
-        <span className="text-xs text-muted tabular-nums">({reviews.toLocaleString("he-IL")})</span>
-      )}
+      <span className="text-xs text-ivory tabular-nums">{value.toFixed(1)}</span>
+      {count && <span className="text-xs text-muted tabular-nums">({count})</span>}
     </div>
   );
 }

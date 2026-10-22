@@ -99,10 +99,10 @@ function ProductCard({ product }) {
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
   const hoverImage = product.hoverImage || product.images?.[1];
-  const photoClass = "h-full w-full object-contain object-center p-2.5 transition duration-500 sm:p-4";
+  const photoClass = "h-full w-full object-contain object-center p-6 transition duration-500 sm:p-8";
 
   return (
-    <article className="group flex flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
+    <article className="group flex h-full flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
       <div className="relative aspect-square overflow-hidden bg-ink">
         <button
           type="button"
@@ -142,52 +142,54 @@ function ProductCard({ product }) {
             wished ? "text-gold" : "text-ivory"
           }`}
           aria-pressed={wished}
-          aria-label={wished ? "הסרה מרשימת המשאלות" : "שמירה לרשימת המשאלות"}
+          aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
           onClick={() => toggleWish(product.id)}
         >
           <IconHeart filled={wished} />
         </button>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
-        <p className="text-[11px] leading-4 text-gold">{product.category}</p>
-        <h3 className="mt-1 text-sm leading-5 font-medium sm:text-base sm:leading-6">
-          <button type="button" className="text-start hover:text-gold-soft" onClick={() => openQuickView(product.id)}>
-            {product.name}
-          </button>
-        </h3>
-        <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
-        {typeof product.rating === "number" && (
-          <div className="mt-3">
-            <Stars value={product.rating} reviews={product.reviews} />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between p-3 sm:p-4">
+        <div>
+          <p className="text-[11px] leading-4 text-gold">{product.category}</p>
+          <h3 className="mt-1 text-sm leading-5 font-medium sm:text-base sm:leading-6">
+            <button type="button" className="text-start hover:text-gold-soft" onClick={() => openQuickView(product.id)}>
+              {product.name}
+            </button>
+          </h3>
+          <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
+          {typeof product.rating === "number" && (
+            <div className="mt-3 h-5">
+              <Stars value={product.rating} reviews={product.reviews} />
+            </div>
+          )}
+          {product.variants && (
+            <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
+              {product.variants.map((variant) => (
+                <button
+                  key={variant.id}
+                  type="button"
+                  aria-pressed={variantId === variant.id}
+                  disabled={soldOut}
+                  onClick={() => setVariantId(variant.id)}
+                  className={`border px-2.5 py-1.5 text-xs ${
+                    variantId === variant.id
+                      ? "border-gold bg-gold text-[#16120b]"
+                      : "border-white/15 text-ivory/80"
+                  }`}
+                >
+                  {variant.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 min-h-7">
+            <Price price={offer.price} compareAt={offer.compareAt} />
           </div>
-        )}
-        {product.variants && (
-          <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
-            {product.variants.map((variant) => (
-              <button
-                key={variant.id}
-                type="button"
-                aria-pressed={variantId === variant.id}
-                disabled={soldOut}
-                onClick={() => setVariantId(variant.id)}
-                className={`border px-2.5 py-1.5 text-xs ${
-                  variantId === variant.id
-                    ? "border-gold bg-gold text-[#16120b]"
-                    : "border-white/15 text-ivory/80"
-                }`}
-              >
-                {variant.label}
-              </button>
-            ))}
-          </div>
-        )}
-        <div className="mt-3">
-          <Price price={offer.price} compareAt={offer.compareAt} />
+          {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}
         </div>
-        {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}
 
-        <div className="mt-4 grid gap-1">
+        <div className="mt-auto grid gap-1 pt-4">
           <button
             type="button"
             className="btn-gold h-11 text-sm"
@@ -252,7 +254,7 @@ export default function Catalog() {
             אין דגמים בקטגוריה הזו כרגע.
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
             {visible.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

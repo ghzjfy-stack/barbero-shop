@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { discountPercent, resolveOffer } from "../data";
 import { useStore } from "../store";
-import { IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
+import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
 
@@ -10,12 +10,31 @@ export default function QuickView() {
   const [variantId, setVariantId] = useState(null);
   const [qty, setQty] = useState(1);
   const [photo, setPhoto] = useState(0);
+  const touchX = useRef(null);
+  const galleryLength = quickView?.images?.length || (quickView?.image ? 1 : 0);
+
+  const stepPhoto = (delta) => {
+    if (galleryLength < 2) return;
+    setPhoto((current) => (current + delta + galleryLength) % galleryLength);
+  };
 
   useEffect(() => {
     setVariantId(quickView?.variants?.[0]?.id ?? null);
     setQty(1);
     setPhoto(0);
   }, [quickView?.id]);
+
+  useEffect(() => {
+    if (!quickView || galleryLength < 2) return undefined;
+    const onKey = (event) => {
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return;
+      event.preventDefault();
+      stepPhoto(event.key === "ArrowLeft" ? 1 : -1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [quickView, galleryLength]);
 
   if (!quickView) return null;
 
@@ -51,23 +70,59 @@ export default function QuickView() {
         </div>
         <div className="grid max-h-[92svh] overflow-y-auto border border-line bg-slate sm:grid-cols-2">
         <div className={`relative flex flex-col ${frame.box}`}>
-          <div className="aspect-square w-full">
+          <div
+            className="relative aspect-square w-full"
+            onTouchStart={(event) => {
+              touchX.current = event.changedTouches[0]?.clientX ?? null;
+            }}
+            onTouchEnd={(event) => {
+              if (touchX.current == null || gallery.length < 2) return;
+              const dx = (event.changedTouches[0]?.clientX ?? touchX.current) - touchX.current;
+              if (Math.abs(dx) < 40) return;
+              stepPhoto(dx < 0 ? 1 : -1);
+            }}
+          >
             <ProductImage
               src={activePhoto}
-              alt={quickView.name}
+              alt={`${quickView.name}, תמונה ${photo + 1} מתוך ${gallery.length}`}
               className="h-full w-full object-contain"
             />
+            {gallery.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="absolute top-1/2 start-2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center bg-ink/80 text-ivory hover:text-gold-soft"
+                  aria-label="התמונה הקודמת"
+                  onClick={() => stepPhoto(-1)}
+                >
+                  <IconChevron className="h-5 w-5 rotate-180" />
+                </button>
+                <button
+                  type="button"
+                  className="absolute top-1/2 end-2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center bg-ink/80 text-ivory hover:text-gold-soft"
+                  aria-label="התמונה הבאה"
+                  onClick={() => stepPhoto(1)}
+                >
+                  <IconChevron className="h-5 w-5" />
+                </button>
+                <p className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+                  <span className="bg-ink/80 px-2 py-1 text-[11px] tabular-nums text-ivory">
+                    {photo + 1} / {gallery.length}
+                  </span>
+                </p>
+              </>
+            )}
           </div>
           {gallery.length > 1 && (
-            <div className="flex flex-wrap gap-2 p-3" role="group" aria-label="גלריית המוצר">
+            <div className="flex gap-2 overflow-x-auto p-3" role="group" aria-label="גלריית המוצר">
               {gallery.map((src, index) => (
                 <button
                   key={src}
                   type="button"
-                  aria-label={`תמונה ${index + 1}`}
+                  aria-label={`תמונה ${index + 1} מתוך ${gallery.length}`}
                   aria-pressed={index === photo}
                   onClick={() => setPhoto(index)}
-                  className={`h-16 w-16 overflow-hidden border ${index === photo ? "border-gold" : "border-white/20"}`}
+                  className={`h-16 w-16 shrink-0 overflow-hidden border ${index === photo ? "border-gold" : "border-white/20"}`}
                 >
                   <img src={src} alt="" className="h-full w-full object-contain" />
                 </button>
@@ -175,7 +230,7 @@ export default function QuickView() {
               type="button"
               className={`grid h-12 w-12 place-items-center border border-white/15 ${wished ? "text-gold" : ""}`}
               aria-pressed={wished}
-              aria-label={wished ? "הסרה מרשימת המשאלות" : "שמירה לרשימת המשאלות"}
+              aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
               onClick={() => toggleWish(quickView.id)}
             >
               <IconHeart filled={wished} />

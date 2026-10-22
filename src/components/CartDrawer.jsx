@@ -7,16 +7,17 @@ import ProductImage, { imageFrame } from "./ProductImage";
 
 const BIT_PHONE = "0543554888";
 
-function bitLaunchHref(userAgent = "") {
-  const target = `www.bitpay.co.il/app?phone=${BIT_PHONE}`;
-  const https = `https://${target}`;
-  const ua = userAgent.toLowerCase();
-  if (/iphone|ipad|ipod/.test(ua)) return `paymentsBIT://${target}`;
-  if (/android/.test(ua)) {
-    const fallback = encodeURIComponent(https);
-    return `intent://${target}#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url=${fallback};end`;
-  }
-  return https;
+function bitTransferUrl(amount) {
+  const total = Number(amount);
+  const value = Number.isFinite(total) && total > 0 ? total : 0;
+  return `https://www.bitpay.co.il/app/transfer?phone=${BIT_PHONE}&amount=${value}`;
+}
+
+function prefersBitApp() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent.toLowerCase();
+  if (/iphone|ipad|ipod|android/.test(ua)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
 }
 
 const emptyDetails = {
@@ -84,8 +85,8 @@ export default function CartDrawer() {
   const whatsappHref = store.order
     ? `https://wa.me/972543554888?text=${encodeURIComponent(`שלום, אישור תשלום עבור הזמנה ${store.order.number}`)}`
     : "https://wa.me/972543554888";
-  const bitHref = bitLaunchHref(typeof navigator === "undefined" ? "" : navigator.userAgent);
-  const bitInBrowser = bitHref.startsWith("http");
+  const mobileBit = prefersBitApp();
+  const bitLinkProps = mobileBit ? {} : { target: "_blank", rel: "noopener noreferrer" };
 
   return (
     <Drawer open={store.cartOpen} onClose={store.closeCart} label="עגלת קניות">
@@ -156,10 +157,10 @@ export default function CartDrawer() {
             />
             <a
               className="btn-ghost mt-4 h-12 w-full"
-              href={bitHref}
-              {...(bitInBrowser ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              href={bitTransferUrl(store.order.total)}
+              {...bitLinkProps}
             >
-              פתח את אפליקציית Bit
+              תשלום בביט
             </a>
             <ul className="mt-8 space-y-3 border-t border-white/10 pt-5 text-sm">
               {store.order.lines.map((line) => (
@@ -330,14 +331,20 @@ export default function CartDrawer() {
                 total={store.total}
                 empty={store.lines.length === 0}
               />
-              <button
-                type="button"
-                className="btn-gold mt-4 h-12 w-full"
-                disabled={store.lines.length === 0}
-                onClick={() => store.setCheckoutStep("details")}
-              >
-                תשלום בביט
-              </button>
+              {store.lines.length === 0 ? (
+                <button type="button" className="btn-gold mt-4 h-12 w-full" disabled>
+                  תשלום בביט
+                </button>
+              ) : (
+                <a
+                  className="btn-gold mt-4 h-12 w-full"
+                  href={bitTransferUrl(store.total)}
+                  {...bitLinkProps}
+                  onClick={() => store.setCheckoutStep("details")}
+                >
+                  תשלום בביט
+                </a>
+              )}
               <p className="mt-3 text-center text-[11px] text-muted">מקבלים ביט בלבד · יבוא מקורי · אחריות רשמית</p>
             </footer>
           </>

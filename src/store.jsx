@@ -196,7 +196,7 @@ export function StoreProvider({ children }) {
       exists ? current.filter((id) => id !== productId) : [...current, productId],
     );
     notify(
-      exists ? "הוסר מרשימת המשאלות" : "נשמר ברשימת המשאלות",
+      exists ? "המוצר הוסר מהמועדפים שלי" : "המוצר נוסף בהצלחה למועדפים שלי",
       exists ? null : "wish",
     );
   };

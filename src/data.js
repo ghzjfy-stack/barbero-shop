@@ -19,6 +19,7 @@ export const categories = ["הכל", "מכונות תספורת", "טרימרי�
 export const navLinks = [
   { label: "קולקציה", href: "/#collection" },
   { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
+  { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
   { label: "אודות", href: "/about" },
 ];
 
@@ -111,6 +112,7 @@ export const products = [
     brand: "Wahl",
     category: "מכונות תספורת",
     rating: 4.9,
+    reviews: 114,
     sku: "BRB-W-SN",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
@@ -145,13 +147,15 @@ export const products = [
     image:
       "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?auto=format&fit=crop&w=1000&q=80",
     blurb:
-      "דיטיילר אלחוטי מסדרת 5-Star, לקווים חדים ולעבודה צמודה. אזלה מהמלאי כרגע — אפשר לשמור אותה לרשימת המשאלות.",
+      "דיטיילר אלחוטי מסדרת 5-Star, לקווים חדים ולעבודה צמודה. אזלה מהמלאי כרגע — אפשר לשמור אותה למועדפים שלי.",
   },
   {
     id: "wahl-vanish",
     name: "Wahl 5-Star Series Vanish Shaver",
     brand: "Wahl",
     category: "טרימרים ומכונות גילוח",
+    rating: 4.8,
+    reviews: 56,
     sku: "8173-700",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
@@ -179,6 +183,8 @@ export const products = [
     name: "Wahl Aqua Blade Lithium Ion Wet / Dry Trimmer",
     brand: "Wahl",
     category: "טרימרים ומכונות גילוח",
+    rating: 4.7,
+    reviews: 42,
     sku: "9899-100",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
