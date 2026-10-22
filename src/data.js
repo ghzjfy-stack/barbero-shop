@@ -31,7 +31,7 @@ export const trustItems = [
   {
     icon: "truck",
     title: "משלוח מהיר",
-    text: "שליח עד הבית בכל הארץ, בדרך כלל תוך 2–5 ימי עסקים, עם מספר מעקב ברגע שהחבילה יוצאת.",
+    text: "משלוח ישיר מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב צמוד.",
   },
   {
     icon: "bolt",
@@ -128,6 +128,23 @@ export const products = [
       { id: "cord", label: "עם כבל", price: 589 },
       { id: "cordless", label: "אלחוטי", price: 749, compareAt: 829 },
     ],
+  },
+  {
+    id: "wahl-senior",
+    name: "מכונת תספורת Wahl Cordless Senior 5-Star",
+    brand: "Wahl",
+    category: "מכונות תספורת",
+    rating: 4.9,
+    sku: "BRB-W-SN",
+    voltage: "120V",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 8,
+    price: 550,
+    frame: "studio",
+    image: "/products/wahl-senior.webp",
+    blurb:
+      "מכונת כבל מסדרת 5-Star, עם גוף מתכת כבד ולהב שמיועד לדירוג, פייד ועבודה מעל מסרק. הידית יושבת יציב גם במשמרת ארוכה.",
   },
   {
     id: "andis-master",

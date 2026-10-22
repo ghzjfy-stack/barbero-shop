@@ -3,7 +3,7 @@ import { useStore } from "../store";
 import Drawer from "./Drawer";
 import { IconClose } from "./Icons";
 import Price from "./Price";
-import ProductImage from "./ProductImage";
+import ProductImage, { imageFrame } from "./ProductImage";
 
 export default function WishlistDrawer() {
   const { wishOpen, closeWish, wishlist, toggleWish, addToCart, openQuickView } = useStore();
@@ -38,8 +38,14 @@ export default function WishlistDrawer() {
               const soldOut = product.stock <= 0;
               return (
                 <li key={product.id} className="grid grid-cols-[4.5rem_1fr] gap-3 border-b border-white/10 pb-4">
-                  <button type="button" className="h-24 overflow-hidden bg-[#1a1814]" onClick={() => openQuickView(product.id)}>
-                    <ProductImage src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                  <button type="button" className={`h-24 overflow-hidden ${imageFrame(product).box}`} onClick={() => openQuickView(product.id)}>
+                    <ProductImage
+                      src={product.image}
+                      alt={product.name}
+                      className={
+                        imageFrame(product).studio ? "h-full w-full object-contain p-1.5" : "h-full w-full object-cover"
+                      }
+                    />
                   </button>
                   <div>
                     <button type="button" className="text-start text-sm leading-5" onClick={() => openQuickView(product.id)}>

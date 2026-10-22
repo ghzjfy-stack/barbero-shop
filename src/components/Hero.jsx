@@ -3,16 +3,17 @@ import { fromPrice, products, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconChevron } from "./Icons";
 import Price from "./Price";
-import ProductImage from "./ProductImage";
+import ProductImage, { imageFrame } from "./ProductImage";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=2000&q=80";
 
 export default function Hero() {
-  const featured = products[0];
+  const featured = products.find((product) => product.id === "wahl-senior") ?? products[0];
   const { addToCart, openQuickView } = useStore();
   const [imageOk, setImageOk] = useState(true);
   const offer = resolveOffer(featured);
+  const frame = imageFrame(featured);
 
   return (
     <section id="top" className="relative min-h-[100svh] overflow-hidden">
@@ -57,16 +58,20 @@ export default function Hero() {
         <aside className="rise hidden border border-line bg-ink/80 p-4 backdrop-blur-md lg:col-span-5 lg:block">
           <p className="text-xs text-gold">הדגם שפותח את הבית</p>
           <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
-            <div className="relative aspect-[16/10] overflow-hidden bg-charcoal">
+            <div className={`relative aspect-[16/10] overflow-hidden ${frame.box}`}>
               <ProductImage
                 src={featured.image}
                 alt={featured.name}
-                className="h-full w-full object-cover brightness-90"
+                className={
+                  frame.studio
+                    ? "h-full w-full object-contain p-3"
+                    : "h-full w-full object-cover brightness-90"
+                }
               />
             </div>
             <div className="mt-4">
               <p className="text-xs tracking-[0.14em] text-muted">{featured.brand}</p>
-              <h2 className="mt-2 font-display text-3xl leading-tight">{featured.name}</h2>
+              <h2 className="mt-2 font-display text-2xl leading-tight sm:text-3xl">{featured.name}</h2>
               <div className="mt-3">
                 <Price price={fromPrice(featured)} compareAt={offer.compareAt} from={Boolean(featured.variants)} />
               </div>

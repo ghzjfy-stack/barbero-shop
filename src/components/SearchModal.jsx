@@ -3,7 +3,7 @@ import { products, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconClose, IconSearch } from "./Icons";
 import Price from "./Price";
-import ProductImage from "./ProductImage";
+import ProductImage, { imageFrame } from "./ProductImage";
 
 export default function SearchModal() {
   const { searchOpen, closeSearch, openQuickView } = useStore();
@@ -69,8 +69,16 @@ export default function SearchModal() {
                       className="grid w-full grid-cols-[3.5rem_1fr_auto] items-center gap-3 px-3 py-2 text-start hover:bg-white/5"
                       onClick={() => openQuickView(product.id)}
                     >
-                      <span className="h-14 overflow-hidden bg-[#1a1814]">
-                        <ProductImage src={product.image} alt="" className="h-full w-full object-cover" />
+                      <span className={`h-14 overflow-hidden ${imageFrame(product).box}`}>
+                        <ProductImage
+                          src={product.image}
+                          alt=""
+                          className={
+                            imageFrame(product).studio
+                              ? "h-full w-full object-contain p-1"
+                              : "h-full w-full object-cover"
+                          }
+                        />
                       </span>
                       <span>
                         <span className="block text-sm">{product.name}</span>

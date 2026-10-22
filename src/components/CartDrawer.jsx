@@ -3,7 +3,7 @@ import { FREE_SHIPPING, formatPrice } from "../data";
 import { useStore } from "../store";
 import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
-import ProductImage from "./ProductImage";
+import ProductImage, { imageFrame } from "./ProductImage";
 
 const emptyDetails = { name: "", phone: "", city: "", address: "", agree: false };
 
@@ -179,8 +179,16 @@ export default function CartDrawer() {
                 <ul className="space-y-4">
                   {store.lines.map((line) => (
                     <li key={`${line.id}-${line.variantId}`} className="grid grid-cols-[4.5rem_1fr] gap-3 border-b border-white/10 pb-4">
-                      <div className="h-24 overflow-hidden bg-[#1a1814]">
-                        <ProductImage src={line.product.image} alt="" className="h-full w-full object-cover" />
+                      <div className={`h-24 overflow-hidden ${imageFrame(line.product).box}`}>
+                        <ProductImage
+                          src={line.product.image}
+                          alt=""
+                          className={
+                            imageFrame(line.product).studio
+                              ? "h-full w-full object-contain p-1.5"
+                              : "h-full w-full object-cover"
+                          }
+                        />
                       </div>
                       <div>
                         <div className="flex items-start justify-between gap-3">

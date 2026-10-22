@@ -98,15 +98,11 @@ export default function Footer() {
           <h2 className="font-display text-2xl">יצירת קשר</h2>
           <ul className="mt-4 space-y-2 text-sm leading-7 text-muted">
             <li>רחוב אלנבי 48, תל אביב</li>
-            <li>א׳–ה׳, 10:00–19:00</li>
+            <li>שעות מענה: א׳–ה׳, 09:00–18:00</li>
+            <li>מענה בוואטסאפ/טלפון</li>
             <li>
-              <a className="hover:text-ivory" href="tel:+97235550198">
-                03-555-0198
-              </a>
-            </li>
-            <li>
-              <a className="hover:text-ivory" href="mailto:hello@barbero.co.il">
-                hello@barbero.co.il
+              <a className="hover:text-ivory" href="mailto:support@barbero.co.il">
+                support@barbero.co.il
               </a>
             </li>
           </ul>

@@ -3,7 +3,7 @@ import { categories, discountPercent, fromPrice, products, resolveOffer } from "
 import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
-import ProductImage from "./ProductImage";
+import ProductImage, { imageFrame } from "./ProductImage";
 
 function modelCount(count) {
   if (count === 1) return "דגם אחד";
@@ -18,10 +18,11 @@ function ProductCard({ product }) {
   const soldOut = product.stock <= 0;
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
+  const frame = imageFrame(product);
 
   return (
     <article className="group flex flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
-      <div className="relative aspect-[3/4] overflow-hidden bg-[#1a1814]">
+      <div className={`relative aspect-[3/4] overflow-hidden ${frame.box}`}>
         <button
           type="button"
           className="absolute inset-0"
@@ -31,7 +32,11 @@ function ProductCard({ product }) {
           <ProductImage
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-cover brightness-[.78] saturate-[.8] transition duration-700 group-hover:scale-[1.04] group-hover:brightness-90"
+            className={
+              frame.studio
+                ? "h-full w-full object-contain p-5 transition duration-700 group-hover:scale-[1.03]"
+                : "h-full w-full object-cover brightness-[.78] saturate-[.8] transition duration-700 group-hover:scale-[1.04] group-hover:brightness-90"
+            }
           />
         </button>
         <div className="pointer-events-none absolute top-3 start-3 flex flex-col items-start gap-2">
@@ -140,7 +145,7 @@ export default function Catalog() {
             <select
               value={sort}
               onChange={(event) => setSort(event.target.value)}
-              className="field h-11 w-auto bg-charcoal pe-8"
+              className="field sort-select h-11 bg-charcoal"
             >
               <option value="featured">מיון: מומלצים</option>
               <option value="priceAsc">מחיר: מהנמוך</option>

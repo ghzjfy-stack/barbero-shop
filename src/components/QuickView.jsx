@@ -3,7 +3,7 @@ import { discountPercent, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
 import Price from "./Price";
-import ProductImage from "./ProductImage";
+import ProductImage, { imageFrame } from "./ProductImage";
 
 export default function QuickView() {
   const { quickView, closeQuickView, addToCart, toggleWish, isWished } = useStore();
@@ -22,6 +22,7 @@ export default function QuickView() {
   const soldOut = quickView.stock <= 0;
   const off = discountPercent(offer.price, offer.compareAt);
   const maxQty = Math.max(quickView.stock, 1);
+  const frame = imageFrame(quickView);
   const specs = [
     ["מותג", quickView.brand],
     ["קטגוריה", quickView.category],
@@ -47,11 +48,15 @@ export default function QuickView() {
         >
           <IconClose />
         </button>
-        <div className="relative min-h-72 bg-[#16140f]">
+        <div className={`relative min-h-72 ${frame.box}`}>
           <ProductImage
             src={quickView.image}
             alt={quickView.name}
-            className="h-full max-h-[46svh] w-full object-cover sm:max-h-none sm:min-h-full"
+            className={
+              frame.studio
+                ? "h-full max-h-[46svh] w-full object-contain p-6 sm:max-h-none sm:min-h-full"
+                : "h-full max-h-[46svh] w-full object-cover sm:max-h-none sm:min-h-full"
+            }
           />
           {soldOut ? (
             <span className="absolute top-4 start-4 bg-ink/85 px-3 py-1 text-xs">אזל מהמלאי</span>
