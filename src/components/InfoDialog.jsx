@@ -38,7 +38,7 @@ export default function InfoDialog() {
         className="relative z-10 max-h-[88svh] w-full max-w-xl overflow-y-auto border border-line bg-[#0e0e10] p-6 sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
-          <h2 id="info-title" className="font-display text-4xl leading-none">
+          <h2 id="info-title" className="font-display text-3xl leading-tight sm:text-4xl">
             {page.title}
           </h2>
           <button type="button" className="icon-btn" aria-label="סגירה" onClick={closeInfo}>

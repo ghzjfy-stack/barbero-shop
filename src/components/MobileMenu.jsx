@@ -1,10 +1,12 @@
 import { navLinks } from "../data";
+import { onNavClick, usePathname } from "../navigate";
 import { useStore } from "../store";
 import { IconClose } from "./Icons";
 import { Logo } from "./Header";
 
 export default function MobileMenu() {
   const { menuOpen, setMenuOpen, goToCategory, openSearch, openInfo } = useStore();
+  const path = usePathname();
 
   return (
     <div className={`fixed inset-0 z-50 md:hidden ${menuOpen ? "" : "pointer-events-none"}`} aria-hidden={!menuOpen}>
@@ -16,7 +18,7 @@ export default function MobileMenu() {
       />
       <div
         inert={menuOpen ? undefined : true}
-        className={`absolute inset-y-0 right-0 flex w-[min(100%,22rem)] flex-col border-s border-white/10 bg-ink px-6 py-5 transition-transform duration-500 ${
+        className={`absolute inset-y-0 right-0 flex w-[min(100%,22rem)] flex-col border-s border-white/10 bg-ink px-6 pt-[max(1.25rem,env(safe-area-inset-top,0px))] pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] transition-transform duration-500 ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -31,11 +33,11 @@ export default function MobileMenu() {
             <a
               key={link.label}
               href={link.href}
-              onClick={() => {
-                if (link.category || link.href === "#collection") goToCategory(link.category || "הכל");
-                else setMenuOpen(false);
-              }}
-              className="border-b border-white/10 py-4 font-display text-4xl"
+              aria-current={link.href === "/about" && path === "/about" ? "page" : undefined}
+              onClick={(event) => onNavClick(event, link, { goToCategory, closeMenu: () => setMenuOpen(false) })}
+              className={`border-b border-white/10 py-4 font-display text-4xl ${
+                link.href === "/about" && path === "/about" ? "text-gold-soft" : ""
+              }`}
             >
               {link.label}
             </a>

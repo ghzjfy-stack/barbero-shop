@@ -13,7 +13,7 @@ export default function TrustGrid() {
           {trustItems.map((item) => (
             <article
               key={item.title}
-              className="border border-white/10 bg-ink/50 p-6 transition duration-300 hover:-translate-y-1 hover:border-gold/45"
+              className="border border-white/10 bg-ink/50 p-5 transition duration-300 sm:p-6 md:hover:-translate-y-1 hover:border-gold/45"
             >
               <span className="grid h-12 w-12 place-items-center border border-gold/35 text-gold">
                 <TrustIcon name={item.icon} />

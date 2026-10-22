@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { navLinks } from "../data";
+import { onNavClick, usePathname } from "../navigate";
 import { useStore } from "../store";
 import { IconBag, IconHeart, IconMenu, IconSearch } from "./Icons";
 
@@ -16,13 +17,19 @@ function CountBadge({ count }) {
 }
 
 export function Logo() {
+  const { setMenuOpen } = useStore();
   return (
-    <a href="#top" dir="ltr" className="flex min-w-0 items-center gap-2.5 sm:gap-3">
-      <span className="grid h-10 w-10 shrink-0 place-items-center border border-gold/70 font-display text-lg text-gold sm:h-11 sm:w-11 sm:text-xl">
+    <a
+      href="/"
+      dir="ltr"
+      className="flex min-w-0 items-center gap-2.5 sm:gap-3"
+      onClick={(event) => onNavClick(event, { href: "/" }, { closeMenu: () => setMenuOpen(false) })}
+    >
+      <span className="grid h-9 w-9 shrink-0 place-items-center border border-gold/70 font-display text-base text-gold min-[360px]:h-10 min-[360px]:w-10 min-[360px]:text-lg sm:h-11 sm:w-11 sm:text-xl">
         B
       </span>
       <span className="flex min-w-0 flex-col leading-none">
-        <span className="font-display text-[1.05rem] tracking-[0.2em] text-ivory sm:text-[1.35rem] sm:tracking-[0.28em]">
+        <span className="font-display text-[0.95rem] tracking-[0.08em] text-ivory min-[360px]:text-[1.05rem] min-[360px]:tracking-[0.2em] sm:text-[1.35rem] sm:tracking-[0.28em]">
           BARBERO
         </span>
         <span className="mt-1 hidden text-[10px] text-gold-soft min-[420px]:block">בית לציוד תספורת וגילוח מקצועי</span>
@@ -46,6 +53,7 @@ export default function Header() {
     goToCategory,
   } = useStore();
   const [solid, setSolid] = useState(false);
+  const path = usePathname();
 
   useEffect(() => {
     const onScroll = () => setSolid(window.scrollY > 8);
@@ -57,23 +65,24 @@ export default function Header() {
   return (
     <header
       className={`transition-colors duration-300 ${
-        solid || menuOpen
+        solid || menuOpen || path === "/about"
           ? "border-b border-white/10 bg-ink/92 backdrop-blur-md"
           : "border-b border-transparent bg-gradient-to-b from-ink/80 to-transparent"
       }`}
     >
       <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-8">
+        <div className="flex min-w-0 items-center gap-4 lg:gap-8">
           <Logo />
-          <nav className="hidden items-center gap-6 md:flex" aria-label="ראשי">
+          <nav className="hidden items-center gap-4 md:flex lg:gap-6" aria-label="ראשי">
             {navLinks.map((link) => (
               <a
                 key={link.label}
                 href={link.href}
-                onClick={() => {
-                  if (link.category || link.href === "#collection") goToCategory(link.category || "הכל");
-                }}
-                className="text-sm text-ivory/85 transition-colors hover:text-gold-soft"
+                aria-current={link.href === "/about" && path === "/about" ? "page" : undefined}
+                onClick={(event) => onNavClick(event, link, { goToCategory })}
+                className={`text-sm transition-colors hover:text-gold-soft ${
+                  link.href === "/about" && path === "/about" ? "text-gold-soft" : "text-ivory/85"
+                }`}
               >
                 {link.label}
               </a>

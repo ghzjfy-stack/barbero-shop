@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { navLinks, serviceLinks } from "../data";
+import { onNavClick } from "../navigate";
 import { useStore } from "../store";
 import { Logo } from "./Header";
 
@@ -19,7 +20,7 @@ export default function Footer() {
   };
 
   return (
-    <footer id="about" className="border-t border-white/10 bg-[#0b0b0c]">
+    <footer className="border-t border-white/10 bg-[#0b0b0c]">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
         <div>
           <Logo />
@@ -81,11 +82,7 @@ export default function Footer() {
                 <a
                   href={link.href}
                   className="text-sm text-muted hover:text-ivory"
-                  onClick={() => {
-                    if (link.category || link.href === "#collection") {
-                      goToCategory(link.category || "הכל");
-                    }
-                  }}
+                  onClick={(event) => onNavClick(event, link, { goToCategory })}
                 >
                   {link.label}
                 </a>
@@ -109,7 +106,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 pb-[max(5.75rem,calc(5rem+env(safe-area-inset-bottom,0px)))] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-xs text-muted">© {year} BARBERO. כל הזכויות שמורות.</p>
           <div className="flex flex-wrap items-center gap-3" aria-label="אמצעי תשלום">
             <span className="text-xs text-muted">תשלום בביט בלבד</span>

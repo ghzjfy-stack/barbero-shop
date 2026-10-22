@@ -18,7 +18,7 @@ export default function Drawer({ open, onClose, label, children }) {
         aria-modal={open}
         aria-label={label}
         inert={open ? undefined : true}
-        className={`absolute top-0 bottom-0 left-0 flex w-full max-w-[28rem] flex-col border-e border-white/10 bg-[#0c0c0e] shadow-[0_0_80px_rgba(0,0,0,0.45)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`absolute top-0 bottom-0 left-0 flex w-full max-w-[28rem] flex-col border-e border-white/10 bg-[#0c0c0e] pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)] shadow-[0_0_80px_rgba(0,0,0,0.45)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

@@ -38,20 +38,18 @@ export default function QuickView() {
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6">
       <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-sm" aria-label="סגירה" onClick={closeQuickView} />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="quick-view-title"
-        className="relative z-10 grid max-h-[92svh] w-full max-w-4xl overflow-y-auto border border-line bg-slate sm:grid-cols-2"
-      >
-        <button
-          type="button"
-          className="icon-btn absolute top-2 left-2 z-10 bg-ink/75"
-          aria-label="סגירה"
-          onClick={closeQuickView}
-        >
-          <IconClose />
-        </button>
+      <div role="dialog" aria-modal="true" aria-labelledby="quick-view-title" className="relative z-10 w-full max-w-4xl">
+        <div className="pointer-events-none absolute inset-0 z-20" dir="ltr">
+          <button
+            type="button"
+            className="icon-btn pointer-events-auto absolute top-2 left-2 bg-ink/80"
+            aria-label="סגירה"
+            onClick={closeQuickView}
+          >
+            <IconClose />
+          </button>
+        </div>
+        <div className="grid max-h-[92svh] overflow-y-auto border border-line bg-slate sm:grid-cols-2">
         <div className={`relative flex flex-col ${frame.box}`}>
           <div className="aspect-square w-full">
             <ProductImage
@@ -61,7 +59,7 @@ export default function QuickView() {
             />
           </div>
           {gallery.length > 1 && (
-            <div className="flex gap-2 p-3" role="group" aria-label="גלריית המוצר">
+            <div className="flex flex-wrap gap-2 p-3" role="group" aria-label="גלריית המוצר">
               {gallery.map((src, index) => (
                 <button
                   key={src}
@@ -91,7 +89,7 @@ export default function QuickView() {
 
         <div className="flex flex-col p-5 sm:p-8">
           <p className="text-xs text-gold">{quickView.category}</p>
-          <h2 id="quick-view-title" className="mt-2 font-display text-4xl leading-none">
+          <h2 id="quick-view-title" className="mt-2 font-display text-[1.7rem] leading-tight sm:text-4xl">
             {quickView.name}
           </h2>
           <p className="mt-3 text-xs tracking-[0.16em] text-muted">{quickView.brand}</p>
@@ -112,11 +110,11 @@ export default function QuickView() {
             </ul>
           )}
 
-          <dl className="mt-6 grid grid-cols-2 gap-px bg-white/10 text-sm">
+          <dl className="mt-6 grid grid-cols-1 gap-px bg-white/10 text-sm min-[480px]:grid-cols-2">
             {specs.map(([label, value]) => (
               <div key={label} className="bg-ink px-3 py-3">
                 <dt className="text-xs text-muted">{label}</dt>
-                <dd className="mt-1">{value}</dd>
+                <dd className="mt-1 break-words">{value}</dd>
               </div>
             ))}
           </dl>
@@ -192,6 +190,7 @@ export default function QuickView() {
           >
             {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
           </button>
+        </div>
         </div>
       </div>
     </div>

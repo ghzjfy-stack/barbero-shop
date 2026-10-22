@@ -194,6 +194,13 @@ footer[id] {
   color: #f4f1ea;
 }
 
+@media (max-width: 359px) {
+  .icon-btn {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+}
+
 .icon-btn:hover {
   color: #e4d2a2;
 }
@@ -216,7 +223,7 @@ footer[id] {
   border-color: #c6a15b;
 }
 
-select.sort-select {
+.sort-select {
   width: auto;
   min-width: 13.5rem;
   flex-shrink: 0;
@@ -224,6 +231,8 @@ select.sort-select {
   padding-block: 0.5rem;
   padding-inline-start: 1rem;
   padding-inline-end: 2.75rem;
+  background-color: #090909;
+  color: #f4f1ea;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%23d9d3c7' stroke-width='1.5'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: left 0.9rem center;

@@ -1,9 +1,94 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { categories, discountPercent, fromPrice, products, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
-import ProductImage, { imageFrame } from "./ProductImage";
+import ProductImage from "./ProductImage";
+
+const sortOptions = [
+  { value: "featured", label: "מיון: מומלצים" },
+  { value: "priceAsc", label: "מחיר: מהנמוך" },
+  { value: "priceDesc", label: "מחיר: מהגבוה" },
+  { value: "rating", label: "דירוג" },
+];
+
+function SortSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const current = sortOptions.find((option) => option.value === value) ?? sortOptions[0];
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const choose = (next) => {
+    onChange(next);
+    setOpen(false);
+  };
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        className="sort-select field h-11 bg-black text-ivory"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="catalog-sort-list"
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          const index = sortOptions.findIndex((option) => option.value === value);
+          const step = event.key === "ArrowDown" ? 1 : -1;
+          const next = sortOptions[(index + step + sortOptions.length) % sortOptions.length];
+          onChange(next.value);
+          setOpen(true);
+        }}
+      >
+        {current.label}
+      </button>
+      {open && (
+        <ul
+          id="catalog-sort-list"
+          role="listbox"
+          aria-label="מיון"
+          className="absolute z-30 mt-2 w-full min-w-full border border-white/15 bg-black py-1 shadow-2xl"
+        >
+          {sortOptions.map((option) => {
+            const selected = option.value === value;
+            return (
+              <li key={option.value} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`block min-h-11 w-full px-4 py-3 text-start text-sm text-ivory transition-colors hover:bg-[#27272a] hover:text-gold-soft ${
+                    selected ? "bg-[#18181b] text-gold-soft" : ""
+                  }`}
+                  onClick={() => choose(option.value)}
+                >
+                  {option.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 function ProductCard({ product }) {
   const { addToCart, openQuickView, toggleWish, isWished } = useStore();
@@ -13,15 +98,12 @@ function ProductCard({ product }) {
   const soldOut = product.stock <= 0;
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
-  const frame = imageFrame(product);
   const hoverImage = product.hoverImage || product.images?.[1];
-  const photoClass = frame.studio
-    ? "h-full w-full object-contain transition duration-500"
-    : "h-full w-full object-cover transition duration-500";
+  const photoClass = "h-full w-full object-contain object-center p-2.5 transition duration-500 sm:p-4";
 
   return (
     <article className="group flex flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
-      <div className={`relative aspect-square overflow-hidden ${frame.box}`}>
+      <div className="relative aspect-square overflow-hidden bg-ink">
         <button
           type="button"
           className="absolute inset-0"
@@ -31,11 +113,7 @@ function ProductCard({ product }) {
           <ProductImage
             src={product.image}
             alt={product.name}
-            className={
-              hoverImage
-                ? `${photoClass} group-hover:opacity-0`
-                : `${photoClass} ${frame.studio ? "group-hover:scale-[1.03]" : "group-hover:scale-[1.04] group-hover:brightness-90"}`
-            }
+            className={hoverImage ? `${photoClass} group-hover:opacity-0` : photoClass}
           />
           {hoverImage && (
             <ProductImage
@@ -71,9 +149,9 @@ function ProductCard({ product }) {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-[11px] text-gold">{product.category}</p>
-        <h3 className="mt-1 text-base leading-6 font-medium">
+      <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-4">
+        <p className="text-[11px] leading-4 text-gold">{product.category}</p>
+        <h3 className="mt-1 text-sm leading-5 font-medium sm:text-base sm:leading-6">
           <button type="button" className="text-start hover:text-gold-soft" onClick={() => openQuickView(product.id)}>
             {product.name}
           </button>
@@ -149,22 +227,13 @@ export default function Catalog() {
             <p className="mb-3 text-xs text-gold">הקולקציה</p>
             <h2 className="font-display text-4xl leading-tight sm:text-5xl">קולקציית פרימיום לתספורת וגילוח</h2>
           </div>
-          <label className="text-sm text-muted">
+          <div className="text-sm text-muted">
             <span className="sr-only">מיון</span>
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value)}
-              className="field sort-select h-11 bg-charcoal"
-            >
-              <option value="featured">מיון: מומלצים</option>
-              <option value="priceAsc">מחיר: מהנמוך</option>
-              <option value="priceDesc">מחיר: מהגבוה</option>
-              <option value="rating">דירוג</option>
-            </select>
-          </label>
+            <SortSelect value={sort} onChange={setSort} />
+          </div>
         </div>
 
-        <div className="mb-8 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mb-8 flex flex-wrap gap-2">
           {categories.map((item) => (
             <button
               key={item}

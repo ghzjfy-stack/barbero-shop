@@ -3,17 +3,17 @@ import { fromPrice, products, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconChevron } from "./Icons";
 import Price from "./Price";
-import ProductImage, { imageFrame } from "./ProductImage";
+import ProductImage from "./ProductImage";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=2000&q=80";
+const HERO_PRODUCT = "/products/wahl-senior-cut.png";
 
 export default function Hero() {
   const featured = products.find((product) => product.id === "wahl-senior") ?? products[0];
   const { addToCart, openQuickView } = useStore();
   const [imageOk, setImageOk] = useState(true);
   const offer = resolveOffer(featured);
-  const frame = imageFrame(featured);
 
   return (
     <section id="top" className="relative min-h-[100svh] overflow-hidden">
@@ -27,51 +27,47 @@ export default function Hero() {
           onError={() => setImageOk(false)}
         />
       )}
-      <div className="absolute inset-0 bg-[linear-gradient(to_left,rgba(9,9,9,0.94)_0%,rgba(9,9,9,0.82)_46%,rgba(9,9,9,0.28)_100%)]" />
-      <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-ink/50" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(9,9,9,0.9)_0%,rgba(9,9,9,0.72)_48%,rgba(9,9,9,0.5)_100%)] md:bg-[linear-gradient(to_left,rgba(9,9,9,0.94)_0%,rgba(9,9,9,0.88)_60%,rgba(9,9,9,0.32)_100%)]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-ink/45" />
 
-      <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl items-end gap-10 px-4 pt-36 pb-16 sm:px-6 lg:grid-cols-12 lg:px-8">
-        <div className="rise lg:col-span-7">
-          <p className="mb-5 text-xs tracking-[0.28em] text-gold" dir="ltr">
+      <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl items-end gap-8 px-4 pt-[calc(8.5rem+env(safe-area-inset-top,0px))] pb-12 sm:px-6 md:grid-cols-12 md:gap-10 md:pb-16 lg:px-8">
+        <div className="rise md:col-span-7">
+          <p className="mb-4 text-[11px] tracking-[0.16em] text-gold sm:mb-5 sm:text-xs sm:tracking-[0.28em]" dir="ltr">
             BARBERO · DIRECT IMPORT
           </p>
-          <h1 className="max-w-3xl font-display text-[2.35rem] leading-[1.18] font-bold text-ivory sm:text-5xl lg:text-[4.4rem]">
+          <h1 className="max-w-3xl font-display text-[2.05rem] leading-[1.2] font-bold text-ivory sm:text-4xl md:text-[2.6rem] lg:text-5xl xl:text-[4.4rem]">
             מכונות התספורת והגילוח המובילות בעולם
-            <span className="mt-3 block text-[1.45rem] leading-snug font-medium text-gold-soft sm:text-3xl lg:text-[2.35rem]">
+            <span className="mt-3 block text-[1.3rem] leading-snug font-medium text-gold-soft sm:text-2xl lg:text-3xl xl:text-[2.35rem]">
               – יבוא ישיר מארה״ב
             </span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-8 text-ivory/75 sm:text-lg">
             נבחרו למספרות ולשימוש ביתי. 100% מקורי מארה״ב, באיכות ללא פשרות, עם אחריות מלאה ושירות לקוחות בעברית.
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a href="#collection" className="btn-gold h-12 px-7 text-[15px]">
+          <div className="mt-8 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap min-[420px]:items-center">
+            <a href="#collection" className="btn-gold h-12 w-full px-7 text-[15px] min-[420px]:w-auto">
               <span>לצפייה בקולקציה</span>
               <IconChevron className="h-4 w-4" />
             </a>
-            <a href="#trust" className="btn-ghost h-12 px-6 text-[15px]">
+            <a href="#trust" className="btn-ghost h-12 w-full px-6 text-[15px] min-[420px]:w-auto">
               למה BARBERO
             </a>
           </div>
         </div>
 
-        <aside className="rise hidden border border-line bg-ink/80 p-4 backdrop-blur-md lg:col-span-5 lg:block">
+        <aside className="rise border border-line bg-ink/80 p-4 backdrop-blur-md md:col-span-5">
           <p className="text-xs text-gold">הדגם שפותח את הבית</p>
           <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
-            <div className={`relative aspect-[16/10] overflow-hidden ${frame.box}`}>
+            <div className="relative mx-auto h-64 w-full overflow-hidden sm:h-72 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
               <ProductImage
-                src={featured.image}
+                src={HERO_PRODUCT}
                 alt={featured.name}
-                className={
-                  frame.studio
-                    ? "h-full w-full object-contain p-3"
-                    : "h-full w-full object-cover brightness-90"
-                }
+                className="absolute inset-0 h-full w-full object-contain object-center"
               />
             </div>
             <div className="mt-4">
               <p className="text-xs tracking-[0.14em] text-muted">{featured.brand}</p>
-              <h2 className="mt-2 font-display text-2xl leading-tight sm:text-3xl">{featured.name}</h2>
+              <h2 className="mt-2 font-display text-xl leading-tight sm:text-2xl lg:text-3xl">{featured.name}</h2>
               <div className="mt-3">
                 <Price price={fromPrice(featured)} compareAt={offer.compareAt} from={Boolean(featured.variants)} />
               </div>
