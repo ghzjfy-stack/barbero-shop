@@ -5,7 +5,30 @@ import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import ProductImage, { imageFrame } from "./ProductImage";
 
-const emptyDetails = { name: "", phone: "", city: "", address: "", agree: false };
+const BIT_PHONE = "0543554888";
+
+function bitLaunchHref(userAgent = "") {
+  const target = `www.bitpay.co.il/app?phone=${BIT_PHONE}`;
+  const https = `https://${target}`;
+  const ua = userAgent.toLowerCase();
+  if (/iphone|ipad|ipod/.test(ua)) return `paymentsBIT://${target}`;
+  if (/android/.test(ua)) {
+    const fallback = encodeURIComponent(https);
+    return `intent://${target}#Intent;scheme=bit;package=com.bnhp.payments.paymentsapp;S.browser_fallback_url=${fallback};end`;
+  }
+  return https;
+}
+
+const emptyDetails = {
+  name: "",
+  phone: "",
+  city: "",
+  address: "",
+  unit: "",
+  postal: "",
+  notes: "",
+  agree: false,
+};
 
 export default function CartDrawer() {
   const store = useStore();
@@ -25,6 +48,8 @@ export default function CartDrawer() {
     if (phone.length < 9 || phone.length > 13) next.phone = "מספר טלפון לא תקין";
     if (details.city.trim().length < 2) next.city = "חסרה עיר";
     if (details.address.trim().length < 4) next.address = "חסרה כתובת למשלוח";
+    const postal = details.postal.trim();
+    if (postal && !/^\d{5}(\d{2})?$/.test(postal)) next.postal = "מיקוד לא תקין";
     if (!details.agree) next.agree = "יש לאשר את התקנון כדי להמשיך";
     setErrors(next);
     return Object.keys(next).length === 0;
@@ -38,6 +63,9 @@ export default function CartDrawer() {
       phone: details.phone.trim(),
       city: details.city.trim(),
       address: details.address.trim(),
+      unit: details.unit.trim(),
+      postal: details.postal.trim(),
+      notes: details.notes.trim(),
     });
     setDetails(emptyDetails);
     setCopied(false);
@@ -52,6 +80,12 @@ export default function CartDrawer() {
       setCopied(false);
     }
   };
+
+  const whatsappHref = store.order
+    ? `https://wa.me/972543554888?text=${encodeURIComponent(`שלום, אישור תשלום עבור הזמנה ${store.order.number}`)}`
+    : "https://wa.me/972543554888";
+  const bitHref = bitLaunchHref(typeof navigator === "undefined" ? "" : navigator.userAgent);
+  const bitInBrowser = bitHref.startsWith("http");
 
   return (
     <Drawer open={store.cartOpen} onClose={store.closeCart} label="עגלת קניות">
@@ -87,9 +121,14 @@ export default function CartDrawer() {
         )}
 
         {store.checkoutStep === "done" && store.order ? (
-          <div className="flex flex-1 flex-col px-5 py-8">
-            <p className="text-sm leading-7 text-ivory/75">
-              תודה, {store.order.details.name}. שמרנו את ההזמנה במכשיר הזה. אין כאן חיוב ואין משלוח אמיתי.
+          <div className="flex flex-1 flex-col overflow-y-auto px-5 py-8">
+            <p className="text-sm leading-7 text-ivory/75">תודה, {store.order.details.name}.</p>
+            <p className="mt-5 border border-gold/50 bg-gold/10 px-4 py-4 text-base font-semibold leading-8 text-ivory">
+              להשלמת ההזמנה, אנא העבר{" "}
+              <span className="tabular-nums" dir="ltr">
+                {formatPrice(store.order.total)}
+              </span>{" "}
+              ב-Bit למספר <span dir="ltr">054-3554888</span>
             </p>
             <p className="mt-6 text-xs text-muted">מספר הזמנה</p>
             <p className="mt-1 font-display text-4xl text-gold-soft" dir="ltr">
@@ -98,6 +137,30 @@ export default function CartDrawer() {
             <button type="button" className="btn-ghost mt-4 h-11" onClick={copyNumber}>
               {copied ? "המספר הועתק" : "העתקת מספר"}
             </button>
+            <a
+              className="mt-3 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
+              href={whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              שלח אישור תשלום בוואטסאפ
+            </a>
+            <p className="mt-5 text-center text-xs leading-6 text-muted">
+              סרוק את קוד ה-QR לתשלום מהיר ב-Bit, או לחץ על הכפתור למטה
+            </p>
+            <img
+              className="mx-auto mt-3 block max-w-[200px] rounded-lg"
+              src="/bit-qr.jpg"
+              alt="קוד QR לתשלום ב-Bit"
+              width="200"
+            />
+            <a
+              className="btn-ghost mt-4 h-12 w-full"
+              href={bitHref}
+              {...(bitInBrowser ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+            >
+              פתח את אפליקציית Bit
+            </a>
             <ul className="mt-8 space-y-3 border-t border-white/10 pt-5 text-sm">
               {store.order.lines.map((line) => (
                 <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
@@ -109,13 +172,15 @@ export default function CartDrawer() {
                 </li>
               ))}
             </ul>
-            <p className="mt-4 flex justify-between border-t border-white/10 pt-4 text-base">
-              <span>לתשלום</span>
-              <span className="tabular-nums">{formatPrice(store.order.total)}</span>
-            </p>
+            <div className="mt-4">
+              <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
+            </div>
             <p className="mt-2 text-sm text-muted">
-              {store.order.details.address}, {store.order.details.city}
+              {[store.order.details.address, store.order.details.unit, store.order.details.city, store.order.details.postal]
+                .filter(Boolean)
+                .join(", ")}
             </p>
+            {store.order.details.notes && <p className="mt-2 text-sm leading-7 text-muted">{store.order.details.notes}</p>}
             <button type="button" className="btn-gold mt-auto h-12" onClick={store.finishCheckout}>
               המשך בקניות
             </button>
@@ -134,6 +199,26 @@ export default function CartDrawer() {
             <Field label="כתובת" error={errors.address}>
               <input className="field" autoComplete="street-address" value={details.address} onChange={(event) => setField("address", event.target.value)} />
             </Field>
+            <Field label="דירה / קומה / כניסה" error={errors.unit}>
+              <input className="field" autoComplete="address-line2" value={details.unit} onChange={(event) => setField("unit", event.target.value)} />
+            </Field>
+            <Field label="מיקוד" error={errors.postal}>
+              <input
+                className="field"
+                inputMode="numeric"
+                autoComplete="postal-code"
+                value={details.postal}
+                onChange={(event) => setField("postal", event.target.value)}
+              />
+            </Field>
+            <Field label="הערות לשליח" error={errors.notes}>
+              <textarea
+                className="field min-h-24 resize-y"
+                rows={3}
+                value={details.notes}
+                onChange={(event) => setField("notes", event.target.value)}
+              />
+            </Field>
             <label className="mt-2 flex items-start gap-3 text-sm leading-6 text-muted">
               <input
                 type="checkbox"
@@ -150,16 +235,18 @@ export default function CartDrawer() {
               </span>
             </label>
             {errors.agree && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.agree}</p>}
-            <p className="mt-4 text-xs leading-6 text-muted">
-              התשלום מתבצע בביט בלבד. ההזמנה נשמרת במכשיר זה בלבד ואינה נשלחת לסליקה.
-            </p>
-            <div className="mt-auto grid gap-2 pt-6">
-              <button type="submit" className="btn-gold h-12">
-                אישור הזמנה · {formatPrice(store.total)}
-              </button>
-              <button type="button" className="btn-ghost h-11" onClick={() => store.setCheckoutStep("cart")}>
-                חזרה לעגלה
-              </button>
+            <p className="mt-4 text-xs leading-6 text-muted">התשלום מתבצע בביט בלבד. התשלום מאובטח בתקן SSL מחמיר.</p>
+            <div className="mt-auto pt-6">
+              <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
+              <Totals subtotal={store.subtotal} shipping={store.shipping} total={store.total} />
+              <div className="mt-4 grid gap-2">
+                <button type="submit" className="btn-gold h-12">
+                  אישור הזמנה · {formatPrice(store.total)}
+                </button>
+                <button type="button" className="btn-ghost h-11" onClick={() => store.setCheckoutStep("cart")}>
+                  חזרה לעגלה
+                </button>
+              </div>
             </div>
           </form>
         ) : (
@@ -236,38 +323,13 @@ export default function CartDrawer() {
             </div>
 
             <footer className="border-t border-white/10 px-5 py-4">
-              <div className="mb-4">
-                <div className="mb-2 flex items-center justify-between text-xs">
-                  <span className="text-muted">משלוח חינם מעל {formatPrice(FREE_SHIPPING)}</span>
-                  <span className={store.remaining === 0 && store.subtotal > 0 ? "text-gold-soft" : "text-ivory"}>
-                    {store.subtotal === 0
-                      ? "התחילו להוסיף"
-                      : store.remaining === 0
-                        ? "המשלוח עלינו"
-                        : `עוד ${formatPrice(store.remaining)}`}
-                  </span>
-                </div>
-                <div
-                  className="h-1.5 bg-white/10"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round(store.progress)}
-                  aria-label="התקדמות למשלוח חינם"
-                >
-                  <div className="h-full bg-gold transition-[width] duration-500" style={{ width: `${store.progress}%` }} />
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <Row label="סיכום ביניים" value={formatPrice(store.subtotal)} />
-                <Row
-                  label="משלוח"
-                  value={store.lines.length === 0 ? "—" : store.shipping === 0 ? "חינם" : formatPrice(store.shipping)}
-                  gold={store.lines.length > 0 && store.shipping === 0}
-                />
-                <Row label="לתשלום" value={formatPrice(store.total)} strong />
-              </div>
+              <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
+              <Totals
+                subtotal={store.subtotal}
+                shipping={store.shipping}
+                total={store.total}
+                empty={store.lines.length === 0}
+              />
               <button
                 type="button"
                 className="btn-gold mt-4 h-12 w-full"
@@ -282,6 +344,41 @@ export default function CartDrawer() {
         )}
       </div>
     </Drawer>
+  );
+}
+
+function ShippingProgress({ subtotal, remaining, progress }) {
+  const qualified = remaining === 0 && subtotal > 0;
+  return (
+    <div className="mb-4">
+      <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+        <span className="text-muted">משלוח חינם מעל {formatPrice(FREE_SHIPPING)}</span>
+        <span className={qualified ? "text-gold-soft" : "text-ivory"}>
+          {subtotal === 0 ? "התחילו להוסיף" : qualified ? "המשלוח עלינו" : `עוד ${formatPrice(remaining)}`}
+        </span>
+      </div>
+      <div
+        className="h-1.5 bg-white/10"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress)}
+        aria-label="התקדמות למשלוח חינם"
+      >
+        <div className="h-full bg-gold transition-[width] duration-500" style={{ width: `${progress}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function Totals({ subtotal, shipping, total, empty = false }) {
+  const free = !empty && shipping === 0;
+  return (
+    <div className="space-y-2 text-sm">
+      <Row label="סיכום ביניים" value={formatPrice(subtotal)} />
+      <Row label="משלוח" value={empty ? "—" : free ? "חינם" : formatPrice(shipping)} gold={free} />
+      <Row label="לתשלום" value={formatPrice(total)} strong />
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   FREE_SHIPPING,
-  SHIPPING_FEE,
+  shippingFeeFor,
   findProduct,
   resolveOffer,
 } from "./data";
@@ -102,7 +102,7 @@ export function StoreProvider({ children }) {
   );
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-  const shipping = subtotal === 0 || subtotal >= FREE_SHIPPING ? 0 : SHIPPING_FEE;
+  const shipping = shippingFeeFor(subtotal);
   const total = subtotal + shipping;
   const remaining = Math.max(0, FREE_SHIPPING - subtotal);
   const progress = subtotal <= 0 ? 0 : Math.min(100, (subtotal / FREE_SHIPPING) * 100);

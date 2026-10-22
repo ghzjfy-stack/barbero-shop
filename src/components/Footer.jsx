@@ -24,7 +24,7 @@ export default function Footer() {
         <div>
           <Logo />
           <p className="mt-5 max-w-xs text-sm leading-7 text-muted">
-            BARBERO מביאה מכונות תספורת, גילוח וטיפוח מקוריות — למספרות, ולמי שמתייחס לבוקר כמו לטקס.
+            BARBERO מביאה אליכם מכונות תספורת, גילוח וטיפוח מקוריות – ביבוא ישיר מארה״ב, למספרות ולשימוש ביתי מקצועי.
           </p>
           <div className="mt-6">
             <p className="text-sm">עדכונים על הקולקציה</p>
@@ -74,7 +74,7 @@ export default function Footer() {
         </div>
 
         <div>
-          <h2 className="font-display text-2xl">הבית</h2>
+          <h2 className="font-display text-2xl">ניווט מהיר</h2>
           <ul className="mt-4 space-y-2">
             {navLinks.map((link) => (
               <li key={link.label}>
@@ -97,7 +97,6 @@ export default function Footer() {
         <div>
           <h2 className="font-display text-2xl">יצירת קשר</h2>
           <ul className="mt-4 space-y-2 text-sm leading-7 text-muted">
-            <li>רחוב אלנבי 48, תל אביב</li>
             <li>שעות מענה: א׳–ה׳, 09:00–18:00</li>
             <li>מענה בוואטסאפ/טלפון</li>
             <li>

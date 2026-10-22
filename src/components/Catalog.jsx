@@ -19,6 +19,11 @@ function ProductCard({ product }) {
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
   const frame = imageFrame(product);
+  const gallery = product.images?.length ? product.images : [product.image];
+  const hoverImage = gallery[1];
+  const photoClass = frame.studio
+    ? "h-full w-full object-contain p-5 transition duration-500"
+    : "h-full w-full object-cover brightness-[.78] saturate-[.8] transition duration-500";
 
   return (
     <article className="group flex flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
@@ -30,14 +35,21 @@ function ProductCard({ product }) {
           aria-label={`מבט מהיר: ${product.name}`}
         >
           <ProductImage
-            src={product.image}
+            src={gallery[0]}
             alt={product.name}
             className={
-              frame.studio
-                ? "h-full w-full object-contain p-5 transition duration-700 group-hover:scale-[1.03]"
-                : "h-full w-full object-cover brightness-[.78] saturate-[.8] transition duration-700 group-hover:scale-[1.04] group-hover:brightness-90"
+              hoverImage
+                ? `${photoClass} group-hover:opacity-0`
+                : `${photoClass} ${frame.studio ? "group-hover:scale-[1.03]" : "group-hover:scale-[1.04] group-hover:brightness-90"}`
             }
           />
+          {hoverImage && (
+            <ProductImage
+              src={hoverImage}
+              alt=""
+              className={`${photoClass} absolute inset-0 opacity-0 group-hover:opacity-100`}
+            />
+          )}
         </button>
         <div className="pointer-events-none absolute top-3 start-3 flex flex-col items-start gap-2">
           {soldOut ? (

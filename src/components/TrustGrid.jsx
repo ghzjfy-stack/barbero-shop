@@ -7,7 +7,7 @@ export default function TrustGrid() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
         <div className="mb-10 max-w-2xl">
           <p className="mb-3 text-xs text-gold">הסטנדרט</p>
-          <h2 className="font-display text-4xl leading-tight sm:text-5xl">כל דגם מגיע עם שקט</h2>
+          <h2 className="font-display text-4xl leading-tight sm:text-5xl">ראש שקט בכל קנייה</h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {trustItems.map((item) => (

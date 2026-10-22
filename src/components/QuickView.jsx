@@ -9,10 +9,12 @@ export default function QuickView() {
   const { quickView, closeQuickView, addToCart, toggleWish, isWished } = useStore();
   const [variantId, setVariantId] = useState(null);
   const [qty, setQty] = useState(1);
+  const [photo, setPhoto] = useState(0);
 
   useEffect(() => {
     setVariantId(quickView?.variants?.[0]?.id ?? null);
     setQty(1);
+    setPhoto(0);
   }, [quickView?.id]);
 
   if (!quickView) return null;
@@ -23,6 +25,8 @@ export default function QuickView() {
   const off = discountPercent(offer.price, offer.compareAt);
   const maxQty = Math.max(quickView.stock, 1);
   const frame = imageFrame(quickView);
+  const gallery = quickView.images?.length ? quickView.images : [quickView.image];
+  const activePhoto = gallery[photo] ?? gallery[0];
   const specs = [
     ["מותג", quickView.brand],
     ["קטגוריה", quickView.category],
@@ -48,16 +52,32 @@ export default function QuickView() {
         >
           <IconClose />
         </button>
-        <div className={`relative min-h-72 ${frame.box}`}>
+        <div className={`relative flex min-h-72 flex-col ${frame.box}`}>
           <ProductImage
-            src={quickView.image}
+            src={activePhoto}
             alt={quickView.name}
             className={
               frame.studio
-                ? "h-full max-h-[46svh] w-full object-contain p-6 sm:max-h-none sm:min-h-full"
-                : "h-full max-h-[46svh] w-full object-cover sm:max-h-none sm:min-h-full"
+                ? "h-full max-h-[46svh] w-full flex-1 object-contain p-6 sm:max-h-none sm:min-h-0"
+                : "h-full max-h-[46svh] w-full flex-1 object-cover sm:max-h-none sm:min-h-0"
             }
           />
+          {gallery.length > 1 && (
+            <div className="flex gap-2 p-3" role="group" aria-label="גלריית המוצר">
+              {gallery.map((src, index) => (
+                <button
+                  key={src}
+                  type="button"
+                  aria-label={`תמונה ${index + 1}`}
+                  aria-pressed={index === photo}
+                  onClick={() => setPhoto(index)}
+                  className={`h-16 w-16 overflow-hidden border ${index === photo ? "border-gold" : "border-white/20"}`}
+                >
+                  <img src={src} alt="" className="h-full w-full object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
           {soldOut ? (
             <span className="absolute top-4 start-4 bg-ink/85 px-3 py-1 text-xs">אזל מהמלאי</span>
           ) : off > 0 ? (

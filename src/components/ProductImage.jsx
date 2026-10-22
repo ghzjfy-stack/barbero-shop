@@ -2,7 +2,7 @@ import { useState } from "react";
 
 export function imageFrame(product) {
   if (product?.frame === "studio") {
-    return { studio: true, box: "bg-[#f6f3ec]" };
+    return { studio: true, box: "bg-[#121212]" };
   }
   return { studio: false, box: "bg-[#1a1814]" };
 }
