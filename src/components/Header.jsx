@@ -25,7 +25,7 @@ export function Logo() {
         <span className="font-display text-[1.05rem] tracking-[0.2em] text-ivory sm:text-[1.35rem] sm:tracking-[0.28em]">
           BARBERO
         </span>
-        <span className="mt-1 hidden text-[10px] text-gold-soft min-[420px]:block">אטלייה לגילוח וטיפוח</span>
+        <span className="mt-1 hidden text-[10px] text-gold-soft min-[420px]:block">בית לציוד תספורת וגילוח מקצועי</span>
       </span>
     </a>
   );
