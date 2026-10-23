@@ -99,28 +99,30 @@ function ProductCard({ product }) {
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
   const hoverImage = product.hoverImage || product.images?.[1];
-  const photoClass =
-    "h-full w-full object-contain object-center p-3 transition duration-500 sm:p-5 lg:p-7";
 
   return (
     <article className="group flex h-full flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
       <div className="relative aspect-square overflow-hidden bg-ink">
         <button
           type="button"
-          className="absolute inset-0"
+          className="absolute inset-0 flex items-center justify-center p-2 sm:p-3 lg:p-4"
           onClick={() => openQuickView(product.id)}
           aria-label={`מבט מהיר: ${product.name}`}
         >
           <ProductImage
             src={product.image}
             alt={product.name}
-            className={hoverImage ? `${photoClass} group-hover:opacity-0` : photoClass}
+            className={
+              hoverImage
+                ? "max-h-full max-w-full h-auto w-auto object-contain object-center transition duration-500 group-hover:opacity-0"
+                : "max-h-full max-w-full h-auto w-auto object-contain object-center transition duration-500"
+            }
           />
           {hoverImage && (
             <ProductImage
               src={hoverImage}
               alt=""
-              className={`${photoClass} absolute inset-0 opacity-0 group-hover:opacity-100`}
+              className="pointer-events-none absolute inset-2 sm:inset-3 lg:inset-4 m-auto max-h-[calc(100%-1rem)] max-w-[calc(100%-1rem)] h-auto w-auto object-contain object-center opacity-0 transition duration-500 group-hover:opacity-100"
             />
           )}
         </button>
