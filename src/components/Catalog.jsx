@@ -99,7 +99,8 @@ function ProductCard({ product }) {
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
   const hoverImage = product.hoverImage || product.images?.[1];
-  const photoClass = "h-full w-full object-contain object-center p-6 transition duration-500 sm:p-8";
+  const photoClass =
+    "h-full w-full object-contain object-center p-3 transition duration-500 sm:p-5 lg:p-7";
 
   return (
     <article className="group flex h-full flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
