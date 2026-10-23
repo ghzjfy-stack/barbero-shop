@@ -4,7 +4,6 @@ import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage from "./ProductImage";
-
 const sortOptions = [
   { value: "featured", label: "מיון: מומלצים" },
   { value: "priceAsc", label: "מחיר: מהנמוך" },
