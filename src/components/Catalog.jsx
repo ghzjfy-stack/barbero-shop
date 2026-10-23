@@ -156,8 +156,124 @@ function ProductCard({ product }) {
         <div>
           <p className="text-[11px] leading-4 text-gold">{product.category}</p>
           <h3 className="mt-1 text-sm leading-5 font-medium sm:text-base sm:leading-6">
-            <button type="button" className="text-start hover:text-gold-soft" onClick={() => openQuickView(product.id)}>
+            <button
+              type="button"
+              className="text-start hover:text-gold-soft"
+              onClick={() => openQuickView(product.id)}
+            >
               {product.name}
             </button>
           </h3>
-          <p className="mt-1 text-start text-xs 
+          <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
+          {typeof product.rating === "number" && (
+            <div className="mt-3 h-5">
+              <Stars value={product.rating} reviews={product.reviews} />
+            </div>
+          )}
+          {product.variants && (
+            <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
+              {product.variants.map((variant) => (
+                <button
+                  key={variant.id}
+                  type="button"
+                  aria-pressed={variantId === variant.id}
+                  disabled={soldOut}
+                  onClick={() => setVariantId(variant.id)}
+                  className={`border px-2.5 py-1.5 text-xs ${
+                    variantId === variant.id
+                      ? "border-gold bg-gold text-[#16120b]"
+                      : "border-white/15 text-ivory/80"
+                  }`}
+                >
+                  {variant.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 min-h-7">
+            <Price price={offer.price} compareAt={offer.compareAt} />
+          </div>
+          {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}
+        </div>
+
+        <div className="mt-auto grid gap-1 pt-4">
+          <button
+            type="button"
+            className="btn-gold h-11 text-sm"
+            disabled={soldOut}
+            onClick={() => addToCart(product.id, 1, offer.variant?.id)}
+          >
+            {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
+          </button>
+          <button
+            type="button"
+            className="btn-text h-9 text-sm"
+            onClick={() => openQuickView(product.id)}
+          >
+            מבט מהיר
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+export default function Catalog() {
+  const { category, setCategory } = useStore();
+  const [sort, setSort] = useState("featured");
+
+  const visible = products
+    .filter((product) => category === "הכל" || product.category === category)
+    .slice()
+    .sort((a, b) => {
+      if (sort === "priceAsc") return fromPrice(a) - fromPrice(b);
+      if (sort === "priceDesc") return fromPrice(b) - fromPrice(a);
+      if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+      return 0;
+    });
+
+  return (
+    <section id="collection" className="bg-ink">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="mb-3 text-xs text-gold">הקולקציה</p>
+            <h2 className="font-display text-4xl leading-tight sm:text-5xl">
+              קולקציית פרימיום לתספורת וגילוח
+            </h2>
+          </div>
+          <div className="text-sm text-muted">
+            <span className="sr-only">מיון</span>
+            <SortSelect value={sort} onChange={setSort} />
+          </div>
+        </div>
+
+        <div className="mb-8 flex flex-wrap gap-2">
+          {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="chip"
+              aria-pressed={category === item}
+              onClick={() => setCategory(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
+        {visible.length === 0 ? (
+          <p className="border border-dashed border-white/15 px-6 py-16 text-center text-muted">
+            אין דגמים בקטגוריה הזו כרגע.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
+            {visible.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
