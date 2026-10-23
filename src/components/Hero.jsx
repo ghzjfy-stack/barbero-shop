@@ -1,254 +1,92 @@
-export const announcements = [
-  "100% יבוא מקורי מארה״ב",
-  "משלוחים לכל הארץ (7–14 ימי עסקים)",
-  "תשלום מאובטח ב-Bit",
-  "החזרה/החלפה תוך 14 ימים באריזה מקורית וסגורה בלבד",
-  "אחריות ושירות לקוחות בעברית",
-];
+import { useState } from "react";
+import { fromPrice, products, resolveOffer } from "../data";
+import { useStore } from "../store";
+import { IconChevron } from "./Icons";
+import Price from "./Price";
+import ProductImage from "./ProductImage";
 
-export const FREE_SHIPPING = 499;
-export const SHIPPING_FEE = 39;
+const HERO_IMAGE =
+  "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=2000&q=80";
+const HERO_PRODUCT = "/products/wahl-senior-cut.png";
 
-export function shippingFeeFor(subtotal) {
-  if (subtotal > 0 && subtotal < FREE_SHIPPING) return SHIPPING_FEE;
-  return 0;
-}
+export default function Hero() {
+  const featured = products.find((product) => product.id === "wahl-senior") ?? products[0];
+  const { addToCart, openQuickView } = useStore();
+  const [imageOk, setImageOk] = useState(true);
+  const offer = resolveOffer(featured);
 
-export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח"];
+  return (
+    <section id="top" className="relative min-h-[100svh] overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_15%_80%,rgba(198,161,91,0.2),transparent_42%),linear-gradient(160deg,#1a1814,#090909)]" />
+      {imageOk && (
+        <img
+          src={HERO_IMAGE}
+          alt=""
+          fetchPriority="high"
+          className="absolute inset-0 h-full w-full object-cover object-[center_30%] brightness-[.62] saturate-[.75]"
+          onError={() => setImageOk(false)}
+        />
+      )}
+      <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(9,9,9,0.9)_0%,rgba(9,9,9,0.72)_48%,rgba(9,9,9,0.5)_100%)] md:bg-[linear-gradient(to_left,rgba(9,9,9,0.94)_0%,rgba(9,9,9,0.88)_60%,rgba(9,9,9,0.32)_100%)]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-ink/80 via-transparent to-ink/45" />
 
-export const navLinks = [
-  { label: "קולקציה", href: "/#collection" },
-  { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
-  { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
-  { label: "אודות", href: "/about" },
-];
+      <div className="relative z-10 mx-auto grid min-h-[100svh] w-full max-w-7xl items-end gap-8 px-4 pt-[calc(8.5rem+env(safe-area-inset-top,0px))] pb-12 sm:px-6 md:grid-cols-12 md:gap-10 md:pb-16 lg:px-8">
+        <div className="rise md:col-span-7">
+          <p className="mb-4 text-[11px] tracking-[0.16em] text-gold sm:mb-5 sm:text-xs sm:tracking-[0.28em]" dir="ltr">
+            BARBERO · DIRECT IMPORT
+          </p>
+          <h1 className="max-w-3xl font-display text-[2.05rem] leading-[1.2] font-bold text-ivory sm:text-4xl md:text-[2.6rem] lg:text-5xl xl:text-[4.4rem]">
+            מכונות התספורת והגילוח המובילות בעולם
+            <span className="mt-3 block text-[1.3rem] leading-snug font-medium text-gold-soft sm:text-2xl lg:text-3xl xl:text-[2.35rem]">
+              – יבוא ישיר מארה״ב
+            </span>
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-8 text-ivory/75 sm:text-lg">
+            נבחרו למספרות ולשימוש ביתי. 100% מקורי מארה״ב, באיכות ללא פשרות, עם אחריות מלאה ושירות לקוחות בעברית.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap min-[420px]:items-center">
+            <a href="#collection" className="btn-gold h-12 w-full px-7 text-[15px] min-[420px]:w-auto">
+              <span>לצפייה בקולקציה</span>
+              <IconChevron className="h-4 w-4" />
+            </a>
+            <a href="#trust" className="btn-ghost h-12 w-full px-6 text-[15px] min-[420px]:w-auto">
+              למה BARBERO
+            </a>
+          </div>
+        </div>
 
-export const trustItems = [
-  {
-    icon: "truck",
-    title: "משלוח בינלאומי",
-    text: "משלוח ישיר מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב.",
-  },
-  {
-    icon: "box",
-    title: "אריזה מקורית",
-    text: "מוצרים חדשים באריזה מקורית וסגורה מהיצרן.",
-  },
-  {
-    icon: "globe",
-    title: "יבוא ישיר מארה״ב",
-    text: "ציוד מקורי בלבד, המיובא ישירות מהמותג בארה״ב. 100% מוצרים מקוריים, חדשים ובאריזה סגורה.",
-  },
-  {
-    icon: "shield",
-    title: "אחריות ושירות",
-    text: "אחריות מלאה ושירות לקוחות בעברית לכל פנייה.",
-  },
-];
-
-export const serviceLinks = [
-  { label: "מעקב הזמנה", page: "tracking" },
-  { label: "משלוחים והחזרות", page: "shipping" },
-  { label: "אחריות", page: "warranty" },
-  { label: "שאלות נפוצות", page: "faq" },
-  { label: "מדיניות פרטיות", page: "privacy" },
-  { label: "תקנון", page: "terms" },
-];
-
-export const pages = {
-  tracking: {
-    title: "מעקב הזמנה",
-    paragraphs: [
-      "הזינו את מספר ההזמנה ממסך האישור. המעקב בדמו הזה נשמר בדפדפן בלבד.",
-    ],
-  },
-  shipping: {
-    title: "משלוחים והחזרות",
-    paragraphs: [
-      "משלוח לכל הארץ תוך 7–14 ימי עסקים.",
-      "משלוח חינם בקנייה מעל 499 ₪! בהזמנות מתחת לסכום זה, עלות המשלוח הינה 39 ₪.",
-      "החזרה או החלפה ניתן לבצע תוך 14 ימים מיום קבלת המוצר, כשהפריט באריזתו המקורית והסגורה בלבד ולא נעשה בו כל שימוש. מטעמי היגיינה, מוצרים שנפתחו אינם ניתנים להחזרה.",
-      "האתר מספק שירות במשלוחים לכל הארץ (ללא איסוף עצמי).",
-    ],
-  },
-  warranty: {
-    title: "אחריות ושירות BARBERO",
-    paragraphs: [
-      "כל מכונות התספורת, הפיניש ומכונות הגילוח מגיעות עם אחריות יבואן ל-12 חודשים על המנוע והרכיבים החשמליים (בלאי טבעי של להבים, סכינים ורשתות אינו כלול).",
-      "האחריות תקפה בהצגת חשבונית קנייה של BARBERO. השירות, המענה והטיפול מתבצעים ישירות מול צוות השירות שלנו בעברית, במהירות וללא צורך בפנייה לגורמים בחו״ל.",
-    ],
-  },
-  faq: {
-    title: "שאלות נפוצות",
-    paragraphs: [
-      "האם המכונה עובדת בישראל? כן. הדגמים בקטלוג הם 100V–240V ומתחברים לשקע ישראלי בלי ממיר.",
-      "האם זה יבוא מקורי? כן. הסחורה מגיעה 100% מקורית מארה״ב, עם אחריות מלאה שלנו ושירות לקוחות בעברית.",
-      "תוך כמה זמן זה מגיע? המשלוח מגיע ישירות מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב צמוד.",
-      "אפשר להחליף דגם? כן, תוך 14 יום, כל עוד המוצר לא היה בשימוש והאריזה שמורה.",
-      "איך משלמים? כרגע מקבלים תשלום בביט בלבד.",
-    ],
-  },
-  privacy: {
-    title: "מדיניות פרטיות",
-    paragraphs: [
-      "אנו ב-BARBERO מחויבים לשמירה מלאה על פרטיותכם. הפרטים האישיים משמשים אך ורק לצורך עיבוד המשלוח. כל פעולות התשלום מבוצעות בסליקה מוצפנת ומאובטחת (SSL) ואינן נשמרות בשרת. איננו מעבירים מידע לגורם שלישי.",
-    ],
-  },
-  terms: {
-    title: "תקנון",
-    paragraphs: [
-      "ברוכים הבאים ל-BARBERO. האתר מציע ציוד תספורת וגילוח מקורי ביבוא ישיר מארה״ב.",
-      "• כל ההזמנות מטופלות ונשלחות ישירות לבית הלקוח תוך 7–14 ימי עסקים.",
-      "• ניתן להחזיר או להחליף מוצר תוך 14 יום באריזתו המקורית ושלא נעשה בו שימוש.",
-      "• כל המוצרים באתר מקוריים ומלווים באחריות מלאה ובשירות לקוחות בעברית.",
-    ],
-  },
-};
-
-export const products = [
-  {
-    id: "wahl-senior",
-    name: "מכונת תספורת Wahl Cordless Senior 5-Star",
-    brand: "Wahl",
-    category: "מכונות תספורת",
-    rating: 4.9,
-    reviews: 114,
-    sku: "BRB-W-SN",
-    voltage: "100V-240V (מתח אוניברסלי)",
-    origin: "ארה״ב",
-    badge: "חדש",
-    stock: 8,
-    price: 550,
-    frame: "studio",
-    image: "/products/wahl-senior.webp",
-    hoverImage: "/products/wahl-senior-use.webp",
-    images: [
-      "/products/wahl-senior.webp",
-      "/products/wahl-senior-use.webp",
-      "/products/wahl-senior-hero.webp",
-    ],
-    blurb:
-      "מכונת תספורת אלחוטית מקצועית מסדרת 5-Star. גוף מתכת מחוזק, מנוע עוצמתי ולהב מבוקש לדירוגים מדויקים (Fade). אחיזה נוחה וארגונומית לעבודה ממושכת.",
-  },
-  {
-    id: "fast-feed",
-    name: "מכונת תספורת Wahl 5-Star Detailer Li",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.6,
-    reviews: 88,
-    sku: "BRB-W-DL",
-    voltage: null,
-    origin: "ארה״ב",
-    badge: null,
-    stock: 0,
-    price: 499,
-    frame: "studio",
-    image:
-      "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "דיטיילר אלחוטי מסדרת 5-Star, לקווים חדים ולעבודה צמודה. אזלה מהמלאי כרגע — אפשר לשמור אותה למועדפים שלי.",
-  },
-  {
-    id: "wahl-vanish",
-    name: "Wahl 5-Star Series Vanish Shaver",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.8,
-    reviews: 56,
-    sku: "8173-700",
-    voltage: "100V-240V (מתח אוניברסלי)",
-    origin: "ארה״ב",
-    badge: "Zero Finish",
-    stock: 8,
-    price: 420,
-    compareAt: 520,
-    frame: "studio",
-    image: "/vanish.jpg",
-    hoverImage: "/vanish-hover.jpg",
-    images: ["/vanish.jpg", "/vanish-hover.jpg"],
-    blurb:
-      "מכונת גילוח רשת כפולה מקצועית להחלקה מלאה (Zero Finish), עיצוב קווי צוואר וזקן, וגילוח קרקפת חלק ללא גירויים.",
-    features: [
-      "מערכת חיתוך עצמאית (Independent Cutter Bars): להבים ורשתות זזים בנפרד להתאמה מושלמת לתווי הפנים והקרקפת.",
-      "רשתות זהב היפואלרגניות (Micro-Thin Gold Foils): גילוח קרוב במיוחד ללא צריבה או גירויים בעור.",
-      "סוללת ליתיום-יון עוצמתית: מעל 100+ דקות עבודה רצופות מטעינה אחת.",
-      "חיווי סוללה חכם (LED Fuel Gauge): 3 פסי תאורה כחולים בחזית המציגים את מצב הסוללה בזמן אמת.",
-      "מנגנון נעילת נסיעות (Travel Lock): מונע הפעלה מקרית של המכשיר בדרכים.",
-      "מתח אוניברסלי (100V-240V): מתאים לחשמל בישראל (עבודה נטענת או עם כבל).",
-    ],
-  },
-  {
-    id: "wahl-aqua",
-    name: "Wahl Aqua Blade Lithium Ion Wet / Dry Trimmer",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.7,
-    reviews: 42,
-    sku: "9899-100",
-    voltage: "100V-240V (מתח אוניברסלי)",
-    origin: "ארה״ב",
-    badge: "עמיד למים",
-    stock: 8,
-    price: 500,
-    compareAt: 620,
-    frame: "studio",
-    image: "/aqua.jpg",
-    hoverImage: "/aqua-hover.jpg",
-    images: ["/aqua.jpg", "/aqua-hover.jpg"],
-    blurb:
-      "מכונת טיפוח ועיצוב זקן וגוף עמידה במים לחלוטין (100% Waterproof), עם להבי פלדה קרובים במיוחד לשימוש במקלחת ובשטיפה מלאה תחת הברז.",
-    features: [
-      "100% עמידות למים (Showerproof): עבודה רטובה ויבשה (Wet/Dry) לניקוי מהיר תחת הברז או לשימוש נוח במקלחת.",
-      "להב Extreme Precision Blade: להב נירוסטה המיוצר בארה״ב החותך כ-60% קרוב יותר מלהבי טרימר רגילים (Ultra-Close Cutting).",
-      "סוללת ליתיום-יון עוצמתית: מספקת עד 180 דקות עבודה (3 שעות!) מטעינה מלאה, כולל טעינה מהירה של דקה לשימוש דחוף.",
-      "אחיזת סיליקון ארגונומית (Non-Slip Grip): מארז סיליקון נגד החלקה לאחיזה יציבה ובטוחה בסביבה רטובה.",
-      "ערכת טיפוח מקיפה: כוללת מסרקי הגבהה מגוונים לעיצוב הזקן והגוף בדרגות שונות.",
-      "מתח אוניברסלי (100V-240V): תומך בחשמל בישראל לטעינה בטוחה ומהירה.",
-    ],
-  },
-];
-
-export function formatPrice(value) {
-  const amount = new Intl.NumberFormat("he-IL", { maximumFractionDigits: 0 }).format(value);
-  return `₪${amount}`;
-}
-
-export function findProduct(id) {
-  return products.find((product) => product.id === id) ?? null;
-}
-
-export function resolveOffer(product, variantId) {
-  const variant =
-    product.variants?.find((item) => item.id === variantId) ||
-    product.variants?.[0] ||
-    null;
-
-  if (variant) {
-    return {
-      variant,
-      price: variant.price,
-      compareAt: variant.compareAt ?? null,
-      label: variant.label,
-    };
-  }
-
-  return {
-    variant: null,
-    price: product.price,
-    compareAt: product.compareAt ?? null,
-    label: null,
-  };
-}
-
-export function discountPercent(price, compareAt) {
-  if (!compareAt || compareAt <= price) return 0;
-  return Math.round((1 - price / compareAt) * 100);
-}
-
-export function fromPrice(product) {
-  if (product.variants?.length) {
-    return Math.min(...product.variants.map((variant) => variant.price));
-  }
-  return product.price;
+        <aside className="rise border border-line bg-ink/80 p-4 backdrop-blur-md md:col-span-5">
+          <p className="text-xs text-gold">הדגם שפותח את הבית</p>
+          <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
+            <div className="relative mx-auto h-72 w-full overflow-hidden sm:h-80 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
+              <ProductImage
+                src={HERO_PRODUCT}
+                alt={featured.name}
+                className="absolute inset-0 h-full w-full object-contain object-center p-2"
+              />
+            </div>
+            <div className="mt-4">
+              <p className="text-xs tracking-[0.14em] text-muted">{featured.brand}</p>
+              <h2 className="mt-2 font-display text-xl leading-tight sm:text-2xl lg:text-3xl">{featured.name}</h2>
+              <div className="mt-3">
+                <Price price={fromPrice(featured)} compareAt={offer.compareAt} from={Boolean(featured.variants)} />
+              </div>
+            </div>
+          </button>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              className="btn-gold h-11 text-sm"
+              onClick={() => addToCart(featured.id, 1, offer.variant?.id)}
+            >
+              הוסף לעגלה
+            </button>
+            <button type="button" className="btn-ghost h-11 text-sm" onClick={() => openQuickView(featured.id)}>
+              מבט מהיר
+            </button>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
 }
