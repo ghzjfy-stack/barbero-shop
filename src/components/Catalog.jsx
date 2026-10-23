@@ -1,254 +1,269 @@
-export const announcements = [
-  "100% יבוא מקורי מארה״ב",
-  "משלוחים לכל הארץ (7–14 ימי עסקים)",
-  "תשלום מאובטח ב-Bit",
-  "החזרה/החלפה תוך 14 ימים באריזה מקורית וסגורה בלבד",
-  "אחריות ושירות לקוחות בעברית",
+import { useEffect, useRef, useState } from "react";
+import { categories, discountPercent, fromPrice, products, resolveOffer } from "../data";
+import { useStore } from "../store";
+import { IconHeart, Stars } from "./Icons";
+import Price from "./Price";
+import ProductImage from "./ProductImage";
+
+const sortOptions = [
+  { value: "featured", label: "מיון: מומלצים" },
+  { value: "priceAsc", label: "מחיר: מהנמוך" },
+  { value: "priceDesc", label: "מחיר: מהגבוה" },
+  { value: "rating", label: "דירוג" },
 ];
 
-export const FREE_SHIPPING = 499;
-export const SHIPPING_FEE = 39;
+function SortSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const current = sortOptions.find((option) => option.value === value) ?? sortOptions[0];
 
-export function shippingFeeFor(subtotal) {
-  if (subtotal > 0 && subtotal < FREE_SHIPPING) return SHIPPING_FEE;
-  return 0;
-}
-
-export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח"];
-
-export const navLinks = [
-  { label: "קולקציה", href: "/#collection" },
-  { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
-  { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
-  { label: "אודות", href: "/about" },
-];
-
-export const trustItems = [
-  {
-    icon: "truck",
-    title: "משלוח בינלאומי",
-    text: "משלוח ישיר מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב.",
-  },
-  {
-    icon: "box",
-    title: "אריזה מקורית",
-    text: "מוצרים חדשים באריזה מקורית וסגורה מהיצרן.",
-  },
-  {
-    icon: "globe",
-    title: "יבוא ישיר מארה״ב",
-    text: "ציוד מקורי בלבד, המיובא ישירות מהמותג בארה״ב. 100% מוצרים מקוריים, חדשים ובאריזה סגורה.",
-  },
-  {
-    icon: "shield",
-    title: "אחריות ושירות",
-    text: "אחריות מלאה ושירות לקוחות בעברית לכל פנייה.",
-  },
-];
-
-export const serviceLinks = [
-  { label: "מעקב הזמנה", page: "tracking" },
-  { label: "משלוחים והחזרות", page: "shipping" },
-  { label: "אחריות", page: "warranty" },
-  { label: "שאלות נפוצות", page: "faq" },
-  { label: "מדיניות פרטיות", page: "privacy" },
-  { label: "תקנון", page: "terms" },
-];
-
-export const pages = {
-  tracking: {
-    title: "מעקב הזמנה",
-    paragraphs: [
-      "הזינו את מספר ההזמנה ממסך האישור. המעקב בדמו הזה נשמר בדפדפן בלבד.",
-    ],
-  },
-  shipping: {
-    title: "משלוחים והחזרות",
-    paragraphs: [
-      "משלוח לכל הארץ תוך 7–14 ימי עסקים.",
-      "משלוח חינם בקנייה מעל 499 ₪! בהזמנות מתחת לסכום זה, עלות המשלוח הינה 39 ₪.",
-      "החזרה או החלפה ניתן לבצע תוך 14 ימים מיום קבלת המוצר, כשהפריט באריזתו המקורית והסגורה בלבד ולא נעשה בו כל שימוש. מטעמי היגיינה, מוצרים שנפתחו אינם ניתנים להחזרה.",
-      "האתר מספק שירות במשלוחים לכל הארץ (ללא איסוף עצמי).",
-    ],
-  },
-  warranty: {
-    title: "אחריות ושירות BARBERO",
-    paragraphs: [
-      "כל מכונות התספורת, הפיניש ומכונות הגילוח מגיעות עם אחריות יבואן ל-12 חודשים על המנוע והרכיבים החשמליים (בלאי טבעי של להבים, סכינים ורשתות אינו כלול).",
-      "האחריות תקפה בהצגת חשבונית קנייה של BARBERO. השירות, המענה והטיפול מתבצעים ישירות מול צוות השירות שלנו בעברית, במהירות וללא צורך בפנייה לגורמים בחו״ל.",
-    ],
-  },
-  faq: {
-    title: "שאלות נפוצות",
-    paragraphs: [
-      "האם המכונה עובדת בישראל? כן. הדגמים בקטלוג הם 100V–240V ומתחברים לשקע ישראלי בלי ממיר.",
-      "האם זה יבוא מקורי? כן. הסחורה מגיעה 100% מקורית מארה״ב, עם אחריות מלאה שלנו ושירות לקוחות בעברית.",
-      "תוך כמה זמן זה מגיע? המשלוח מגיע ישירות מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב צמוד.",
-      "אפשר להחליף דגם? כן, תוך 14 יום, כל עוד המוצר לא היה בשימוש והאריזה שמורה.",
-      "איך משלמים? כרגע מקבלים תשלום בביט בלבד.",
-    ],
-  },
-  privacy: {
-    title: "מדיניות פרטיות",
-    paragraphs: [
-      "אנו ב-BARBERO מחויבים לשמירה מלאה על פרטיותכם. הפרטים האישיים משמשים אך ורק לצורך עיבוד המשלוח. כל פעולות התשלום מבוצעות בסליקה מוצפנת ומאובטחת (SSL) ואינן נשמרות בשרת. איננו מעבירים מידע לגורם שלישי.",
-    ],
-  },
-  terms: {
-    title: "תקנון",
-    paragraphs: [
-      "ברוכים הבאים ל-BARBERO. האתר מציע ציוד תספורת וגילוח מקורי ביבוא ישיר מארה״ב.",
-      "• כל ההזמנות מטופלות ונשלחות ישירות לבית הלקוח תוך 7–14 ימי עסקים.",
-      "• ניתן להחזיר או להחליף מוצר תוך 14 יום באריזתו המקורית ושלא נעשה בו שימוש.",
-      "• כל המוצרים באתר מקוריים ומלווים באחריות מלאה ובשירות לקוחות בעברית.",
-    ],
-  },
-};
-
-export const products = [
-  {
-    id: "wahl-senior",
-    name: "מכונת תספורת Wahl Cordless Senior 5-Star",
-    brand: "Wahl",
-    category: "מכונות תספורת",
-    rating: 4.9,
-    reviews: 114,
-    sku: "BRB-W-SN",
-    voltage: "100V-240V (מתח אוניברסלי)",
-    origin: "ארה״ב",
-    badge: "חדש",
-    stock: 8,
-    price: 550,
-    frame: "studio",
-    image: "/products/wahl-senior.webp",
-    hoverImage: "/products/wahl-senior-use.webp",
-    images: [
-      "/products/wahl-senior.webp",
-      "/products/wahl-senior-use.webp",
-      "/products/wahl-senior-hero.webp",
-    ],
-    blurb:
-      "מכונת תספורת אלחוטית מקצועית מסדרת 5-Star. גוף מתכת מחוזק, מנוע עוצמתי ולהב מבוקש לדירוגים מדויקים (Fade). אחיזה נוחה וארגונומית לעבודה ממושכת.",
-  },
-  {
-    id: "fast-feed",
-    name: "מכונת תספורת Wahl 5-Star Detailer Li",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.6,
-    reviews: 88,
-    sku: "BRB-W-DL",
-    voltage: null,
-    origin: "ארה״ב",
-    badge: null,
-    stock: 0,
-    price: 499,
-    frame: "studio",
-    image:
-      "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "דיטיילר אלחוטי מסדרת 5-Star, לקווים חדים ולעבודה צמודה. אזלה מהמלאי כרגע — אפשר לשמור אותה למועדפים שלי.",
-  },
-  {
-    id: "wahl-vanish",
-    name: "Wahl 5-Star Series Vanish Shaver",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.8,
-    reviews: 56,
-    sku: "8173-700",
-    voltage: "100V-240V (מתח אוניברסלי)",
-    origin: "ארה״ב",
-    badge: "Zero Finish",
-    stock: 8,
-    price: 420,
-    compareAt: 520,
-    frame: "studio",
-    image: "/vanish.jpg",
-    hoverImage: "/vanish-hover.jpg",
-    images: ["/vanish.jpg", "/vanish-hover.jpg"],
-    blurb:
-      "מכונת גילוח רשת כפולה מקצועית להחלקה מלאה (Zero Finish), עיצוב קווי צוואר וזקן, וגילוח קרקפת חלק ללא גירויים.",
-    features: [
-      "מערכת חיתוך עצמאית (Independent Cutter Bars): להבים ורשתות זזים בנפרד להתאמה מושלמת לתווי הפנים והקרקפת.",
-      "רשתות זהב היפואלרגניות (Micro-Thin Gold Foils): גילוח קרוב במיוחד ללא צריבה או גירויים בעור.",
-      "סוללת ליתיום-יון עוצמתית: מעל 100+ דקות עבודה רצופות מטעינה אחת.",
-      "חיווי סוללה חכם (LED Fuel Gauge): 3 פסי תאורה כחולים בחזית המציגים את מצב הסוללה בזמן אמת.",
-      "מנגנון נעילת נסיעות (Travel Lock): מונע הפעלה מקרית של המכשיר בדרכים.",
-      "מתח אוניברסלי (100V-240V): מתאים לחשמל בישראל (עבודה נטענת או עם כבל).",
-    ],
-  },
-  {
-    id: "wahl-aqua",
-    name: "Wahl Aqua Blade Lithium Ion Wet / Dry Trimmer",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.7,
-    reviews: 42,
-    sku: "9899-100",
-    voltage: "100V-240V (מתח אוניברסלי)",
-    origin: "ארה״ב",
-    badge: "עמיד למים",
-    stock: 8,
-    price: 500,
-    compareAt: 620,
-    frame: "studio",
-    image: "/aqua.jpg",
-    hoverImage: "/aqua-hover.jpg",
-    images: ["/aqua.jpg", "/aqua-hover.jpg"],
-    blurb:
-      "מכונת טיפוח ועיצוב זקן וגוף עמידה במים לחלוטין (100% Waterproof), עם להבי פלדה קרובים במיוחד לשימוש במקלחת ובשטיפה מלאה תחת הברז.",
-    features: [
-      "100% עמידות למים (Showerproof): עבודה רטובה ויבשה (Wet/Dry) לניקוי מהיר תחת הברז או לשימוש נוח במקלחת.",
-      "להב Extreme Precision Blade: להב נירוסטה המיוצר בארה״ב החותך כ-60% קרוב יותר מלהבי טרימר רגילים (Ultra-Close Cutting).",
-      "סוללת ליתיום-יון עוצמתית: מספקת עד 180 דקות עבודה (3 שעות!) מטעינה מלאה, כולל טעינה מהירה של דקה לשימוש דחוף.",
-      "אחיזת סיליקון ארגונומית (Non-Slip Grip): מארז סיליקון נגד החלקה לאחיזה יציבה ובטוחה בסביבה רטובה.",
-      "ערכת טיפוח מקיפה: כוללת מסרקי הגבהה מגוונים לעיצוב הזקן והגוף בדרגות שונות.",
-      "מתח אוניברסלי (100V-240V): תומך בחשמל בישראל לטעינה בטוחה ומהירה.",
-    ],
-  },
-];
-
-export function formatPrice(value) {
-  const amount = new Intl.NumberFormat("he-IL", { maximumFractionDigits: 0 }).format(value);
-  return `₪${amount}`;
-}
-
-export function findProduct(id) {
-  return products.find((product) => product.id === id) ?? null;
-}
-
-export function resolveOffer(product, variantId) {
-  const variant =
-    product.variants?.find((item) => item.id === variantId) ||
-    product.variants?.[0] ||
-    null;
-
-  if (variant) {
-    return {
-      variant,
-      price: variant.price,
-      compareAt: variant.compareAt ?? null,
-      label: variant.label,
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointer = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
     };
-  }
+    const onKey = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
-  return {
-    variant: null,
-    price: product.price,
-    compareAt: product.compareAt ?? null,
-    label: null,
+  const choose = (next) => {
+    onChange(next);
+    setOpen(false);
   };
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        className="sort-select field h-11 bg-black text-ivory"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls="catalog-sort-list"
+        onClick={() => setOpen((isOpen) => !isOpen)}
+        onKeyDown={(event) => {
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+          event.preventDefault();
+          const index = sortOptions.findIndex((option) => option.value === value);
+          const step = event.key === "ArrowDown" ? 1 : -1;
+          const next = sortOptions[(index + step + sortOptions.length) % sortOptions.length];
+          onChange(next.value);
+          setOpen(true);
+        }}
+      >
+        {current.label}
+      </button>
+      {open && (
+        <ul
+          id="catalog-sort-list"
+          role="listbox"
+          aria-label="מיון"
+          className="absolute z-30 mt-2 w-full min-w-full border border-white/15 bg-black py-1 shadow-2xl"
+        >
+          {sortOptions.map((option) => {
+            const selected = option.value === value;
+            return (
+              <li key={option.value} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  className={`block min-h-11 w-full px-4 py-3 text-start text-sm text-ivory transition-colors hover:bg-[#27272a] hover:text-gold-soft ${
+                    selected ? "bg-[#18181b] text-gold-soft" : ""
+                  }`}
+                  onClick={() => choose(option.value)}
+                >
+                  {option.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
 }
 
-export function discountPercent(price, compareAt) {
-  if (!compareAt || compareAt <= price) return 0;
-  return Math.round((1 - price / compareAt) * 100);
+function ProductCard({ product }) {
+  const { addToCart, openQuickView, toggleWish, isWished } = useStore();
+  const [variantId, setVariantId] = useState(product.variants?.[0]?.id);
+  const offer = resolveOffer(product, variantId);
+  const wished = isWished(product.id);
+  const soldOut = product.stock <= 0;
+  const off = discountPercent(offer.price, offer.compareAt);
+  const lowStock = product.stock > 0 && product.stock <= 3;
+  const hoverImage = product.hoverImage || product.images?.[1];
+
+  return (
+    <article className="group flex h-full flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
+      <div className="relative aspect-square overflow-hidden bg-ink">
+        <button
+          type="button"
+          className="absolute inset-0 flex items-center justify-center p-2 sm:p-3 lg:p-4"
+          onClick={() => openQuickView(product.id)}
+          aria-label={`מבט מהיר: ${product.name}`}
+        >
+          <ProductImage
+            src={product.image}
+            alt={product.name}
+            className={
+              hoverImage
+                ? "max-h-full max-w-full h-auto w-auto object-contain object-center transition duration-500 group-hover:opacity-0"
+                : "max-h-full max-w-full h-auto w-auto object-contain object-center transition duration-500"
+            }
+          />
+          {hoverImage && (
+            <ProductImage
+              src={hoverImage}
+              alt=""
+              className="pointer-events-none absolute inset-2 sm:inset-3 lg:inset-4 m-auto max-h-[calc(100%-1rem)] max-w-[calc(100%-1rem)] h-auto w-auto object-contain object-center opacity-0 transition duration-500 group-hover:opacity-100"
+            />
+          )}
+        </button>
+        <div className="pointer-events-none absolute top-3 start-3 flex max-w-[calc(100%-3.25rem)] flex-col items-start gap-2">
+          {soldOut ? (
+            <span className="bg-ink/85 px-2.5 py-1 text-[11px] text-ivory">אזל</span>
+          ) : product.badge ? (
+            <span className="bg-ink/85 px-2.5 py-1 text-start text-[11px] leading-4 text-gold-soft">
+              {product.badge}
+            </span>
+          ) : off > 0 ? (
+            <span dir="ltr" className="bg-gold px-2.5 py-1 text-[11px] font-semibold text-[#16120b]">
+              -{off}%
+            </span>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className={`absolute top-2 end-2 grid h-11 w-11 place-items-center bg-ink/55 ${
+            wished ? "text-gold" : "text-ivory"
+          }`}
+          aria-pressed={wished}
+          aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
+          onClick={() => toggleWish(product.id)}
+        >
+          <IconHeart filled={wished} />
+        </button>
+      </div>
+
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between p-3 sm:p-4">
+        <div>
+          <p className="text-[11px] leading-4 text-gold">{product.category}</p>
+          <h3 className="mt-1 text-sm leading-5 font-medium sm:text-base sm:leading-6">
+            <button type="button" className="text-start hover:text-gold-soft" onClick={() => openQuickView(product.id)}>
+              {product.name}
+            </button>
+          </h3>
+          <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
+          {typeof product.rating === "number" && (
+            <div className="mt-3 h-5">
+              <Stars value={product.rating} reviews={product.reviews} />
+            </div>
+          )}
+          {product.variants && (
+            <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
+              {product.variants.map((variant) => (
+                <button
+                  key={variant.id}
+                  type="button"
+                  aria-pressed={variantId === variant.id}
+                  disabled={soldOut}
+                  onClick={() => setVariantId(variant.id)}
+                  className={`border px-2.5 py-1.5 text-xs ${
+                    variantId === variant.id
+                      ? "border-gold bg-gold text-[#16120b]"
+                      : "border-white/15 text-ivory/80"
+                  }`}
+                >
+                  {variant.label}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="mt-3 min-h-7">
+            <Price price={offer.price} compareAt={offer.compareAt} />
+          </div>
+          {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}
+        </div>
+
+        <div className="mt-auto grid gap-1 pt-4">
+          <button
+            type="button"
+            className="btn-gold h-11 text-sm"
+            disabled={soldOut}
+            onClick={() => addToCart(product.id, 1, offer.variant?.id)}
+          >
+            {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
+          </button>
+          <button type="button" className="btn-text h-9 text-sm" onClick={() => openQuickView(product.id)}>
+            מבט מהיר
+          </button>
+        </div>
+      </div>
+    </article>
+  );
 }
 
-export function fromPrice(product) {
-  if (product.variants?.length) {
-    return Math.min(...product.variants.map((variant) => variant.price));
-  }
-  return product.price;
+export default function Catalog() {
+  const { category, setCategory } = useStore();
+  const [sort, setSort] = useState("featured");
+
+  const visible = products
+    .filter((product) => category === "הכל" || product.category === category)
+    .slice()
+    .sort((a, b) => {
+      if (sort === "priceAsc") return fromPrice(a) - fromPrice(b);
+      if (sort === "priceDesc") return fromPrice(b) - fromPrice(a);
+      if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+      return 0;
+    });
+
+  return (
+    <section id="collection" className="bg-ink">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+          <div>
+            <p className="mb-3 text-xs text-gold">הקולקציה</p>
+            <h2 className="font-display text-4xl leading-tight sm:text-5xl">קולקציית פרימיום לתספורת וגילוח</h2>
+          </div>
+          <div className="text-sm text-muted">
+            <span className="sr-only">מיון</span>
+            <SortSelect value={sort} onChange={setSort} />
+          </div>
+        </div>
+
+        <div className="mb-8 flex flex-wrap gap-2">
+          {categories.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="chip"
+              aria-pressed={category === item}
+              onClick={() => setCategory(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+
+        {visible.length === 0 ? (
+          <p className="border border-dashed border-white/15 px-6 py-16 text-center text-muted">
+            אין דגמים בקטגוריה הזו כרגע.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
+            {visible.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
