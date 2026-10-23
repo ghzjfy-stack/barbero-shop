@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage from "./ProductImage";
+
 const sortOptions = [
   { value: "featured", label: "מיון: מומלצים" },
   { value: "priceAsc", label: "מחיר: מהנמוך" },
@@ -159,58 +160,4 @@ function ProductCard({ product }) {
               {product.name}
             </button>
           </h3>
-          <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
-          {typeof product.rating === "number" && (
-            <div className="mt-3 h-5">
-              <Stars value={product.rating} reviews={product.reviews} />
-            </div>
-          )}
-          {product.variants && (
-            <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
-              {product.variants.map((variant) => (
-                <button
-                  key={variant.id}
-                  type="button"
-                  aria-pressed={variantId === variant.id}
-                  disabled={soldOut}
-                  onClick={() => setVariantId(variant.id)}
-                  className={`border px-2.5 py-1.5 text-xs ${
-                    variantId === variant.id
-                      ? "border-gold bg-gold text-[#16120b]"
-                      : "border-white/15 text-ivory/80"
-                  }`}
-                >
-                  {variant.label}
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="mt-3 min-h-7">
-            <Price price={offer.price} compareAt={offer.compareAt} />
-          </div>
-          {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}
-        </div>
-
-        <div className="mt-auto grid gap-1 pt-4">
-          <button
-            type="button"
-            className="btn-gold h-11 text-sm"
-            disabled={soldOut}
-            onClick={() => addToCart(product.id, 1, offer.variant?.id)}
-          >
-            {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
-          </button>
-          <button type="button" className="btn-text h-9 text-sm" onClick={() => openQuickView(product.id)}>
-            מבט מהיר
-          </button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-export default function Catalog() {
-  const { category, setCategory } = useStore();
-  const [sort, setSort] = useState("featured");
-
-  const visible = products
+          <p className="mt-1 text-start text-xs 
