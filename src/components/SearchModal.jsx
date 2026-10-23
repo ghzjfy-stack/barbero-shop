@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { IconClose, IconSearch } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
+import ProductTitle from "./ProductTitle";
 
 export default function SearchModal() {
   const { searchOpen, closeSearch, openQuickView } = useStore();
@@ -20,7 +21,7 @@ export default function SearchModal() {
     const needle = query.trim().toLowerCase();
     const source = needle
       ? products.filter((product) =>
-          [product.name, product.brand, product.category, product.sku]
+          [product.name, product.kind, product.model, product.brand, product.category, product.sku]
             .join(" ")
             .toLowerCase()
             .includes(needle),
@@ -81,7 +82,9 @@ export default function SearchModal() {
                         />
                       </span>
                       <span>
-                        <span className="block text-sm">{product.name}</span>
+                        <span className="block text-start text-sm">
+                          <ProductTitle product={product} />
+                        </span>
                         <span className="mt-1 block text-xs text-muted">
                           {product.brand} · {product.category}
                         </span>

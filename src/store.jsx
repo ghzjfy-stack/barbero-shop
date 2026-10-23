@@ -238,6 +238,8 @@ export function StoreProvider({ children }) {
       shipping,
       lines: lines.map((line) => ({
         name: line.product.name,
+        kind: line.product.kind,
+        model: line.product.model,
         label: line.offer.label,
         qty: line.qty,
         lineTotal: line.lineTotal,

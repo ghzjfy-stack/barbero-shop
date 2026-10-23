@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage from "./ProductImage";
+import ProductTitle from "./ProductTitle";
 
 const sortOptions = [
   { value: "featured", label: "מיון: מומלצים" },
@@ -152,24 +153,22 @@ function ProductCard({ product }) {
         </button>
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between p-3 sm:p-4">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col p-3 sm:p-4">
         <div>
-          <p className="text-[11px] leading-4 text-gold">{product.category}</p>
-          <h3 className="mt-1 text-sm leading-5 font-medium sm:text-base sm:leading-6">
+          <p className="line-clamp-2 min-h-8 text-[11px] leading-4 text-gold">{product.category}</p>
+          <h3 className="mt-1 h-[4.5rem] overflow-hidden text-sm leading-6 font-medium sm:text-base">
             <button
               type="button"
-              className="text-start hover:text-gold-soft"
+              className="line-clamp-3 h-full w-full text-start leading-6 hover:text-gold-soft"
               onClick={() => openQuickView(product.id)}
             >
-              {product.name}
+              <ProductTitle product={product} />
             </button>
           </h3>
-          <p className="mt-1 text-start text-xs tracking-[0.14em] text-muted">{product.brand}</p>
-          {typeof product.rating === "number" && (
-            <div className="mt-3 h-5">
-              <Stars value={product.rating} reviews={product.reviews} />
-            </div>
-          )}
+          <p className="mt-1 h-4 truncate text-start text-xs leading-4 tracking-[0.14em] text-muted">{product.brand}</p>
+          <div className="mt-3 h-5">
+            {typeof product.rating === "number" && <Stars value={product.rating} reviews={product.reviews} />}
+          </div>
           {product.variants && (
             <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
               {product.variants.map((variant) => (
@@ -190,7 +189,7 @@ function ProductCard({ product }) {
               ))}
             </div>
           )}
-          <div className="mt-3 min-h-7">
+          <div className="mt-3 flex min-h-12 items-start">
             <Price price={offer.price} compareAt={offer.compareAt} />
           </div>
           {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}

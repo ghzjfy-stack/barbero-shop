@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
+import ProductTitle from "./ProductTitle";
 
 export default function QuickView() {
   const { quickView, closeQuickView, addToCart, toggleWish, isWished } = useStore();
@@ -144,8 +145,8 @@ export default function QuickView() {
 
         <div className="flex flex-col p-5 sm:p-8">
           <p className="text-xs text-gold">{quickView.category}</p>
-          <h2 id="quick-view-title" className="mt-2 font-display text-[1.7rem] leading-tight sm:text-4xl">
-            {quickView.name}
+          <h2 id="quick-view-title" className="mt-2 text-start font-display text-[1.7rem] leading-tight sm:text-4xl">
+            <ProductTitle product={quickView} />
           </h2>
           <p className="mt-3 text-xs tracking-[0.16em] text-muted">{quickView.brand}</p>
           {typeof quickView.rating === "number" && (

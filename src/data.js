@@ -108,7 +108,8 @@ export const pages = {
 export const products = [
   {
     id: "wahl-senior",
-    name: "מכונת תספורת Wahl Cordless Senior 5-Star",
+    kind: "מכונת תספורת",
+    model: "Cordless Senior 5-Star",
     brand: "Wahl",
     category: "מכונות תספורת",
     rating: 4.9,
@@ -131,27 +132,9 @@ export const products = [
       "מכונת תספורת אלחוטית מקצועית מסדרת 5-Star. גוף מתכת מחוזק, מנוע עוצמתי ולהב מבוקש לדירוגים מדויקים (Fade). אחיזה נוחה וארגונומית לעבודה ממושכת.",
   },
   {
-    id: "fast-feed",
-    name: "מכונת תספורת Wahl 5-Star Detailer Li",
-    brand: "Wahl",
-    category: "טרימרים ומכונות גילוח",
-    rating: 4.6,
-    reviews: 88,
-    sku: "BRB-W-DL",
-    voltage: null,
-    origin: "ארה״ב",
-    badge: null,
-    stock: 0,
-    price: 499,
-    frame: "studio",
-    image:
-      "https://images.unsplash.com/photo-1493256338651-d82f7acb2b38?auto=format&fit=crop&w=1000&q=80",
-    blurb:
-      "דיטיילר אלחוטי מסדרת 5-Star, לקווים חדים ולעבודה צמודה. אזלה מהמלאי כרגע — אפשר לשמור אותה למועדפים שלי.",
-  },
-  {
     id: "wahl-vanish",
-    name: "Wahl 5-Star Series Vanish Shaver",
+    kind: "מכונת גילוח",
+    model: "5-Star Series Vanish",
     brand: "Wahl",
     category: "טרימרים ומכונות גילוח",
     rating: 4.8,
@@ -166,7 +149,7 @@ export const products = [
     frame: "studio",
     image: "/vanish.jpg",
     hoverImage: "/vanish-hover.jpg",
-    images: ["/vanish.jpg", "/vanish-hover.jpg"],
+    images: ["/vanish.jpg", "/vanish-features.jpg", "/vanish-box.jpg", "/vanish-hover.jpg"],
     blurb:
       "מכונת גילוח רשת כפולה מקצועית להחלקה מלאה (Zero Finish), עיצוב קווי צוואר וזקן, וגילוח קרקפת חלק ללא גירויים.",
     features: [
@@ -180,7 +163,8 @@ export const products = [
   },
   {
     id: "wahl-aqua",
-    name: "Wahl Aqua Blade Lithium Ion Wet / Dry Trimmer",
+    kind: "טרימר",
+    model: "Aqua Blade Lithium Ion Wet / Dry",
     brand: "Wahl",
     category: "טרימרים ומכונות גילוח",
     rating: 4.7,
@@ -195,7 +179,7 @@ export const products = [
     frame: "studio",
     image: "/aqua.jpg",
     hoverImage: "/aqua-hover.jpg",
-    images: ["/aqua.jpg", "/aqua-hover.jpg"],
+    images: ["/aqua.jpg", "/aqua-kit.jpg", "/aqua-heads.jpg", "/aqua-guards.jpg", "/aqua-hover.jpg"],
     blurb:
       "מכונת טיפוח ועיצוב זקן וגוף עמידה במים לחלוטין (100% Waterproof), עם להבי פלדה קרובים במיוחד לשימוש במקלחת ובשטיפה מלאה תחת הברז.",
     features: [
@@ -207,7 +191,10 @@ export const products = [
       "מתח אוניברסלי (100V-240V): תומך בחשמל בישראל לטעינה בטוחה ומהירה.",
     ],
   },
-];
+].map((product) => ({
+  ...product,
+  name: `${product.kind} ${product.model}`,
+}));
 
 export function formatPrice(value) {
   const amount = new Intl.NumberFormat("he-IL", { maximumFractionDigits: 0 }).format(value);

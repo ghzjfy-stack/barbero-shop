@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import ProductImage, { imageFrame } from "./ProductImage";
+import ProductTitle from "./ProductTitle";
 
 const BIT_PHONE = "0543554888";
 
@@ -166,7 +167,7 @@ export default function CartDrawer() {
               {store.order.lines.map((line) => (
                 <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
                   <span>
-                    {line.name}
+                    {line.kind && line.model ? <ProductTitle product={line} /> : line.name}
                     {line.label ? ` · ${line.label}` : ""} × {line.qty}
                   </span>
                   <span className="tabular-nums">{formatPrice(line.lineTotal)}</span>
@@ -281,7 +282,9 @@ export default function CartDrawer() {
                       <div>
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <h3 className="text-sm leading-5">{line.product.name}</h3>
+                            <h3 className="text-start text-sm leading-5">
+                              <ProductTitle product={line.product} />
+                            </h3>
                             {line.offer.label && <p className="mt-1 text-xs text-gold">{line.offer.label}</p>}
                           </div>
                           <button

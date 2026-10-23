@@ -4,6 +4,7 @@ import Drawer from "./Drawer";
 import { IconClose } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
+import ProductTitle from "./ProductTitle";
 
 export default function WishlistDrawer() {
   const { wishOpen, closeWish, wishlist, toggleWish, addToCart, openQuickView } = useStore();
@@ -49,7 +50,7 @@ export default function WishlistDrawer() {
                   </button>
                   <div>
                     <button type="button" className="text-start text-sm leading-5" onClick={() => openQuickView(product.id)}>
-                      {product.name}
+                      <ProductTitle product={product} />
                     </button>
                     <div className="mt-2">
                       <Price price={offer.price} compareAt={offer.compareAt} />
