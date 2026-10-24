@@ -1,13 +1,13 @@
 /**
  * BARBERO → Google Sheets (הזמנות אוטומטיות + עיצוב)
  *
- * התקנה / עדכון עיצוב:
- * 1. Extensions → Apps Script → הדביקו את הקובץ הזה במקום הקוד הישן
+ * התקנה / עדכון (חובה אחרי שינוי קוד — אחרת מיילים נופלים לטאב הזמנות):
+ * 1. Extensions → Apps Script → מחקו הכול והדביקו את הקובץ הזה
  * 2. שמרו
- * 3. בחרו בפונקציה setupBarberoSheet → Run (פעם אחת) ואשרו הרשאות
- * 4. Deploy → Manage deployments → Edit → New version → Deploy
+ * 3. בחרו setupBarberoSheet → Run (פעם אחת) — יוצר גם טאב «ניוזלטר»
+ * 4. Deploy → Manage deployments → עיפרון → New version → Deploy
  *
- * בלי עמודות שותפים — אתה לבד. יש סטטוסים צבעוניים + ימי משלוח.
+ * בלי עמודות שותפים. הזמנות → טאב «הזמנות». מיילים → טאב «ניוזלטר».
  */
 
 var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
@@ -89,11 +89,18 @@ function doPost(e) {
       return json_({ ok: false, error: "unauthorized" });
     }
 
-    if (body.type === "newsletter") {
+    // הרשמת ניוזלטר — לא לכתוב לטאב הזמנות
+    if (isNewsletterPayload_(body)) {
       return appendNewsletter_(body);
     }
 
     var row = body.row || {};
+    var orderNumber = row.orderNumber || (body.order && body.order.number) || "";
+    // חוסם שורות ריקות מסוג "ממתין לביט" בלי מספר הזמנה
+    if (!orderNumber) {
+      return json_({ ok: false, error: "missing_order_number" });
+    }
+
     var sheet = getSheet_();
     ensureHeader_(sheet, false);
 
@@ -105,7 +112,7 @@ function doPost(e) {
     sheet.appendRow([
       status,
       row.createdAt || "",
-      row.orderNumber || "",
+      orderNumber,
       row.name || "",
       row.phone || "",
       row.city || "",
@@ -128,6 +135,16 @@ function doPost(e) {
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message ? err.message : err) });
   }
+}
+
+function isNewsletterPayload_(body) {
+  if (!body || typeof body !== "object") return false;
+  if (body.type === "newsletter") return true;
+  var email = String(body.email || "").trim();
+  if (!email) return false;
+  var hasOrder =
+    (body.row && body.row.orderNumber) || (body.order && body.order.number);
+  return !hasOrder;
 }
 
 function doGet() {
