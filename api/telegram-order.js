@@ -147,9 +147,9 @@ function sendJson(res, status, body) {
 }
 
 function telegramConfig() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  const threadRaw = process.env.TELEGRAM_MESSAGE_THREAD_ID;
+  const token = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
+  const threadRaw = String(process.env.TELEGRAM_MESSAGE_THREAD_ID || "").trim();
   const threadId = threadRaw && /^\d+$/.test(threadRaw) ? Number(threadRaw) : undefined;
   return { token, chatId, threadId };
 }
@@ -163,7 +163,11 @@ async function sendTelegramMessage(text) {
       body: {
         ok: false,
         error: "telegram_not_configured",
-        hint: "Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID (group id) in Vercel env",
+        missing: {
+          TELEGRAM_BOT_TOKEN: !token,
+          TELEGRAM_CHAT_ID: !chatId,
+        },
+        hint: "Set the missing vars in Vercel → Settings → Environment Variables for Production, then Redeploy",
       },
     };
   }
