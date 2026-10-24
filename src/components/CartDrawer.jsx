@@ -408,7 +408,7 @@ export default function CartDrawer() {
                 </button>
               )}
               <p className="mt-3 text-center text-[11px] text-muted">
-                הסכום כולל משלוח כשצריך · תשלום בביט אחרי אישור ההזמנה
+                הסכום כולל משלוח במידת הצורך · תשלום בביט אחרי אישור ההזמנה
               </p>
             </footer>
           </>
