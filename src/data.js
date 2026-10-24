@@ -108,10 +108,10 @@ export const pages = {
 export const products = [
   {
     id: "wahl-lithium-ss",
-    kind: "מכונת תספורת",
+    kind: "טרימר",
     model: "Lithium Ion+ Stainless Steel All-in-One",
     brand: "Wahl",
-    category: "מכונות תספורת",
+    category: "טרימרים ומכונות גילוח",
     rating: 4.8,
     reviews: 38,
     sku: "BRB-W-LI-SS",
@@ -130,12 +130,12 @@ export const products = [
       "/products/wahl-lithium-use.jpg",
     ],
     blurb:
-      "ערכת טיפוח All-in-One מנירוסטה עם סוללת Lithium Ion+ לעד 6 שעות עבודה. שימוש רטוב/יבש, להבים מדויקים ו־19 אורכי חיתוך לשיער, זקן ופרטים.",
+      "טרימר All-in-One מנירוסטה לטיפוח ועיצוב זקן, עם סוללת Lithium Ion+ לעד 6 שעות עבודה. שימוש רטוב/יבש, להבים מדויקים ו־19 אורכי חיתוך לפרטים.",
     features: [
       "גוף Stainless Steel פרימיום עם מראה מקצועי ועמידות גבוהה.",
       "סוללת Lithium Ion+: עד כ־6 שעות עבודה רצופות מטעינה אחת.",
       "Wet/Dry Easy Cleanup: שימוש במקלחת או בכיור וניקוי קל במים.",
-      "Precision Blades + 19 Cutting Lengths לעיצוב מדויק של שיער וזקן.",
+      "Precision Blades + 19 Cutting Lengths לעיצוב מדויק של זקן ופרטים.",
       "ערכת אביזרים מלאה: מסרקי Pro-Guard ממתכת, ראש Detail וראש אף/אוזן.",
       "מתח אוניברסלי 100V–240V — מתאים לחשמל בישראל.",
     ],
