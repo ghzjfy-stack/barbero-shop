@@ -25,6 +25,13 @@ function Shell() {
     document.title = about
       ? "אודות | BARBERO"
       : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
+    const sharedProduct = new URLSearchParams(window.location.search).get("product");
+    if (sharedProduct && !about) {
+      window.requestAnimationFrame(() => {
+        document.getElementById("collection")?.scrollIntoView({ block: "start" });
+      });
+      return;
+    }
     if (about || !window.location.hash) {
       window.scrollTo(0, 0);
       return;

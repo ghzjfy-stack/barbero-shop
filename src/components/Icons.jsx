@@ -159,6 +159,33 @@ export function IconWhatsApp({ className = "h-7 w-7" }) {
   );
 }
 
+/** Compact beard brush — used as the WhatsApp product-share mark. */
+export function IconBeardBrush({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {/* brush head */}
+      <path d="M7.2 4.2c0-.7.6-1.2 1.3-1.2h7c.7 0 1.3.5 1.3 1.2v1.1H7.2V4.2Z" />
+      <path d="M6.4 5.3h11.2v2.2c0 1.1-.9 2-2 2H8.4c-1.1 0-2-.9-2-2V5.3Z" fill="currentColor" stroke="none" opacity="0.22" />
+      <path d="M6.4 5.3h11.2v2.2c0 1.1-.9 2-2 2H8.4c-1.1 0-2-.9-2-2V5.3Z" />
+      {/* bristles */}
+      <path d="M8.2 9.5v2.2M10.1 9.5v2.6M12 9.5v2.8M13.9 9.5v2.6M15.8 9.5v2.2" />
+      {/* ferrule + handle */}
+      <path d="M9.2 12.4h5.6v1.4H9.2z" />
+      <path d="M10.35 13.8h3.3L12.8 21h-1.6L10.35 13.8Z" />
+      <path d="M11.1 16.2h1.8M11.25 18.2h1.5" opacity="0.7" />
+    </svg>
+  );
+}
+
 export function IconShield({ className }) {
   return (
     <Svg className={className}>
