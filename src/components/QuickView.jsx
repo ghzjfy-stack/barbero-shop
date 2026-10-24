@@ -89,6 +89,13 @@ export default function QuickView() {
               alt={`${quickView.name}, תמונה ${photo + 1} מתוך ${gallery.length}`}
               className="h-full w-full object-contain"
             />
+            <div className="absolute top-3 end-3 z-10 flex flex-col gap-2">
+              <ProductShareButton
+                product={quickView}
+                variantId={variantId}
+                className="grid h-11 w-11 place-items-center bg-ink/80 text-ivory transition hover:text-gold-soft"
+              />
+            </div>
             {gallery.length > 1 && (
               <>
                 <button
@@ -237,12 +244,6 @@ export default function QuickView() {
             >
               <IconHeart filled={wished} />
             </button>
-            <ProductShareButton
-              product={quickView}
-              variantId={variantId}
-              iconOnly
-              className="grid h-12 w-12 place-items-center border border-white/15 text-gold-soft transition hover:border-gold/50 hover:text-gold"
-            />
           </div>
 
           <button
