@@ -107,6 +107,40 @@ export const pages = {
 
 export const products = [
   {
+    id: "wahl-lithium-ss",
+    kind: "מכונת תספורת",
+    model: "Lithium Ion+ Stainless Steel All-in-One",
+    brand: "Wahl",
+    category: "מכונות תספורת",
+    rating: 4.8,
+    reviews: 38,
+    sku: "BRB-W-LI-SS",
+    voltage: "100V-240V (מתח אוניברסלי)",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 10,
+    price: 500,
+    frame: "studio",
+    image: "/products/wahl-lithium.jpg",
+    hoverImage: "/products/wahl-lithium-kit.jpg",
+    images: [
+      "/products/wahl-lithium.jpg",
+      "/products/wahl-lithium-kit.jpg",
+      "/products/wahl-lithium-box.jpg",
+      "/products/wahl-lithium-use.jpg",
+    ],
+    blurb:
+      "ערכת טיפוח All-in-One מנירוסטה עם סוללת Lithium Ion+ לעד 6 שעות עבודה. שימוש רטוב/יבש, להבים מדויקים ו־19 אורכי חיתוך לשיער, זקן ופרטים.",
+    features: [
+      "גוף Stainless Steel פרימיום עם מראה מקצועי ועמידות גבוהה.",
+      "סוללת Lithium Ion+: עד כ־6 שעות עבודה רצופות מטעינה אחת.",
+      "Wet/Dry Easy Cleanup: שימוש במקלחת או בכיור וניקוי קל במים.",
+      "Precision Blades + 19 Cutting Lengths לעיצוב מדויק של שיער וזקן.",
+      "ערכת אביזרים מלאה: מסרקי Pro-Guard ממתכת, ראש Detail וראש אף/אוזן.",
+      "מתח אוניברסלי 100V–240V — מתאים לחשמל בישראל.",
+    ],
+  },
+  {
     id: "wahl-senior",
     kind: "מכונת תספורת",
     model: "Cordless Senior 5-Star",
@@ -117,7 +151,6 @@ export const products = [
     sku: "BRB-W-SN",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
-    badge: "חדש",
     stock: 8,
     price: 550,
     frame: "studio",
