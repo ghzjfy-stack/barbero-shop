@@ -128,19 +128,56 @@ export default async function handler(req, res) {
     order,
   };
 
-  let upstream;
+  let result;
   try {
-    upstream = await fetch(webhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    result = await postAppsScript(webhook, payload);
   } catch {
     sendJson(res, 502, { ok: false, error: "sheets_unreachable" });
     return;
   }
 
-  const text = await upstream.text().catch(() => "");
+  if (!result.ok || result.data?.ok === false) {
+    sendJson(res, 502, {
+      ok: false,
+      error: "sheets_rejected",
+      detail: result.data?.error || result.data?.raw || result.statusText,
+    });
+    return;
+  }
+
+  sendJson(res, 200, { ok: true, sheets: result.data });
+}
+
+/**
+ * Google Apps Script web apps respond with 302 → googleusercontent.com/macros/echo.
+ * Some runtimes (incl. Vercel) mishandle following that redirect on POST and get HTML 405.
+ * POST with redirect:manual, then GET the Location for the JSON body.
+ */
+async function postAppsScript(url, payload) {
+  const posted = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    redirect: "manual",
+  });
+
+  let text = "";
+  let status = posted.status;
+  let statusText = posted.statusText;
+
+  if (status >= 300 && status < 400) {
+    const location = posted.headers.get("location");
+    if (!location) {
+      return { ok: false, status, statusText: "redirect_without_location", data: {} };
+    }
+    const echoed = await fetch(location, { method: "GET", redirect: "follow" });
+    status = echoed.status;
+    statusText = echoed.statusText;
+    text = await echoed.text().catch(() => "");
+  } else {
+    text = await posted.text().catch(() => "");
+  }
+
   let data = {};
   try {
     data = text ? JSON.parse(text) : {};
@@ -148,14 +185,5 @@ export default async function handler(req, res) {
     data = { raw: text.slice(0, 300) };
   }
 
-  if (!upstream.ok || data.ok === false) {
-    sendJson(res, 502, {
-      ok: false,
-      error: "sheets_rejected",
-      detail: data.error || data.raw || upstream.statusText,
-    });
-    return;
-  }
-
-  sendJson(res, 200, { ok: true, sheets: data });
+  return { ok: status >= 200 && status < 300, status, statusText, data };
 }
