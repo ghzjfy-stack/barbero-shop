@@ -7,9 +7,8 @@ import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
 
 const BIT_PHONE = "0543554888";
-const BIT_ANDROID_PACKAGE = "com.bnhp.payments.paymentsapp";
-/** Personal Bit receive link (from the shop QR) — opens pay-to-us with amount entry. */
-const BIT_PERSONAL_PATH = "www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
+/** Personal Bit receive link decoded from public/bit-qr.jpg */
+const BIT_PERSONAL_URL = "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
 
 /** Whole shekels for clipboard helper text. */
 function bitAmount(amount) {
@@ -18,53 +17,9 @@ function bitAmount(amount) {
   return Math.round(total);
 }
 
-function bitHttpsUrl() {
-  return `https://${BIT_PERSONAL_PATH}`;
-}
-
-/** iOS custom scheme used by Bit (see merchant integrations). */
-function bitIosUrl() {
-  return `paymentsBIT://${BIT_PERSONAL_PATH}`;
-}
-
-/**
- * Android Intent into the Bit app with scheme=bit (not https).
- * https-scheme intents often only open Bit's home screen.
- */
-function bitAndroidIntentUrl() {
-  const fallback = encodeURIComponent(bitHttpsUrl());
-  return (
-    `intent://${BIT_PERSONAL_PATH}` +
-    `#Intent;scheme=bit;package=${BIT_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`
-  );
-}
-
-function isAndroid() {
-  if (typeof navigator === "undefined") return false;
-  return /android/i.test(navigator.userAgent);
-}
-
-function isIOS() {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod/i.test(ua)) return true;
-  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-}
-
-function prefersBitApp() {
-  return isAndroid() || isIOS();
-}
-
-function bitLaunchUrl() {
-  if (isAndroid()) return bitAndroidIntentUrl();
-  if (isIOS()) return bitIosUrl();
-  return bitHttpsUrl();
-}
-
-async function copyBitAmount(amount) {
-  const value = String(bitAmount(amount));
+async function copyText(value) {
   try {
-    await navigator.clipboard.writeText(value);
+    await navigator.clipboard.writeText(String(value));
     return true;
   } catch {
     return false;
@@ -88,6 +43,7 @@ export default function CartDrawer() {
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
   const [bitHint, setBitHint] = useState("");
+  const [amountCopied, setAmountCopied] = useState(false);
 
   const setField = (key, value) => {
     setDetails((current) => ({ ...current, [key]: value }));
@@ -139,30 +95,21 @@ export default function CartDrawer() {
         `שלום, אישור תשלום עבור הזמנה ${store.order.number} בסכום ${formatPrice(store.order.total)} (כולל משלוח)`,
       )}`
     : "https://wa.me/972543554888";
-  const mobileBit = prefersBitApp();
-  const bitHref = bitLaunchUrl();
-  const bitLinkProps = mobileBit ? {} : { target: "_blank", rel: "noopener noreferrer" };
 
-  const openBitPayment = async (event, amount) => {
-    const copiedAmount = await copyBitAmount(amount);
+  const copyOrderAmount = async () => {
+    if (!store.order) return;
+    const ok = await copyText(bitAmount(store.order.total));
+    setAmountCopied(ok);
     setBitHint(
-      copiedAmount
-        ? `נפתח תשלום בביט אלינו. הזינו ${formatPrice(amount)} (הועתק — אפשר להדביק)`
-        : `נפתח תשלום בביט אלינו. הזינו ${formatPrice(amount)} למספר ${BIT_PHONE}`,
+      ok
+        ? `הסכום ${formatPrice(store.order.total)} הועתק. בביט: העברה → ${BIT_PHONE} → הדביקו את הסכום`
+        : `בביט לחצו העברה, הזינו ${BIT_PHONE}, ואז ${formatPrice(store.order.total)}`,
     );
+  };
 
-    // Always drive launch ourselves so iOS/Android use the native Bit schemes.
-    if (mobileBit) {
-      event.preventDefault();
-      const primary = bitLaunchUrl();
-      window.location.href = primary;
-      // If the custom scheme is ignored, fall back to HTTPS personal link shortly after.
-      window.setTimeout(() => {
-        if (document.visibilityState === "visible") {
-          window.location.href = bitHttpsUrl();
-        }
-      }, 1200);
-    }
+  const copyBitPhone = async () => {
+    const ok = await copyText(BIT_PHONE);
+    setBitHint(ok ? `המספר ${BIT_PHONE} הועתק` : `העבירו ל־${BIT_PHONE}`);
   };
 
   return (
@@ -222,40 +169,63 @@ export default function CartDrawer() {
             <button type="button" className="btn-ghost mt-4 h-11" onClick={copyNumber}>
               {copied ? "המספר הועתק" : "העתקת מספר הזמנה"}
             </button>
-            <a
-              className="btn-gold mt-4 h-12 w-full"
-              href={bitHref}
-              {...bitLinkProps}
-              onClick={(event) => openBitPayment(event, store.order.total)}
-            >
-              פתיחת ביט להעברה · {formatPrice(store.order.total)}
-            </a>
-            {bitHint ? (
-              <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
-                {bitHint}
+
+            <div className="mt-6 border border-white/10 bg-black/40 px-4 py-5">
+              <p className="text-center text-sm font-semibold text-ivory">תשלום בביט</p>
+              <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
+                <li>
+                  <span className="text-gold">1.</span> פתחו את ביט → <span className="text-ivory">העברה</span>
+                </li>
+                <li>
+                  <span className="text-gold">2.</span> הזינו / הדביקו{" "}
+                  <button type="button" className="text-ivory underline decoration-gold/50" dir="ltr" onClick={copyBitPhone}>
+                    {BIT_PHONE}
+                  </button>
+                </li>
+                <li>
+                  <span className="text-gold">3.</span> הזינו / הדביקו את הסכום{" "}
+                  <span className="tabular-nums text-ivory" dir="ltr">
+                    {formatPrice(store.order.total)}
+                  </span>
+                </li>
+              </ol>
+
+              <button type="button" className="btn-gold mt-5 h-12 w-full" onClick={copyOrderAmount}>
+                {amountCopied ? "הסכום הועתק — עברו לביט" : `העתק סכום ${formatPrice(store.order.total)}`}
+              </button>
+              {bitHint ? (
+                <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
+                  {bitHint}
+                </p>
+              ) : null}
+
+              <p className="mt-6 text-center text-xs leading-6 text-muted">
+                או סרקו מתוך ביט את הקוד האישי שלנו ואז הזינו את אותו סכום
               </p>
-            ) : (
-              <p className="mt-3 text-center text-xs leading-6 text-muted">
-                ייפתח מסך התשלום בביט אלינו — הזינו שם את הסכום שמוצג למעלה ({BIT_PHONE}).
-              </p>
-            )}
+              <img
+                className="mx-auto mt-3 block max-w-[220px] rounded-lg bg-white p-2"
+                src="/bit-qr.jpg"
+                alt="קוד QR אישי לתשלום ב-Bit"
+                width="220"
+              />
+              <a
+                className="mt-4 block text-center text-[11px] text-muted underline decoration-white/20"
+                href={BIT_PERSONAL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                קישור ביט האישי של החנות
+              </a>
+            </div>
+
             <a
-              className="mt-3 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
+              className="mt-4 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
               href={whatsappHref}
               target="_blank"
               rel="noopener noreferrer"
             >
               שלח אישור תשלום בוואטסאפ
             </a>
-            <p className="mt-5 text-center text-xs leading-6 text-muted">
-              סרוק את קוד ה-QR לתשלום ב-Bit (ואז הזינו את הסכום למעלה)
-            </p>
-            <img
-              className="mx-auto mt-3 block max-w-[200px] rounded-lg"
-              src="/bit-qr.jpg"
-              alt="קוד QR לתשלום ב-Bit"
-              width="200"
-            />
             <ul className="mt-8 space-y-3 border-t border-white/10 pt-5 text-sm">
               {store.order.lines.map((line) => (
                 <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
