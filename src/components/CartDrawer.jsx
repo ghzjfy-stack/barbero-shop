@@ -8,10 +8,28 @@ import ProductTitle from "./ProductTitle";
 
 const BIT_PHONE = "0543554888";
 
-function bitTransferUrl(amount) {
+/** Whole shekels only — Bit P2P deep links are unreliable with decimals. */
+function bitAmount(amount) {
   const total = Number(amount);
-  const value = Number.isFinite(total) && total > 0 ? total : 0;
-  return `https://www.bitpay.co.il/app/transfer?phone=${BIT_PHONE}&amount=${value}`;
+  if (!Number.isFinite(total) || total <= 0) return 0;
+  return Math.round(total);
+}
+
+/**
+ * Consumer Bit deep link. Phone usually opens correctly; amount is best-effort
+ * (Bit often ignores it without a business payment-request API).
+ */
+function bitTransferUrl(amount, { orderNumber } = {}) {
+  const value = bitAmount(amount);
+  const params = new URLSearchParams({
+    phone: BIT_PHONE,
+    amount: String(value),
+  });
+  if (orderNumber) {
+    params.set("description", `BARBERO ${orderNumber}`);
+    params.set("desc", `BARBERO ${orderNumber}`);
+  }
+  return `https://www.bitpay.co.il/app/transfer?${params.toString()}`;
 }
 
 function prefersBitApp() {
@@ -19,6 +37,16 @@ function prefersBitApp() {
   const ua = navigator.userAgent.toLowerCase();
   if (/iphone|ipad|ipod|android/.test(ua)) return true;
   return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
+async function copyBitAmount(amount) {
+  const value = String(bitAmount(amount));
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const emptyDetails = {
@@ -37,6 +65,7 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
+  const [bitHint, setBitHint] = useState("");
 
   const setField = (key, value) => {
     setDetails((current) => ({ ...current, [key]: value }));
@@ -84,10 +113,26 @@ export default function CartDrawer() {
   };
 
   const whatsappHref = store.order
-    ? `https://wa.me/972543554888?text=${encodeURIComponent(`שלום, אישור תשלום עבור הזמנה ${store.order.number}`)}`
+    ? `https://wa.me/972543554888?text=${encodeURIComponent(
+        `שלום, אישור תשלום עבור הזמנה ${store.order.number} בסכום ${formatPrice(store.order.total)} (כולל משלוח)`,
+      )}`
     : "https://wa.me/972543554888";
   const mobileBit = prefersBitApp();
   const bitLinkProps = mobileBit ? {} : { target: "_blank", rel: "noopener noreferrer" };
+
+  const openBitPayment = async (event, amount, orderNumber) => {
+    const copiedAmount = await copyBitAmount(amount);
+    setBitHint(
+      copiedAmount
+        ? `הסכום ${formatPrice(amount)} הועתק — אם ביט לא מילאה אותו, הדביקו במסך הסכום`
+        : `העבירו בביט ${formatPrice(amount)} למספר 054-3554888 (כולל משלוח)`,
+    );
+    // Let the browser continue to the Bit deep link (default <a> behavior).
+    if (!event.currentTarget?.href) {
+      event.preventDefault();
+      window.location.href = bitTransferUrl(amount, { orderNumber });
+    }
+  };
 
   return (
     <Drawer open={store.cartOpen} onClose={store.closeCart} label="עגלת קניות">
@@ -126,19 +171,43 @@ export default function CartDrawer() {
           <div className="flex flex-1 flex-col overflow-y-auto px-5 py-8">
             <p className="text-sm leading-7 text-ivory/75">תודה, {store.order.details.name}.</p>
             <p className="mt-5 border border-gold/50 bg-gold/10 px-4 py-4 text-base font-semibold leading-8 text-ivory">
-              להשלמת ההזמנה, אנא העבר{" "}
+              להשלמת ההזמנה העבירו{" "}
               <span className="tabular-nums" dir="ltr">
                 {formatPrice(store.order.total)}
               </span>{" "}
               ב-Bit למספר <span dir="ltr">054-3554888</span>
+              <span className="mt-2 block text-sm font-normal text-ivory/80">
+                הסכום כולל מוצרים
+                {store.order.shipping > 0 ? ` + משלוח ${formatPrice(store.order.shipping)}` : " (משלוח חינם)"}
+              </span>
             </p>
+            <div className="mt-4 rounded-sm border border-white/10 px-4 py-3 text-sm leading-7 text-muted">
+              <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
+            </div>
             <p className="mt-6 text-xs text-muted">מספר הזמנה</p>
             <p className="mt-1 font-display text-4xl text-gold-soft" dir="ltr">
               {store.order.number}
             </p>
             <button type="button" className="btn-ghost mt-4 h-11" onClick={copyNumber}>
-              {copied ? "המספר הועתק" : "העתקת מספר"}
+              {copied ? "המספר הועתק" : "העתקת מספר הזמנה"}
             </button>
+            <a
+              className="btn-gold mt-4 h-12 w-full"
+              href={bitTransferUrl(store.order.total, { orderNumber: store.order.number })}
+              {...bitLinkProps}
+              onClick={(event) => openBitPayment(event, store.order.total, store.order.number)}
+            >
+              תשלום בביט · {formatPrice(store.order.total)}
+            </a>
+            {bitHint ? (
+              <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
+                {bitHint}
+              </p>
+            ) : (
+              <p className="mt-3 text-center text-xs leading-6 text-muted">
+                בלחיצה הסכום מועתק ללוח. אם ביט לא ממלאת אותו אוטומטית — הדביקו במסך הסכום.
+              </p>
+            )}
             <a
               className="mt-3 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
               href={whatsappHref}
@@ -148,7 +217,7 @@ export default function CartDrawer() {
               שלח אישור תשלום בוואטסאפ
             </a>
             <p className="mt-5 text-center text-xs leading-6 text-muted">
-              סרוק את קוד ה-QR לתשלום מהיר ב-Bit, או לחץ על הכפתור למטה
+              סרוק את קוד ה-QR לתשלום ב-Bit (ואז הזינו את הסכום למעלה)
             </p>
             <img
               className="mx-auto mt-3 block max-w-[200px] rounded-lg"
@@ -156,13 +225,6 @@ export default function CartDrawer() {
               alt="קוד QR לתשלום ב-Bit"
               width="200"
             />
-            <a
-              className="btn-ghost mt-4 h-12 w-full"
-              href={bitTransferUrl(store.order.total)}
-              {...bitLinkProps}
-            >
-              תשלום בביט
-            </a>
             <ul className="mt-8 space-y-3 border-t border-white/10 pt-5 text-sm">
               {store.order.lines.map((line) => (
                 <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
@@ -174,9 +236,6 @@ export default function CartDrawer() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4">
-              <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
-            </div>
             <p className="mt-2 text-sm text-muted">
               {[store.order.details.address, store.order.details.unit, store.order.details.city, store.order.details.postal]
                 .filter(Boolean)
@@ -336,19 +395,20 @@ export default function CartDrawer() {
               />
               {store.lines.length === 0 ? (
                 <button type="button" className="btn-gold mt-4 h-12 w-full" disabled>
-                  תשלום בביט
+                  המשך לתשלום
                 </button>
               ) : (
-                <a
+                <button
+                  type="button"
                   className="btn-gold mt-4 h-12 w-full"
-                  href={bitTransferUrl(store.total)}
-                  {...bitLinkProps}
                   onClick={() => store.setCheckoutStep("details")}
                 >
-                  תשלום בביט
-                </a>
+                  המשך לתשלום · {formatPrice(store.total)}
+                </button>
               )}
-              <p className="mt-3 text-center text-[11px] text-muted">מקבלים ביט בלבד · יבוא מקורי · אחריות רשמית</p>
+              <p className="mt-3 text-center text-[11px] text-muted">
+                הסכום כולל משלוח כשצריך · תשלום בביט אחרי אישור ההזמנה
+              </p>
             </footer>
           </>
         )}
