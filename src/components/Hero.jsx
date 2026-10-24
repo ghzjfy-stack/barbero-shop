@@ -60,11 +60,23 @@ export default function Hero() {
             הדגם הנמכר ביותר
           </p>
           <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
-            <div className="relative mx-auto h-64 w-full overflow-hidden sm:h-72 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
+            <div className="relative mx-auto h-72 w-full overflow-hidden sm:h-80 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 bg-[radial-gradient(ellipse_78%_64%_at_50%_42%,#d7b56a_0%,#a07a42_24%,#5c4328_52%,#2a2118_78%,#16120e_100%)]"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-[10%] top-[8%] h-[52%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,246,220,0.9),rgba(228,196,120,0.35)_40%,transparent_72%)] blur-2xl"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-[18%] bottom-[8%] h-16 rounded-full bg-[rgba(255,214,140,0.55)] blur-2xl"
+              />
               <ProductImage
                 src={HERO_PRODUCT}
                 alt={featured.name}
-                className="absolute inset-0 h-full w-full object-contain object-center"
+                className="absolute inset-0 h-full w-full object-contain object-center p-5 [filter:brightness(1.08)_contrast(1.06)_drop-shadow(0_22px_18px_rgba(0,0,0,0.5))_drop-shadow(0_0_26px_rgba(236,214,164,0.34))] sm:p-7"
               />
             </div>
             <div className="mt-4">
