@@ -82,3 +82,13 @@ export default function Hero() {
               onClick={() => addToCart(featured.id, 1, offer.variant?.id)}
             >
               הוסף לעגלה
+            </button>
+            <button type="button" className="btn-ghost h-11 text-sm" onClick={() => openQuickView(featured.id)}>
+              מבט מהיר
+            </button>
+          </div>
+        </aside>
+      </div>
+    </section>
+  );
+}
