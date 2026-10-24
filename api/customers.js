@@ -1,8 +1,8 @@
 /**
- * POST /api/customers — insert a row into public.customers (name, phone).
+ * POST /api/customers — insert a row into public.customers (Name, Phone).
  *
  * Body: { "name": "...", "phone": "..." }
- * Table: customers (id, created_at, name, phone)
+ * Table columns (as created in Supabase): id, created_at, Name, Phone, Email
  */
 
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
