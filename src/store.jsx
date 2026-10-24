@@ -6,6 +6,7 @@ import {
   resolveOffer,
 } from "./data";
 import { notifyTelegramOrder } from "./notifyTelegram";
+import { saveCustomer } from "./saveCustomer";
 import { syncProductQuery } from "./share";
 
 const StoreContext = createContext(null);
@@ -267,6 +268,7 @@ export function StoreProvider({ children }) {
     setCart([]);
     setCheckoutStep("done");
     notifyTelegramOrder(snapshot);
+    saveCustomer({ name: details.name, phone: details.phone });
   };
 
   const finishCheckout = () => {
