@@ -10,13 +10,30 @@ export default function Footer() {
   const [status, setStatus] = useState("idle");
   const year = new Date().getFullYear();
 
-  const subscribe = (event) => {
+  const subscribe = async (event) => {
     event.preventDefault();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    const value = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setStatus("invalid");
       return;
     }
-    setStatus("done");
+    setStatus("saving");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: value }),
+        keepalive: true,
+      });
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+      setStatus("done");
+      setEmail("");
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
@@ -31,7 +48,7 @@ export default function Footer() {
             <p className="text-sm">עדכונים על הקולקציה</p>
             {status === "done" ? (
               <p className="mt-3 text-sm leading-7 text-gold-soft" role="status">
-                תודה שנרשמת! נעדכן אותך ראשון על דגמים חדשים ומבצעים בלעדיים.
+                תודה שנרשמת! נעדכן אותך על דגמים חדשים ומבצעים.
               </p>
             ) : (
               <form className="mt-3 flex" onSubmit={subscribe} noValidate>
@@ -44,19 +61,23 @@ export default function Footer() {
                   autoComplete="email"
                   placeholder="כתובת אימייל"
                   value={email}
+                  disabled={status === "saving"}
                   onChange={(event) => {
                     setEmail(event.target.value);
                     setStatus("idle");
                   }}
                   className="field min-w-0 flex-1"
                 />
-                <button type="submit" className="btn-gold h-auto px-4 text-sm">
-                  הרשמה
+                <button type="submit" className="btn-gold h-auto px-4 text-sm" disabled={status === "saving"}>
+                  {status === "saving" ? "שולח…" : "הרשמה"}
                 </button>
               </form>
             )}
             {status === "invalid" && (
               <p className="mt-2 text-xs text-[#e7b2a4]">הזינו כתובת אימייל תקינה.</p>
+            )}
+            {status === "error" && (
+              <p className="mt-2 text-xs text-[#e7b2a4]">ההרשמה לא הצליחה — נסו שוב בעוד רגע.</p>
             )}
           </div>
         </div>

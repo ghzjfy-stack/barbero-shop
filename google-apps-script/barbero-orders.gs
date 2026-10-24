@@ -12,7 +12,10 @@
 
 var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
 var SHEET_NAME = "הזמנות";
+var NEWSLETTER_SHEET_NAME = "ניוזלטר";
 var WEBHOOK_SECRET = "";
+
+var NEWSLETTER_HEADERS = ["תאריך", "אימייל"];
 
 /** כותרות — סדר חשוב ל-append מהאתר */
 var HEADERS = [
@@ -75,6 +78,7 @@ function setupBarberoSheet() {
   applyStatusValidation_(sheet);
   applyConditionalFormat_(sheet);
   formatMoneyColumns_(sheet);
+  setupNewsletterSheet_();
   SpreadsheetApp.flush();
 }
 
@@ -83,6 +87,10 @@ function doPost(e) {
     var body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
     if (WEBHOOK_SECRET && body.secret !== WEBHOOK_SECRET) {
       return json_({ ok: false, error: "unauthorized" });
+    }
+
+    if (body.type === "newsletter") {
+      return appendNewsletter_(body);
     }
 
     var row = body.row || {};
@@ -123,7 +131,43 @@ function doPost(e) {
 }
 
 function doGet() {
-  return json_({ ok: true, service: "barbero-orders", sheet: SHEET_NAME });
+  return json_({
+    ok: true,
+    service: "barbero-orders",
+    sheet: SHEET_NAME,
+    newsletter: NEWSLETTER_SHEET_NAME,
+  });
+}
+
+function appendNewsletter_(body) {
+  var email = String(body.email || "")
+    .trim()
+    .toLowerCase();
+  if (!email) return json_({ ok: false, error: "missing_email" });
+
+  var sheet = getNewsletterSheet_();
+  ensureNewsletterHeader_(sheet);
+
+  // אל תכפיל מייל שכבר רשום
+  var last = sheet.getLastRow();
+  if (last >= 2) {
+    var existing = sheet.getRange(2, 2, last, 2).getValues();
+    for (var i = 0; i < existing.length; i++) {
+      if (
+        String(existing[i][0] || "")
+          .trim()
+          .toLowerCase() === email
+      ) {
+        return json_({ ok: true, duplicate: true, row: i + 2 });
+      }
+    }
+  }
+
+  var when = body.createdAt || formatNow_();
+  sheet.appendRow([when, email]);
+  var row = sheet.getLastRow();
+  sheet.getRange(row, 1, 1, 2).setHorizontalAlignment("center").setVerticalAlignment("middle");
+  return json_({ ok: true, row: row });
 }
 
 function getSheet_() {
@@ -132,6 +176,40 @@ function getSheet_() {
   if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
   sheet.setRightToLeft(true);
   return sheet;
+}
+
+function getNewsletterSheet_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sheet = ss.getSheetByName(NEWSLETTER_SHEET_NAME);
+  if (!sheet) sheet = ss.insertSheet(NEWSLETTER_SHEET_NAME);
+  sheet.setRightToLeft(true);
+  return sheet;
+}
+
+function setupNewsletterSheet_() {
+  var sheet = getNewsletterSheet_();
+  ensureNewsletterHeader_(sheet);
+  var header = sheet.getRange(1, 1, 1, NEWSLETTER_HEADERS.length);
+  header.setBackground(COLOR.headerBg);
+  header.setFontColor(COLOR.headerFg);
+  header.setFontWeight("bold");
+  header.setFontFamily("Arial");
+  header.setHorizontalAlignment("center");
+  sheet.setColumnWidth(1, 140);
+  sheet.setColumnWidth(2, 260);
+  sheet.setFrozenRows(1);
+}
+
+function ensureNewsletterHeader_(sheet) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(NEWSLETTER_HEADERS);
+  } else {
+    sheet.getRange(1, 1, 1, NEWSLETTER_HEADERS.length).setValues([NEWSLETTER_HEADERS]);
+  }
+}
+
+function formatNow_() {
+  return Utilities.formatDate(new Date(), "Asia/Jerusalem", "dd.MM.yyyy, HH:mm");
 }
 
 function ensureHeader_(sheet, forceRestyle) {
