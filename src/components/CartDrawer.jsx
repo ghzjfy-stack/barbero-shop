@@ -158,29 +158,17 @@ export default function CartDrawer() {
     if (!store.order) return;
     const ok = await copyText(paymentAmount(store.order.total));
     setAmountCopied(ok);
-    if (isPaypal) {
-      setPayHint(
-        ok
-          ? `הסכום ${formatPrice(store.order.total)} הועתק. ב-PayPal העבירו אל ${PAYPAL_EMAIL}`
-          : `העבירו ${formatPrice(store.order.total)} ב-PayPal אל ${PAYPAL_EMAIL}`,
-      );
-      return;
-    }
-    setPayHint(
-      ok
-        ? `הסכום ${formatPrice(store.order.total)} הועתק. בביט: העברה → ${BIT_PHONE} → הדביקו את הסכום`
-        : `בביט לחצו העברה, הזינו ${BIT_PHONE}, ואז ${formatPrice(store.order.total)}`,
-    );
+    setPayHint(ok ? "הסכום הועתק" : `הזינו ידנית ${formatPrice(store.order.total)}`);
   };
 
   const copyBitPhone = async () => {
     const ok = await copyText(BIT_PHONE);
-    setPayHint(ok ? `המספר ${BIT_PHONE} הועתק` : `העבירו ל־${BIT_PHONE}`);
+    setPayHint(ok ? "המספר הועתק" : `העבירו ל־${BIT_PHONE}`);
   };
 
   const copyPaypalEmail = async () => {
     const ok = await copyText(PAYPAL_EMAIL);
-    setPayHint(ok ? `המייל ${PAYPAL_EMAIL} הועתק` : `העבירו אל ${PAYPAL_EMAIL}`);
+    setPayHint(ok ? "המייל הועתק" : `העבירו אל ${PAYPAL_EMAIL}`);
   };
 
   return (
@@ -190,7 +178,7 @@ export default function CartDrawer() {
           <div>
             <p className="text-[11px] text-gold">BARBERO</p>
             <h2 className="font-display text-3xl leading-none">
-              {store.checkoutStep === "done" ? "ההזמנה התקבלה" : "העגלה"}
+              {store.checkoutStep === "done" ? "תשלום" : "העגלה"}
             </h2>
           </div>
           <button type="button" className="icon-btn" aria-label="סגירת העגלה" onClick={store.closeCart}>
@@ -217,172 +205,119 @@ export default function CartDrawer() {
         )}
 
         {store.checkoutStep === "done" && store.order ? (
-          <div className="flex flex-1 flex-col overflow-y-auto px-5 py-8">
-            <p className="text-sm leading-7 text-ivory/75">תודה, {store.order.details.name}.</p>
-            <p className="mt-5 border border-gold/50 bg-gold/10 px-4 py-4 text-base font-semibold leading-8 text-ivory">
-              להשלמת ההזמנה העבירו{" "}
-              <span className="tabular-nums" dir="ltr">
+          <div className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
+            <p className="text-sm text-muted">תודה, {store.order.details.name}</p>
+            <p className="mt-1 text-sm leading-6 text-ivory/80">צעד אחרון — תשלום קצר וסיימנו</p>
+
+            <div className="mt-6 text-center">
+              <p className="text-xs tracking-wide text-muted">{isPaypal ? "לתשלום ב-PayPal" : "לתשלום בביט"}</p>
+              <p className="mt-2 font-display text-5xl leading-none text-gold-soft tabular-nums" dir="ltr">
                 {formatPrice(store.order.total)}
-              </span>{" "}
-              {isPaypal ? (
-                <>
-                  ב-PayPal אל <span dir="ltr">{PAYPAL_EMAIL}</span>
-                </>
-              ) : (
-                <>
-                  ב-Bit למספר <span dir="ltr">054-3554888</span>
-                </>
-              )}
-              <span className="mt-2 block text-sm font-normal text-ivory/80">
-                הסכום כולל מוצרים
-                {store.order.shipping > 0 ? ` + משלוח ${formatPrice(store.order.shipping)}` : " (משלוח חינם)"}
-              </span>
-            </p>
-            <div className="mt-4 rounded-sm border border-white/10 px-4 py-3 text-sm leading-7 text-muted">
-              <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
+              </p>
+              <p className="mt-2 text-xs text-muted">
+                {store.order.shipping > 0 ? `כולל משלוח ${formatPrice(store.order.shipping)}` : "כולל משלוח חינם"}
+              </p>
             </div>
-            <p className="mt-6 text-xs text-muted">מספר הזמנה</p>
-            <p className="mt-1 font-display text-4xl text-gold-soft" dir="ltr">
-              {store.order.number}
-            </p>
-            <button type="button" className="btn-ghost mt-4 h-11" onClick={copyNumber}>
-              {copied ? "המספר הועתק" : "העתקת מספר הזמנה"}
-            </button>
 
-            {isPaypal ? (
-              <div className="mt-6 border border-[#0070ba]/35 bg-gradient-to-b from-[#0070ba]/12 to-black/40 px-4 py-5">
-                <div className="flex items-center justify-center gap-2">
-                  <PayPalMark className="h-5 w-auto" />
-                  <p className="text-sm font-semibold text-ivory">תשלום ב-PayPal</p>
-                </div>
-                <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
-                  <li>
-                    <span className="text-[#79c3fc]">1.</span> לחצו על הכפתור הכחול — בטלפון תיפתח האפליקציה אם מותקנת, במחשב אתר PayPal עם הסכום
-                  </li>
-                  <li>
-                    <span className="text-[#79c3fc]">2.</span> או העבירו ידנית אל{" "}
-                    <button
-                      type="button"
-                      className="text-ivory underline decoration-[#0070ba]/60"
-                      dir="ltr"
-                      onClick={copyPaypalEmail}
-                    >
-                      {PAYPAL_EMAIL}
-                    </button>
-                  </li>
-                  <li>
-                    <span className="text-[#79c3fc]">3.</span> סכום{" "}
-                    <span className="tabular-nums text-ivory" dir="ltr">
-                      {formatPrice(store.order.total)}
-                    </span>
-                  </li>
-                </ol>
-
+            <div className="mt-6 space-y-3">
+              {isPaypal ? (
                 <button
                   type="button"
-                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
+                  className="inline-flex h-14 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
                   onClick={() => openPayPalPayment(store.order)}
                 >
                   <PayPalMark className="h-4 w-auto brightness-0 invert" />
-                  שלם {formatPrice(store.order.total)} ב-PayPal
+                  שלם עכשיו ב-PayPal
                 </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn-gold h-14 w-full text-base"
+                  onClick={async () => {
+                    await copyOrderAmount();
+                    window.open(BIT_PERSONAL_URL, "_blank", "noopener,noreferrer");
+                  }}
+                >
+                  {amountCopied ? "הסכום הועתק — פתחו ביט" : "העתק סכום ופתח ביט"}
+                </button>
+              )}
 
-                <div className="mt-3 grid grid-cols-2 gap-2">
-                  <button type="button" className="btn-ghost h-11 text-xs" onClick={copyPaypalEmail}>
-                    העתק מייל
-                  </button>
-                  <button type="button" className="btn-ghost h-11 text-xs" onClick={copyOrderAmount}>
-                    {amountCopied ? "הסכום הועתק" : "העתק סכום"}
+              <button
+                type="button"
+                className="btn-ghost flex h-12 w-full items-center justify-between gap-3 px-4 text-sm"
+                onClick={isPaypal ? copyPaypalEmail : copyBitPhone}
+              >
+                <span className="text-muted">{isPaypal ? "העתק מייל לקבלה" : "העתק מספר לקבלה"}</span>
+                <span className="font-medium text-ivory tabular-nums" dir="ltr">
+                  {isPaypal ? PAYPAL_EMAIL : BIT_PHONE}
+                </span>
+              </button>
+
+              {payHint ? (
+                <p className="text-center text-xs leading-5 text-gold-soft" role="status">
+                  {payHint}
+                </p>
+              ) : null}
+
+              <a
+                className="inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-sm font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                אחרי התשלום — שלחו אישור בוואטסאפ
+              </a>
+            </div>
+
+            <details className="group mt-8 border-t border-white/10 pt-4">
+              <summary className="cursor-pointer list-none text-sm text-muted transition hover:text-ivory [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex w-full items-center justify-between gap-3">
+                  פרטי הזמנה
+                  <span className="text-xs text-gold-soft group-open:hidden">הצג</span>
+                  <span className="hidden text-xs text-gold-soft group-open:inline">הסתר</span>
+                </span>
+              </summary>
+              <div className="mt-4 space-y-4">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted">מספר הזמנה</span>
+                  <button type="button" className="text-gold-soft underline-offset-2 hover:underline" dir="ltr" onClick={copyNumber}>
+                    {copied ? "הועתק" : store.order.number}
                   </button>
                 </div>
-
-                {payHint ? (
-                  <p className="mt-3 text-center text-xs leading-6 text-[#9fd0ff]" role="status">
-                    {payHint}
-                  </p>
-                ) : (
-                  <p className="mt-3 text-center text-xs leading-6 text-muted">
-                    לאחר התשלום שלחו אישור בוואטסאפ ונאשר את ההזמנה
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="mt-6 border border-white/10 bg-black/40 px-4 py-5">
-                <p className="text-center text-sm font-semibold text-ivory">תשלום בביט</p>
-                <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
-                  <li>
-                    <span className="text-gold">1.</span> פתחו את ביט → <span className="text-ivory">העברה</span>
-                  </li>
-                  <li>
-                    <span className="text-gold">2.</span> הזינו / הדביקו{" "}
-                    <button type="button" className="text-ivory underline decoration-gold/50" dir="ltr" onClick={copyBitPhone}>
-                      {BIT_PHONE}
-                    </button>
-                  </li>
-                  <li>
-                    <span className="text-gold">3.</span> הזינו / הדביקו את הסכום{" "}
-                    <span className="tabular-nums text-ivory" dir="ltr">
-                      {formatPrice(store.order.total)}
-                    </span>
-                  </li>
-                </ol>
-
-                <button type="button" className="btn-gold mt-5 h-12 w-full" onClick={copyOrderAmount}>
-                  {amountCopied ? "הסכום הועתק — עברו לביט" : `העתק סכום ${formatPrice(store.order.total)}`}
-                </button>
-                {payHint ? (
-                  <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
-                    {payHint}
-                  </p>
-                ) : null}
-
-                <p className="mt-6 text-center text-xs leading-6 text-muted">
-                  או סרקו מתוך ביט את הקוד האישי שלנו ואז הזינו את אותו סכום
+                <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
+                <ul className="space-y-2 text-sm">
+                  {store.order.lines.map((line) => (
+                    <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
+                      <span>
+                        {line.kind && line.model ? <ProductTitle product={line} /> : line.name}
+                        {line.label ? ` · ${line.label}` : ""} × {line.qty}
+                      </span>
+                      <span className="tabular-nums">{formatPrice(line.lineTotal)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-muted">
+                  {[store.order.details.address, store.order.details.unit, store.order.details.city, store.order.details.postal]
+                    .filter(Boolean)
+                    .join(", ")}
                 </p>
-                <img
-                  className="mx-auto mt-3 block max-w-[220px] rounded-lg bg-white p-2"
-                  src="/bit-qr.jpg"
-                  alt="קוד QR אישי לתשלום ב-Bit"
-                  width="220"
-                />
-                <a
-                  className="mt-4 block text-center text-[11px] text-muted underline decoration-white/20"
-                  href={BIT_PERSONAL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  קישור ביט האישי של החנות
-                </a>
+                {store.order.details.notes ? <p className="text-sm leading-6 text-muted">{store.order.details.notes}</p> : null}
+                {!isPaypal ? (
+                  <div className="border border-white/10 bg-black/30 px-4 py-4 text-center">
+                    <p className="text-xs text-muted">אפשר גם לסרוק מתוך ביט</p>
+                    <img
+                      className="mx-auto mt-3 block max-w-[160px] rounded-md bg-white p-2"
+                      src="/bit-qr.jpg"
+                      alt="קוד QR לתשלום ב-Bit"
+                      width="160"
+                    />
+                  </div>
+                ) : null}
               </div>
-            )}
+            </details>
 
-            <a
-              className="mt-4 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              שלח אישור תשלום בוואטסאפ
-            </a>
-            <ul className="mt-8 space-y-3 border-t border-white/10 pt-5 text-sm">
-              {store.order.lines.map((line) => (
-                <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
-                  <span>
-                    {line.kind && line.model ? <ProductTitle product={line} /> : line.name}
-                    {line.label ? ` · ${line.label}` : ""} × {line.qty}
-                  </span>
-                  <span className="tabular-nums">{formatPrice(line.lineTotal)}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-2 text-sm text-muted">
-              {[store.order.details.address, store.order.details.unit, store.order.details.city, store.order.details.postal]
-                .filter(Boolean)
-                .join(", ")}
-            </p>
-            {store.order.details.notes && <p className="mt-2 text-sm leading-7 text-muted">{store.order.details.notes}</p>}
-            <button type="button" className="btn-gold mt-auto h-12" onClick={store.finishCheckout}>
-              המשך בקניות
+            <button type="button" className="btn-ghost mt-6 h-11" onClick={store.finishCheckout}>
+              סגור והמשך בקניות
             </button>
           </div>
         ) : store.checkoutStep === "details" ? (
