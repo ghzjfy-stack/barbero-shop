@@ -8,6 +8,8 @@ import ProductTitle from "./ProductTitle";
 
 const BIT_PHONE = "0543554888";
 const BIT_ANDROID_PACKAGE = "com.bnhp.payments.paymentsapp";
+/** Personal Bit receive link (from the shop QR) — opens pay-to-us with amount entry. */
+const BIT_PERSONAL_PATH = "www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
 
 /** Whole shekels for clipboard helper text. */
 function bitAmount(amount) {
@@ -16,18 +18,24 @@ function bitAmount(amount) {
   return Math.round(total);
 }
 
-/** Open Bit on the transfer screen to our number — customer types the amount. */
-function bitTransferUrl() {
-  const params = new URLSearchParams({ phone: BIT_PHONE });
-  return `https://www.bitpay.co.il/app/transfer?${params.toString()}`;
+function bitHttpsUrl() {
+  return `https://${BIT_PERSONAL_PATH}`;
 }
 
-/** Android Chrome: force the Bit app transfer activity instead of a browser tab. */
+/** iOS custom scheme used by Bit (see merchant integrations). */
+function bitIosUrl() {
+  return `paymentsBIT://${BIT_PERSONAL_PATH}`;
+}
+
+/**
+ * Android Intent into the Bit app with scheme=bit (not https).
+ * https-scheme intents often only open Bit's home screen.
+ */
 function bitAndroidIntentUrl() {
-  const fallback = encodeURIComponent(bitTransferUrl());
+  const fallback = encodeURIComponent(bitHttpsUrl());
   return (
-    `intent://www.bitpay.co.il/app/transfer?phone=${BIT_PHONE}` +
-    `#Intent;scheme=https;package=${BIT_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`
+    `intent://${BIT_PERSONAL_PATH}` +
+    `#Intent;scheme=bit;package=${BIT_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`
   );
 }
 
@@ -36,11 +44,21 @@ function isAndroid() {
   return /android/i.test(navigator.userAgent);
 }
 
-function prefersBitApp() {
+function isIOS() {
   if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent.toLowerCase();
-  if (/iphone|ipad|ipod|android/.test(ua)) return true;
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/i.test(ua)) return true;
   return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
+function prefersBitApp() {
+  return isAndroid() || isIOS();
+}
+
+function bitLaunchUrl() {
+  if (isAndroid()) return bitAndroidIntentUrl();
+  if (isIOS()) return bitIosUrl();
+  return bitHttpsUrl();
 }
 
 async function copyBitAmount(amount) {
@@ -122,21 +140,28 @@ export default function CartDrawer() {
       )}`
     : "https://wa.me/972543554888";
   const mobileBit = prefersBitApp();
-  const bitHref = isAndroid() ? bitAndroidIntentUrl() : bitTransferUrl();
+  const bitHref = bitLaunchUrl();
   const bitLinkProps = mobileBit ? {} : { target: "_blank", rel: "noopener noreferrer" };
 
   const openBitPayment = async (event, amount) => {
     const copiedAmount = await copyBitAmount(amount);
     setBitHint(
       copiedAmount
-        ? `נפתח מסך העברה בביט. הזינו ${formatPrice(amount)} (הועתק ללוח — אפשר להדביק)`
-        : `נפתח מסך העברה בביט. הזינו ידנית ${formatPrice(amount)} למספר 054-3554888`,
+        ? `נפתח תשלום בביט אלינו. הזינו ${formatPrice(amount)} (הועתק — אפשר להדביק)`
+        : `נפתח תשלום בביט אלינו. הזינו ${formatPrice(amount)} למספר ${BIT_PHONE}`,
     );
 
-    // Prefer launching the Bit app transfer screen directly on mobile.
+    // Always drive launch ourselves so iOS/Android use the native Bit schemes.
     if (mobileBit) {
       event.preventDefault();
-      window.location.href = isAndroid() ? bitAndroidIntentUrl() : bitTransferUrl();
+      const primary = bitLaunchUrl();
+      window.location.href = primary;
+      // If the custom scheme is ignored, fall back to HTTPS personal link shortly after.
+      window.setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          window.location.href = bitHttpsUrl();
+        }
+      }, 1200);
     }
   };
 
@@ -211,7 +236,7 @@ export default function CartDrawer() {
               </p>
             ) : (
               <p className="mt-3 text-center text-xs leading-6 text-muted">
-                ייפתח מסך ההעברה בביט למספר 054-3554888 — הזינו שם את הסכום שמוצג למעלה.
+                ייפתח מסך התשלום בביט אלינו — הזינו שם את הסכום שמוצג למעלה ({BIT_PHONE}).
               </p>
             )}
             <a
