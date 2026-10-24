@@ -1,8 +1,10 @@
 /**
- * POST /api/customers — insert a row into public.customers (Name, Phone).
+ * POST /api/customers — insert a row into public.customers.
  *
  * Body: { "name": "...", "phone": "..." }
- * Table columns (as created in Supabase): id, created_at, Name, Phone, Email
+ *
+ * Current Supabase columns: id, created_at, Name (text), Email (text), Text (time).
+ * Phone number is stored in Email until a text "Phone" column exists.
  */
 
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
@@ -79,13 +81,22 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Note: in this Supabase table, "Phone" was created as type `time` by mistake,
-  // so we store the phone number in the text column "Email" until Phone is altered to text.
-  const { data, error } = await client
+  // Prefer a text "Phone" column when it exists; otherwise use Email (text).
+  let result = await client
     .from("customers")
-    .insert({ Name: name, Email: phone })
+    .insert({ Name: name, Phone: phone })
     .select("id, created_at, Name, Phone, Email")
     .single();
+
+  if (result.error && /Phone|schema cache/i.test(result.error.message || "")) {
+    result = await client
+      .from("customers")
+      .insert({ Name: name, Email: phone })
+      .select("id, created_at, Name, Email")
+      .single();
+  }
+
+  const { data, error } = result;
 
   if (error) {
     sendJson(res, 502, {
@@ -102,8 +113,8 @@ export default async function handler(req, res) {
       id: data.id,
       created_at: data.created_at,
       name: data.Name,
-      phone: data.Phone,
-      email: data.Email ?? null,
+      phone: data.Phone ?? data.Email ?? null,
+      email: data.Phone ? data.Email ?? null : null,
     },
   });
 }
