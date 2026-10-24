@@ -6,6 +6,7 @@ import {
   resolveOffer,
 } from "./data";
 import { notifyTelegramOrder } from "./notifyTelegram";
+import { notifySheetsOrder } from "./notifySheetsOrder";
 import { saveCustomer } from "./saveCustomer";
 import { syncProductQuery } from "./share";
 
@@ -268,6 +269,7 @@ export function StoreProvider({ children }) {
     setCart([]);
     setCheckoutStep("done");
     notifyTelegramOrder(snapshot);
+    notifySheetsOrder(snapshot);
     saveCustomer({ name: details.name, phone: details.phone });
   };
 
