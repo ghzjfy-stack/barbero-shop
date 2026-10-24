@@ -1,28 +1,20 @@
 /**
- * BARBERO → Google Sheets (הזמנות אוטומטיות)
+ * BARBERO → Google Sheets (הזמנות אוטומטיות + עיצוב)
  *
- * התקנה (פעם אחת):
- * 1. צרו גיליון חדש ב-Google Sheets בשם למשל "BARBERO הזמנות"
- * 2. בשורה 1 הדביקו את הכותרות (אפשר להעתיק מהפונקציה ensureHeader_ למטה)
- * 3. Extensions → Apps Script → מחקו את הקוד הקיים והדביקו את הקובץ הזה
- * 4. שמרו → Deploy → New deployment → Type: Web app
- *    - Execute as: Me
- *    - Who has access: Anyone
- * 5. העתיקו את ה-Web App URL (מסתיים ב-/exec)
- * 6. ב-Vercel → Environment Variables:
- *      GOOGLE_SHEETS_WEBHOOK_URL = <ה-URL מהשלב הקודם>
- *      GOOGLE_SHEETS_WEBHOOK_SECRET = (אופציונלי) מחרוזת סודית שתבחרו
- * 7. אם הגדרתם SECRET — שימו את אותה מחרוזת גם ב-WEBHOOK_SECRET למטה
- * 8. Redeploy ב-Vercel
+ * התקנה / עדכון עיצוב:
+ * 1. Extensions → Apps Script → הדביקו את הקובץ הזה במקום הקוד הישן
+ * 2. שמרו
+ * 3. בחרו בפונקציה setupBarberoSheet → Run (פעם אחת) ואשרו הרשאות
+ * 4. Deploy → Manage deployments → Edit → New version → Deploy
  *
- * כל הזמנה מהאתר תוסיף שורה חדשה לגיליון.
+ * בלי עמודות שותפים — אתה לבד. יש סטטוסים צבעוניים + ימי משלוח.
  */
 
-/** מזהה הגיליון מתוך ה-URL (בין /d/ ל-/edit) */
 var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
 var SHEET_NAME = "הזמנות";
-var WEBHOOK_SECRET = ""; // אופציונלי — חייב להתאים ל-GOOGLE_SHEETS_WEBHOOK_SECRET ב-Vercel
+var WEBHOOK_SECRET = "";
 
+/** כותרות — סדר חשוב ל-append מהאתר */
 var HEADERS = [
   "סטטוס",
   "תאריך",
@@ -39,7 +31,52 @@ var HEADERS = [
   "משלוח",
   "סה״כ",
   "תשלום",
+  "ימי משלוח",
 ];
+
+var STATUS_OPTIONS = [
+  "ממתין לביט",
+  "ממתין ל-PayPal",
+  "שולם",
+  "בהכנה",
+  "משלוח מארה״ב",
+  "נמסר",
+  "בוטל",
+];
+
+/** צבעי מותג BARBERO */
+var COLOR = {
+  headerBg: "#1B4332",
+  headerFg: "#FFFFFF",
+  stripe: "#F4F7F5",
+  ink: "#0B1210",
+  muted: "#5C6B64",
+  gold: "#C6A15B",
+  waitBit: "#FFF3CD",
+  waitPaypal: "#D6EAF8",
+  paid: "#D4EDDA",
+  prep: "#CCE5FF",
+  ship: "#1B4332",
+  shipFg: "#FFFFFF",
+  delivered: "#7B2D26",
+  deliveredFg: "#FFFFFF",
+  cancelled: "#E9ECEF",
+  emptyStatus: "#F1F3F4",
+};
+
+/**
+ * הרצה חד־פעמית מעורך Apps Script:
+ * מעצבת את הגיליון, מוסיפה רשימות נפתחות וצבעים.
+ */
+function setupBarberoSheet() {
+  var sheet = getSheet_();
+  ensureHeader_(sheet, true);
+  styleSheet_(sheet);
+  applyStatusValidation_(sheet);
+  applyConditionalFormat_(sheet);
+  formatMoneyColumns_(sheet);
+  SpreadsheetApp.flush();
+}
 
 function doPost(e) {
   try {
@@ -50,10 +87,15 @@ function doPost(e) {
 
     var row = body.row || {};
     var sheet = getSheet_();
-    ensureHeader_(sheet);
+    ensureHeader_(sheet, false);
+
+    var payment = row.payment || "ביט";
+    var status =
+      row.status ||
+      (payment === "PayPal" ? "ממתין ל-PayPal" : "ממתין לביט");
 
     sheet.appendRow([
-      row.status || "ממתין לביט",
+      status,
       row.createdAt || "",
       row.orderNumber || "",
       row.name || "",
@@ -64,13 +106,17 @@ function doPost(e) {
       row.postal || "",
       row.notes || "",
       row.items || "",
-      row.subtotal === "" || row.subtotal == null ? "" : Number(row.subtotal),
-      row.shipping === "" || row.shipping == null ? "" : Number(row.shipping),
-      row.total === "" || row.total == null ? "" : Number(row.total),
-      row.payment || "ביט",
+      blankToNumber_(row.subtotal),
+      blankToNumber_(row.shipping),
+      blankToNumber_(row.total),
+      payment,
+      "", // ימי משלוח — ממלאים ידנית כשהחבילה בדרך
     ]);
 
-    return json_({ ok: true });
+    var last = sheet.getLastRow();
+    styleDataRow_(sheet, last);
+    applyStatusValidation_(sheet);
+    return json_({ ok: true, row: last });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message ? err.message : err) });
   }
@@ -84,15 +130,156 @@ function getSheet_() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
+  sheet.setRightToLeft(true);
   return sheet;
 }
 
-function ensureHeader_(sheet) {
-  if (sheet.getLastRow() === 0) {
+function ensureHeader_(sheet, forceRestyle) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow === 0) {
     sheet.appendRow(HEADERS);
-    sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold");
-    sheet.setFrozenRows(1);
+  } else {
+    // אם חסרה עמודת ימי משלוח — מוסיפים בסוף בלי לשבור נתונים קיימים
+    var width = sheet.getLastColumn();
+    var headers = sheet.getRange(1, 1, 1, Math.max(width, HEADERS.length)).getValues()[0];
+    var hasShipDays = false;
+    for (var i = 0; i < headers.length; i++) {
+      if (String(headers[i]).indexOf("ימי משלוח") !== -1) {
+        hasShipDays = true;
+        break;
+      }
+    }
+    if (!hasShipDays) {
+      sheet.getRange(1, HEADERS.length).setValue("ימי משלוח");
+    } else {
+      sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    }
   }
+
+  if (forceRestyle || lastRow === 0) {
+    styleSheet_(sheet);
+  } else {
+    styleHeaderOnly_(sheet);
+  }
+  sheet.setFrozenRows(1);
+}
+
+function styleSheet_(sheet) {
+  styleHeaderOnly_(sheet);
+
+  var maxRows = Math.max(sheet.getMaxRows(), 200);
+  var cols = HEADERS.length;
+
+  // רוחב עמודות נוח למובייל / דסקטופ
+  var widths = [140, 130, 120, 120, 110, 90, 160, 90, 80, 140, 220, 100, 80, 90, 90, 90];
+  for (var c = 0; c < widths.length; c++) {
+    sheet.setColumnWidth(c + 1, widths[c]);
+  }
+
+  // שורות נתונים — יישור וגופן
+  if (sheet.getLastRow() > 1) {
+    var data = sheet.getRange(2, 1, sheet.getLastRow() - 1, cols);
+    data.setFontFamily("Arial");
+    data.setFontSize(10);
+    data.setVerticalAlignment("middle");
+    data.setHorizontalAlignment("center");
+    data.setWrap(true);
+  }
+
+  // רקע עדין לשורות ריקות בסטטוס
+  sheet.getRange(2, 1, maxRows - 1, 1).setBackground(COLOR.emptyStatus);
+
+  formatMoneyColumns_(sheet);
+  applyStatusValidation_(sheet);
+  applyConditionalFormat_(sheet);
+}
+
+function styleHeaderOnly_(sheet) {
+  var header = sheet.getRange(1, 1, 1, HEADERS.length);
+  header.setValues([HEADERS]);
+  header.setBackground(COLOR.headerBg);
+  header.setFontColor(COLOR.headerFg);
+  header.setFontWeight("bold");
+  header.setFontFamily("Arial");
+  header.setFontSize(11);
+  header.setHorizontalAlignment("center");
+  header.setVerticalAlignment("middle");
+  sheet.setRowHeight(1, 36);
+}
+
+function styleDataRow_(sheet, row) {
+  var range = sheet.getRange(row, 1, 1, HEADERS.length);
+  range.setFontFamily("Arial");
+  range.setFontSize(10);
+  range.setVerticalAlignment("middle");
+  range.setHorizontalAlignment("center");
+  range.setWrap(true);
+  if (row % 2 === 0) {
+    // לא דורסים צבע סטטוס — רק עמודות אחרות ברקע עדין
+    sheet.getRange(row, 2, 1, HEADERS.length - 1).setBackground(COLOR.stripe);
+  }
+  sheet.getRange(row, 12, 1, 3).setNumberFormat("₪#,##0");
+  sheet.getRange(row, 16).setNumberFormat("0");
+}
+
+function formatMoneyColumns_(sheet) {
+  var last = sheet.getLastRow();
+  if (last < 2) return;
+  sheet.getRange(2, 12, last - 1, 3).setNumberFormat("₪#,##0");
+  sheet.getRange(2, 16, last - 1, 1).setNumberFormat("0");
+}
+
+function applyStatusValidation_(sheet) {
+  var maxRows = Math.max(sheet.getMaxRows(), 200);
+  var rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(STATUS_OPTIONS, true)
+    .setAllowInvalid(false)
+    .setHelpText("בחרו סטטוס הזמנה")
+    .build();
+  sheet.getRange(2, 1, maxRows - 1, 1).setDataValidation(rule);
+}
+
+function applyConditionalFormat_(sheet) {
+  sheet.clearConditionalFormatRules();
+  var maxRows = Math.max(sheet.getMaxRows(), 500);
+  var statusRange = sheet.getRange(2, 1, maxRows - 1, 1);
+  var daysRange = sheet.getRange(2, 16, maxRows - 1, 1);
+  var rules = [];
+
+  function statusRule(text, bg, fg) {
+    return SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo(text)
+      .setBackground(bg)
+      .setFontColor(fg || COLOR.ink)
+      .setRanges([statusRange])
+      .build();
+  }
+
+  rules.push(statusRule("ממתין לביט", COLOR.waitBit));
+  rules.push(statusRule("ממתין ל-PayPal", COLOR.waitPaypal));
+  rules.push(statusRule("שולם", COLOR.paid));
+  rules.push(statusRule("בהכנה", COLOR.prep));
+  rules.push(statusRule("משלוח מארה״ב", COLOR.ship, COLOR.shipFg));
+  rules.push(statusRule("נמסר", COLOR.delivered, COLOR.deliveredFg));
+  rules.push(statusRule("בוטל", COLOR.cancelled, COLOR.muted));
+
+  // סולם צבעים לימי משלוח (כמו במינוקס) — ירוק קצר → אדום ארוך
+  rules.push(
+    SpreadsheetApp.newConditionalFormatRule()
+      .setGradientMinpointWithValue("#D8F3DC", SpreadsheetApp.InterpolationType.NUMBER, "5")
+      .setGradientMidpointWithValue("#FFE066", SpreadsheetApp.InterpolationType.NUMBER, "12")
+      .setGradientMaxpointWithValue("#F8AD9D", SpreadsheetApp.InterpolationType.NUMBER, "20")
+      .setRanges([daysRange])
+      .build(),
+  );
+
+  sheet.setConditionalFormatRules(rules);
+}
+
+function blankToNumber_(value) {
+  if (value === "" || value == null) return "";
+  var n = Number(value);
+  return isNaN(n) ? "" : n;
 }
 
 function json_(obj) {
