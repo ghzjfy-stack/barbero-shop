@@ -42,7 +42,7 @@ export default function Hero() {
             </span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-8 text-ivory/75 sm:text-lg">
-            נבחרו למספרות ולשימוש ביתי. 100% מקורי מארה״ב, באיכות ללא פשרות, עם אחריות מלאה ושירות לקוחות בעברית.
+            נבחרו למספרות ולשימוש ביתי. 100% מקורי מארה״ב, באיכות ללא פשרות, עם אחריות מלאה ושירות ישירות מולנו.
           </p>
           <div className="mt-8 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap min-[420px]:items-center">
             <a href="#collection" className="btn-gold h-12 w-full px-7 text-[15px] min-[420px]:w-auto">
