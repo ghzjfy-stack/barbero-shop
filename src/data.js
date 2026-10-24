@@ -14,12 +14,13 @@ export function shippingFeeFor(subtotal) {
   return 0;
 }
 
-export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח"];
+export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח", "אביזרים ונלווים"];
 
 export const navLinks = [
   { label: "קולקציה", href: "/#collection" },
   { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
   { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
+  { label: "אביזרים ונלווים", href: "/#collection", category: "אביזרים ונלווים" },
   { label: "אודות", href: "/about" },
 ];
 
@@ -258,6 +259,41 @@ export const products = [
       "אחיזת סיליקון ארגונומית (Non-Slip Grip): מארז סיליקון נגד החלקה לאחיזה יציבה ובטוחה בסביבה רטובה.",
       "ערכת טיפוח מקיפה: כוללת מסרקי הגבהה מגוונים לעיצוב הזקן והגוף בדרגות שונות.",
       "מתח אוניברסלי (100V-240V): תומך בחשמל בישראל לטעינה בטוחה ומהירה.",
+    ],
+  },
+  {
+    id: "wahl-blade-oil",
+    kind: "שמן להבים",
+    model: "Hair Clipper Blade Oil 4 fl oz (120 ml)",
+    brand: "Wahl",
+    category: "אביזרים ונלווים",
+    rating: 4.8,
+    reviews: 210,
+    sku: "03310-300A",
+    voltage: "—",
+    origin: "Wahl Clipper Corporation",
+    badge: "משלים",
+    stock: 24,
+    price: 115,
+    frame: "studio",
+    image: "/products/wahl-blade-oil.jpg",
+    hoverImage: "/products/wahl-blade-oil-howto.jpg",
+    images: [
+      "/products/wahl-blade-oil.jpg",
+      "/products/wahl-blade-oil-howto.jpg",
+      "/products/wahl-blade-oil-use.jpg",
+    ],
+    blurb:
+      "שמן סיכה מקורי של Wahl להבי מכונות תספורת וטרימרים. כמה טיפות באופן קבוע משפרות ביצועים, מפחיתות חיכוך ומאריכות את חיי הלהבים.",
+    features: [
+      "נפח: 4 fl oz / 120 ml — בקבוק עם פיית מוליך מדויקת.",
+      "Lubricating oil specifically prepared for clipper blades — מותאם במיוחד ללהבי Wahl.",
+      "Improves Performance: מסייע לפעולה שקטה וחלקה יותר של המכונה.",
+      "Extends Lifetime of Blades: מפחית חיכוך ושומר על חדות לאורך זמן.",
+      "שכבת הגנה דקה נגד קורוזיה על משטחי הלהב.",
+      "אופן שימוש מומלץ: 3 טיפות בחזית כל להב + טיפה בכל צד, להפעיל את המכונה ולנגב עודפים.",
+      "מומלץ לשמן לפני/אחרי שימוש ולאחר ניקוי — לא להחליף ב־WD-40 או שמנים ביתיים.",
+      "מתאים גם כשמן השחזה/הכנה איכותי (honing oil) לפי הנחיות היצרן.",
     ],
   },
 ].map((product) => ({
