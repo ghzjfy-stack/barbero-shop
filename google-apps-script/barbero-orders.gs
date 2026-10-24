@@ -18,6 +18,8 @@
  * כל הזמנה מהאתר תוסיף שורה חדשה לגיליון.
  */
 
+/** מזהה הגיליון מתוך ה-URL (בין /d/ ל-/edit) */
+var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
 var SHEET_NAME = "הזמנות";
 var WEBHOOK_SECRET = ""; // אופציונלי — חייב להתאים ל-GOOGLE_SHEETS_WEBHOOK_SECRET ב-Vercel
 
@@ -79,7 +81,7 @@ function doGet() {
 }
 
 function getSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) sheet = ss.insertSheet(SHEET_NAME);
   return sheet;
