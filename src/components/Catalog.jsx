@@ -91,6 +91,121 @@ function SortSelect({ value, onChange }) {
   );
 }
 
+function ProductCardMedia({ product, soldOut, off, wished, onOpen, onToggleWish }) {
+  const gallery = product.images?.length ? product.images : product.image ? [product.image] : [];
+  const hoverImage = product.hoverImage || gallery[1];
+  const scrollerRef = useRef(null);
+  const swipeRef = useRef({ x: 0, moved: false });
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    const node = scrollerRef.current;
+    if (!node) return undefined;
+    const onScroll = () => {
+      const width = node.clientWidth || 1;
+      setSlide(Math.round(node.scrollLeft / width));
+    };
+    node.addEventListener("scroll", onScroll, { passive: true });
+    return () => node.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const openUnlessSwiped = () => {
+    if (swipeRef.current.moved) return;
+    onOpen();
+  };
+
+  return (
+    <div className="relative aspect-square overflow-hidden bg-ink">
+      {/* Mobile / small: swipe between gallery images */}
+      <div
+        ref={scrollerRef}
+        dir="ltr"
+        className="flex h-full w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        onTouchStart={(event) => {
+          swipeRef.current = { x: event.touches[0]?.clientX ?? 0, moved: false };
+        }}
+        onTouchMove={(event) => {
+          const x = event.touches[0]?.clientX ?? 0;
+          if (Math.abs(x - swipeRef.current.x) > 10) swipeRef.current.moved = true;
+        }}
+      >
+        {gallery.map((src, index) => (
+          <button
+            key={`${src}-${index}`}
+            type="button"
+            className="h-full w-full shrink-0 snap-center p-3"
+            aria-label={`${product.name} — תמונה ${index + 1} מתוך ${gallery.length}`}
+            onClick={openUnlessSwiped}
+          >
+            <ProductImage src={src} alt="" className="h-full w-full object-contain object-center" />
+          </button>
+        ))}
+      </div>
+
+      {/* Desktop: keep existing hover swap */}
+      <button
+        type="button"
+        className="absolute inset-0 hidden p-3 sm:p-4 md:block"
+        onClick={onOpen}
+        aria-label={`מבט מהיר: ${product.name}`}
+      >
+        <ProductImage
+          src={product.image}
+          alt={product.name}
+          className={
+            hoverImage
+              ? "h-full w-full object-contain object-center transition duration-500 group-hover:opacity-0"
+              : "h-full w-full object-contain object-center transition duration-500"
+          }
+        />
+        {hoverImage && (
+          <ProductImage
+            src={hoverImage}
+            alt=""
+            className="pointer-events-none absolute inset-3 sm:inset-4 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] sm:h-[calc(100%-2rem)] sm:w-[calc(100%-2rem)] object-contain object-center opacity-0 transition duration-500 group-hover:opacity-100"
+          />
+        )}
+      </button>
+
+      {gallery.length > 1 && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1.5 md:hidden">
+          {gallery.map((src, index) => (
+            <span
+              key={`dot-${src}-${index}`}
+              className={`h-1.5 w-1.5 rounded-full ${index === slide ? "bg-gold" : "bg-white/35"}`}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="pointer-events-none absolute top-3 start-3 z-10 flex max-w-[calc(100%-3.25rem)] flex-col items-start gap-2">
+        {soldOut ? (
+          <span className="bg-ink/85 px-2.5 py-1 text-[11px] text-ivory">אזל</span>
+        ) : product.badge ? (
+          <span className="bg-ink/85 px-2.5 py-1 text-start text-[11px] leading-4 text-gold-soft">
+            {product.badge}
+          </span>
+        ) : off > 0 ? (
+          <span dir="ltr" className="bg-gold px-2.5 py-1 text-[11px] font-semibold text-[#16120b]">
+            -{off}%
+          </span>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        className={`absolute top-2 end-2 z-10 grid h-11 w-11 place-items-center bg-ink/55 ${
+          wished ? "text-gold" : "text-ivory"
+        }`}
+        aria-pressed={wished}
+        aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
+        onClick={onToggleWish}
+      >
+        <IconHeart filled={wished} />
+      </button>
+    </div>
+  );
+}
+
 function ProductCard({ product }) {
   const { addToCart, openQuickView, toggleWish, isWished } = useStore();
   const [variantId, setVariantId] = useState(product.variants?.[0]?.id);
@@ -99,59 +214,17 @@ function ProductCard({ product }) {
   const soldOut = product.stock <= 0;
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
-  const hoverImage = product.hoverImage || product.images?.[1];
 
   return (
     <article className="group flex h-full flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
-      <div className="relative aspect-square overflow-hidden bg-ink">
-        <button
-          type="button"
-          className="absolute inset-0 p-3 sm:p-4"
-          onClick={() => openQuickView(product.id)}
-          aria-label={`מבט מהיר: ${product.name}`}
-        >
-          <ProductImage
-            src={product.image}
-            alt={product.name}
-            className={
-              hoverImage
-                ? "h-full w-full object-contain object-center transition duration-500 group-hover:opacity-0"
-                : "h-full w-full object-contain object-center transition duration-500"
-            }
-          />
-          {hoverImage && (
-            <ProductImage
-              src={hoverImage}
-              alt=""
-              className="pointer-events-none absolute inset-3 sm:inset-4 h-[calc(100%-1.5rem)] w-[calc(100%-1.5rem)] sm:h-[calc(100%-2rem)] sm:w-[calc(100%-2rem)] object-contain object-center opacity-0 transition duration-500 group-hover:opacity-100"
-            />
-          )}
-        </button>
-        <div className="pointer-events-none absolute top-3 start-3 flex max-w-[calc(100%-3.25rem)] flex-col items-start gap-2">
-          {soldOut ? (
-            <span className="bg-ink/85 px-2.5 py-1 text-[11px] text-ivory">אזל</span>
-          ) : product.badge ? (
-            <span className="bg-ink/85 px-2.5 py-1 text-start text-[11px] leading-4 text-gold-soft">
-              {product.badge}
-            </span>
-          ) : off > 0 ? (
-            <span dir="ltr" className="bg-gold px-2.5 py-1 text-[11px] font-semibold text-[#16120b]">
-              -{off}%
-            </span>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          className={`absolute top-2 end-2 grid h-11 w-11 place-items-center bg-ink/55 ${
-            wished ? "text-gold" : "text-ivory"
-          }`}
-          aria-pressed={wished}
-          aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
-          onClick={() => toggleWish(product.id)}
-        >
-          <IconHeart filled={wished} />
-        </button>
-      </div>
+      <ProductCardMedia
+        product={product}
+        soldOut={soldOut}
+        off={off}
+        wished={wished}
+        onOpen={() => openQuickView(product.id)}
+        onToggleWish={() => toggleWish(product.id)}
+      />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col p-3 sm:p-4">
         <div>
