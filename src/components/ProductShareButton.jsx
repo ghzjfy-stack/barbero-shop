@@ -1,39 +1,25 @@
 import { productWhatsAppShareHref } from "../share";
-import { IconBeardBrush } from "./Icons";
+import { IconShare } from "./Icons";
+
+const mediaClass =
+  "grid h-11 w-11 place-items-center bg-ink/55 text-ivory transition hover:text-gold-soft";
 
 export default function ProductShareButton({
   product,
   variantId,
-  className = "btn-text h-9 text-sm",
-  iconOnly = false,
+  className = mediaClass,
 }) {
-  const href = productWhatsAppShareHref(product, variantId);
-
-  if (iconOnly) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={className}
-        aria-label={`שיתוף ${product.name} בוואטסאפ`}
-        title="שתף בוואטסאפ"
-      >
-        <IconBeardBrush className="h-5 w-5" />
-      </a>
-    );
-  }
-
   return (
     <a
-      href={href}
+      href={productWhatsAppShareHref(product, variantId)}
       target="_blank"
       rel="noopener noreferrer"
       className={className}
       aria-label={`שיתוף ${product.name} בוואטסאפ`}
+      title="שתף בוואטסאפ"
+      onClick={(event) => event.stopPropagation()}
     >
-      <IconBeardBrush className="h-4 w-4" />
-      שתף בוואטסאפ
+      <IconShare className="h-5 w-5" />
     </a>
   );
 }

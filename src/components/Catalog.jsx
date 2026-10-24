@@ -7,6 +7,7 @@ import ProductImage from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 
+
 const sortOptions = [
   { value: "featured", label: "מיון: מומלצים" },
   { value: "priceAsc", label: "מחיר: מהנמוך" },
@@ -92,7 +93,7 @@ function SortSelect({ value, onChange }) {
   );
 }
 
-function ProductCardMedia({ product, soldOut, off, wished, onOpen, onToggleWish }) {
+function ProductCardMedia({ product, soldOut, off, wished, variantId, onOpen, onToggleWish }) {
   const gallery = product.images?.length ? product.images : product.image ? [product.image] : [];
   const hoverImage = product.hoverImage || gallery[1];
   const scrollerRef = useRef(null);
@@ -192,17 +193,20 @@ function ProductCardMedia({ product, soldOut, off, wished, onOpen, onToggleWish 
           </span>
         ) : null}
       </div>
-      <button
-        type="button"
-        className={`absolute top-2 end-2 z-10 grid h-11 w-11 place-items-center bg-ink/55 ${
-          wished ? "text-gold" : "text-ivory"
-        }`}
-        aria-pressed={wished}
-        aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
-        onClick={onToggleWish}
-      >
-        <IconHeart filled={wished} />
-      </button>
+      <div className="absolute top-2 end-2 z-10 flex flex-col gap-2">
+        <button
+          type="button"
+          className={`grid h-11 w-11 place-items-center bg-ink/55 ${
+            wished ? "text-gold" : "text-ivory"
+          }`}
+          aria-pressed={wished}
+          aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
+          onClick={onToggleWish}
+        >
+          <IconHeart filled={wished} />
+        </button>
+        <ProductShareButton product={product} variantId={variantId} />
+      </div>
     </div>
   );
 }
@@ -223,6 +227,7 @@ function ProductCard({ product }) {
         soldOut={soldOut}
         off={off}
         wished={wished}
+        variantId={variantId}
         onOpen={() => openQuickView(product.id)}
         onToggleWish={() => toggleWish(product.id)}
       />
@@ -285,7 +290,6 @@ function ProductCard({ product }) {
           >
             מבט מהיר
           </button>
-          <ProductShareButton product={product} variantId={variantId} />
         </div>
       </div>
     </article>
