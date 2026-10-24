@@ -56,7 +56,9 @@ export default function Hero() {
         </div>
 
         <aside className="rise border border-line bg-ink/80 p-4 backdrop-blur-md md:col-span-5">
-          <p className="text-xs text-gold">הדגם הנמכר ביותר</p>
+          <p className="inline-block border border-gold/50 bg-gradient-to-l from-gold/20 via-gold/10 to-transparent px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-gold shadow-[0_0_24px_rgba(198,161,91,0.25)]">
+            הדגם הנמכר ביותר
+          </p>
           <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
             <div className="relative mx-auto h-64 w-full overflow-hidden sm:h-72 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
               <ProductImage
@@ -80,13 +82,3 @@ export default function Hero() {
               onClick={() => addToCart(featured.id, 1, offer.variant?.id)}
             >
               הוסף לעגלה
-            </button>
-            <button type="button" className="btn-ghost h-11 text-sm" onClick={() => openQuickView(featured.id)}>
-              מבט מהיר
-            </button>
-          </div>
-        </aside>
-      </div>
-    </section>
-  );
-}
