@@ -10,11 +10,28 @@ const BIT_PHONE = "0543554888";
 /** Personal Bit receive link decoded from public/bit-qr.jpg */
 const BIT_PERSONAL_URL = "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
 
+const PAYPAL_EMAIL = "ghzjfyy@gmail.com";
+
 /** Whole shekels for clipboard helper text. */
-function bitAmount(amount) {
+function paymentAmount(amount) {
   const total = Number(amount);
   if (!Number.isFinite(total) || total <= 0) return 0;
   return Math.round(total);
+}
+
+/** One-click PayPal checkout with amount prefilled (ILS). */
+function paypalPayUrl(order) {
+  const params = new URLSearchParams({
+    cmd: "_xclick",
+    business: PAYPAL_EMAIL,
+    item_name: `BARBERO הזמנה ${order.number}`,
+    amount: Number(order.total).toFixed(2),
+    currency_code: "ILS",
+    no_shipping: "1",
+    no_note: "1",
+    charset: "utf-8",
+  });
+  return `https://www.paypal.com/cgi-bin/webscr?${params.toString()}`;
 }
 
 async function copyText(value) {
@@ -35,6 +52,7 @@ const emptyDetails = {
   postal: "",
   notes: "",
   agree: false,
+  payment: "bit",
 };
 
 export default function CartDrawer() {
@@ -42,7 +60,7 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
-  const [bitHint, setBitHint] = useState("");
+  const [payHint, setPayHint] = useState("");
   const [amountCopied, setAmountCopied] = useState(false);
 
   const setField = (key, value) => {
@@ -60,6 +78,7 @@ export default function CartDrawer() {
     const postal = details.postal.trim();
     if (postal && !/^\d{5}(\d{2})?$/.test(postal)) next.postal = "מיקוד לא תקין";
     if (!details.agree) next.agree = "יש לאשר את התקנון כדי להמשיך";
+    if (details.payment !== "bit" && details.payment !== "paypal") next.payment = "בחרו אמצעי תשלום";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -75,9 +94,12 @@ export default function CartDrawer() {
       unit: details.unit.trim(),
       postal: details.postal.trim(),
       notes: details.notes.trim(),
+      payment: details.payment,
     });
     setDetails(emptyDetails);
     setCopied(false);
+    setPayHint("");
+    setAmountCopied(false);
   };
 
   const copyNumber = async () => {
@@ -90,17 +112,28 @@ export default function CartDrawer() {
     }
   };
 
+  const isPaypal = store.order?.payment === "paypal";
+  const payLabel = isPaypal ? "PayPal" : "ביט";
+
   const whatsappHref = store.order
     ? `https://wa.me/972543554888?text=${encodeURIComponent(
-        `שלום, אישור תשלום עבור הזמנה ${store.order.number} בסכום ${formatPrice(store.order.total)} (כולל משלוח)`,
+        `שלום, אישור תשלום ב-${payLabel} עבור הזמנה ${store.order.number} בסכום ${formatPrice(store.order.total)} (כולל משלוח)`,
       )}`
     : "https://wa.me/972543554888";
 
   const copyOrderAmount = async () => {
     if (!store.order) return;
-    const ok = await copyText(bitAmount(store.order.total));
+    const ok = await copyText(paymentAmount(store.order.total));
     setAmountCopied(ok);
-    setBitHint(
+    if (isPaypal) {
+      setPayHint(
+        ok
+          ? `הסכום ${formatPrice(store.order.total)} הועתק. ב-PayPal העבירו אל ${PAYPAL_EMAIL}`
+          : `העבירו ${formatPrice(store.order.total)} ב-PayPal אל ${PAYPAL_EMAIL}`,
+      );
+      return;
+    }
+    setPayHint(
       ok
         ? `הסכום ${formatPrice(store.order.total)} הועתק. בביט: העברה → ${BIT_PHONE} → הדביקו את הסכום`
         : `בביט לחצו העברה, הזינו ${BIT_PHONE}, ואז ${formatPrice(store.order.total)}`,
@@ -109,7 +142,12 @@ export default function CartDrawer() {
 
   const copyBitPhone = async () => {
     const ok = await copyText(BIT_PHONE);
-    setBitHint(ok ? `המספר ${BIT_PHONE} הועתק` : `העבירו ל־${BIT_PHONE}`);
+    setPayHint(ok ? `המספר ${BIT_PHONE} הועתק` : `העבירו ל־${BIT_PHONE}`);
+  };
+
+  const copyPaypalEmail = async () => {
+    const ok = await copyText(PAYPAL_EMAIL);
+    setPayHint(ok ? `המייל ${PAYPAL_EMAIL} הועתק` : `העבירו אל ${PAYPAL_EMAIL}`);
   };
 
   return (
@@ -153,7 +191,15 @@ export default function CartDrawer() {
               <span className="tabular-nums" dir="ltr">
                 {formatPrice(store.order.total)}
               </span>{" "}
-              ב-Bit למספר <span dir="ltr">054-3554888</span>
+              {isPaypal ? (
+                <>
+                  ב-PayPal אל <span dir="ltr">{PAYPAL_EMAIL}</span>
+                </>
+              ) : (
+                <>
+                  ב-Bit למספר <span dir="ltr">054-3554888</span>
+                </>
+              )}
               <span className="mt-2 block text-sm font-normal text-ivory/80">
                 הסכום כולל מוצרים
                 {store.order.shipping > 0 ? ` + משלוח ${formatPrice(store.order.shipping)}` : " (משלוח חינם)"}
@@ -170,53 +216,113 @@ export default function CartDrawer() {
               {copied ? "המספר הועתק" : "העתקת מספר הזמנה"}
             </button>
 
-            <div className="mt-6 border border-white/10 bg-black/40 px-4 py-5">
-              <p className="text-center text-sm font-semibold text-ivory">תשלום בביט</p>
-              <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
-                <li>
-                  <span className="text-gold">1.</span> פתחו את ביט → <span className="text-ivory">העברה</span>
-                </li>
-                <li>
-                  <span className="text-gold">2.</span> הזינו / הדביקו{" "}
-                  <button type="button" className="text-ivory underline decoration-gold/50" dir="ltr" onClick={copyBitPhone}>
-                    {BIT_PHONE}
+            {isPaypal ? (
+              <div className="mt-6 border border-[#0070ba]/35 bg-gradient-to-b from-[#0070ba]/12 to-black/40 px-4 py-5">
+                <div className="flex items-center justify-center gap-2">
+                  <PayPalMark className="h-5 w-auto" />
+                  <p className="text-sm font-semibold text-ivory">תשלום ב-PayPal</p>
+                </div>
+                <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
+                  <li>
+                    <span className="text-[#79c3fc]">1.</span> לחצו על הכפתור הכחול — PayPal ייפתח עם הסכום מוכן
+                  </li>
+                  <li>
+                    <span className="text-[#79c3fc]">2.</span> או העבירו ידנית אל{" "}
+                    <button
+                      type="button"
+                      className="text-ivory underline decoration-[#0070ba]/60"
+                      dir="ltr"
+                      onClick={copyPaypalEmail}
+                    >
+                      {PAYPAL_EMAIL}
+                    </button>
+                  </li>
+                  <li>
+                    <span className="text-[#79c3fc]">3.</span> סכום{" "}
+                    <span className="tabular-nums text-ivory" dir="ltr">
+                      {formatPrice(store.order.total)}
+                    </span>
+                  </li>
+                </ol>
+
+                <a
+                  className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
+                  href={paypalPayUrl(store.order)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <PayPalMark className="h-4 w-auto brightness-0 invert" />
+                  שלם {formatPrice(store.order.total)} ב-PayPal
+                </a>
+
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button type="button" className="btn-ghost h-11 text-xs" onClick={copyPaypalEmail}>
+                    העתק מייל
                   </button>
-                </li>
-                <li>
-                  <span className="text-gold">3.</span> הזינו / הדביקו את הסכום{" "}
-                  <span className="tabular-nums text-ivory" dir="ltr">
-                    {formatPrice(store.order.total)}
-                  </span>
-                </li>
-              </ol>
+                  <button type="button" className="btn-ghost h-11 text-xs" onClick={copyOrderAmount}>
+                    {amountCopied ? "הסכום הועתק" : "העתק סכום"}
+                  </button>
+                </div>
 
-              <button type="button" className="btn-gold mt-5 h-12 w-full" onClick={copyOrderAmount}>
-                {amountCopied ? "הסכום הועתק — עברו לביט" : `העתק סכום ${formatPrice(store.order.total)}`}
-              </button>
-              {bitHint ? (
-                <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
-                  {bitHint}
+                {payHint ? (
+                  <p className="mt-3 text-center text-xs leading-6 text-[#9fd0ff]" role="status">
+                    {payHint}
+                  </p>
+                ) : (
+                  <p className="mt-3 text-center text-xs leading-6 text-muted">
+                    לאחר התשלום שלחו אישור בוואטסאפ ונאשר את ההזמנה
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mt-6 border border-white/10 bg-black/40 px-4 py-5">
+                <p className="text-center text-sm font-semibold text-ivory">תשלום בביט</p>
+                <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
+                  <li>
+                    <span className="text-gold">1.</span> פתחו את ביט → <span className="text-ivory">העברה</span>
+                  </li>
+                  <li>
+                    <span className="text-gold">2.</span> הזינו / הדביקו{" "}
+                    <button type="button" className="text-ivory underline decoration-gold/50" dir="ltr" onClick={copyBitPhone}>
+                      {BIT_PHONE}
+                    </button>
+                  </li>
+                  <li>
+                    <span className="text-gold">3.</span> הזינו / הדביקו את הסכום{" "}
+                    <span className="tabular-nums text-ivory" dir="ltr">
+                      {formatPrice(store.order.total)}
+                    </span>
+                  </li>
+                </ol>
+
+                <button type="button" className="btn-gold mt-5 h-12 w-full" onClick={copyOrderAmount}>
+                  {amountCopied ? "הסכום הועתק — עברו לביט" : `העתק סכום ${formatPrice(store.order.total)}`}
+                </button>
+                {payHint ? (
+                  <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
+                    {payHint}
+                  </p>
+                ) : null}
+
+                <p className="mt-6 text-center text-xs leading-6 text-muted">
+                  או סרקו מתוך ביט את הקוד האישי שלנו ואז הזינו את אותו סכום
                 </p>
-              ) : null}
-
-              <p className="mt-6 text-center text-xs leading-6 text-muted">
-                או סרקו מתוך ביט את הקוד האישי שלנו ואז הזינו את אותו סכום
-              </p>
-              <img
-                className="mx-auto mt-3 block max-w-[220px] rounded-lg bg-white p-2"
-                src="/bit-qr.jpg"
-                alt="קוד QR אישי לתשלום ב-Bit"
-                width="220"
-              />
-              <a
-                className="mt-4 block text-center text-[11px] text-muted underline decoration-white/20"
-                href={BIT_PERSONAL_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                קישור ביט האישי של החנות
-              </a>
-            </div>
+                <img
+                  className="mx-auto mt-3 block max-w-[220px] rounded-lg bg-white p-2"
+                  src="/bit-qr.jpg"
+                  alt="קוד QR אישי לתשלום ב-Bit"
+                  width="220"
+                />
+                <a
+                  className="mt-4 block text-center text-[11px] text-muted underline decoration-white/20"
+                  href={BIT_PERSONAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  קישור ביט האישי של החנות
+                </a>
+              </div>
+            )}
 
             <a
               className="mt-4 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
@@ -281,6 +387,30 @@ export default function CartDrawer() {
                 onChange={(event) => setField("notes", event.target.value)}
               />
             </Field>
+
+            <fieldset className="mb-3">
+              <legend className="mb-2 text-sm text-muted">אמצעי תשלום</legend>
+              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="אמצעי תשלום">
+                <PaymentOption
+                  selected={details.payment === "bit"}
+                  onSelect={() => setField("payment", "bit")}
+                  title="ביט"
+                  subtitle="העברה מהירה"
+                  mark={<BitMark />}
+                  accent="gold"
+                />
+                <PaymentOption
+                  selected={details.payment === "paypal"}
+                  onSelect={() => setField("payment", "paypal")}
+                  title="PayPal"
+                  subtitle="כרטיס או יתרה"
+                  mark={<PayPalMark className="h-4 w-auto text-[#79c3fc]" />}
+                  accent="paypal"
+                />
+              </div>
+              {errors.payment && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.payment}</p>}
+            </fieldset>
+
             <label className="mt-2 flex items-start gap-3 text-sm leading-6 text-muted">
               <input
                 type="checkbox"
@@ -297,7 +427,9 @@ export default function CartDrawer() {
               </span>
             </label>
             {errors.agree && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.agree}</p>}
-            <p className="mt-4 text-xs leading-6 text-muted">התשלום מתבצע בביט בלבד. התשלום מאובטח בתקן SSL מחמיר.</p>
+            <p className="mt-4 text-xs leading-6 text-muted">
+              אחרי אישור ההזמנה תועברו לתשלום ב{details.payment === "paypal" ? "-PayPal" : "ביט"}. התשלום מאובטח בתקן SSL.
+            </p>
             <div className="mt-auto pt-6">
               <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
               <Totals subtotal={store.subtotal} shipping={store.shipping} total={store.total} />
@@ -408,13 +540,63 @@ export default function CartDrawer() {
                 </button>
               )}
               <p className="mt-3 text-center text-[11px] text-muted">
-                הסכום כולל משלוח במידת הצורך · תשלום בביט אחרי אישור ההזמנה
+                הסכום כולל משלוח במידת הצורך · תשלום בביט או PayPal אחרי אישור ההזמנה
               </p>
             </footer>
           </>
         )}
       </div>
     </Drawer>
+  );
+}
+
+function PaymentOption({ selected, onSelect, title, subtitle, mark, accent = "gold" }) {
+  const selectedClass =
+    accent === "paypal"
+      ? "border-[#0070ba]/80 bg-[#0070ba]/15 text-ivory shadow-[inset_0_0_0_1px_rgba(0,112,186,0.35)]"
+      : "border-gold/70 bg-gold/10 text-ivory";
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`flex flex-col items-start gap-2 border px-3 py-3 text-start transition ${
+        selected ? selectedClass : "border-white/12 bg-black/20 text-muted hover:border-white/25 hover:text-ivory"
+      }`}
+    >
+      <span className="flex w-full items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-ivory">{title}</span>
+        {mark}
+      </span>
+      <span className="text-[11px] leading-4">{subtitle}</span>
+    </button>
+  );
+}
+
+function BitMark() {
+  return (
+    <span className="grid h-5 min-w-8 place-items-center rounded-full bg-white px-1.5 text-[10px] font-semibold text-black" dir="ltr">
+      bit
+    </span>
+  );
+}
+
+function PayPalMark({ className = "h-4 w-auto" }) {
+  return (
+    <svg viewBox="0 0 80 24" className={className} aria-hidden="true">
+      <text
+        x="0"
+        y="17"
+        fill="currentColor"
+        fontFamily="Helvetica, Arial, sans-serif"
+        fontWeight="700"
+        fontSize="16"
+        letterSpacing="-0.4"
+      >
+        PayPal
+      </text>
+    </svg>
   );
 }
 
