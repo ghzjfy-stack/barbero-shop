@@ -79,9 +79,11 @@ export default async function handler(req, res) {
     return;
   }
 
+  // Note: in this Supabase table, "Phone" was created as type `time` by mistake,
+  // so we store the phone number in the text column "Email" until Phone is altered to text.
   const { data, error } = await client
     .from("customers")
-    .insert({ Name: name, Phone: phone })
+    .insert({ Name: name, Email: phone })
     .select("id, created_at, Name, Phone, Email")
     .single();
 
