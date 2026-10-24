@@ -19,9 +19,8 @@ function paymentAmount(amount) {
   return Math.round(total);
 }
 
-/** One-click PayPal checkout with amount prefilled (ILS). */
-function paypalPayUrl(order) {
-  const params = new URLSearchParams({
+function paypalPayParams(order) {
+  return new URLSearchParams({
     cmd: "_xclick",
     business: PAYPAL_EMAIL,
     item_name: `BARBERO הזמנה ${order.number}`,
@@ -31,7 +30,41 @@ function paypalPayUrl(order) {
     no_note: "1",
     charset: "utf-8",
   });
-  return `https://www.paypal.com/cgi-bin/webscr?${params.toString()}`;
+}
+
+/** One-click PayPal checkout with amount prefilled (ILS). */
+function paypalPayUrl(order) {
+  return `https://www.paypal.com/cgi-bin/webscr?${paypalPayParams(order).toString()}`;
+}
+
+/**
+ * Phone: prefer the PayPal app when installed, else the mobile web checkout.
+ * Desktop: open the PayPal website in a new tab.
+ */
+function openPayPalPayment(order) {
+  const webUrl = paypalPayUrl(order);
+  const ua = navigator.userAgent || "";
+  const android = /Android/i.test(ua);
+  const ios = /iPhone|iPad|iPod/i.test(ua);
+
+  if (!android && !ios) {
+    window.open(webUrl, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  if (android) {
+    // Chrome Intent → PayPal app package if present, otherwise browser fallback.
+    const intent =
+      `intent://www.paypal.com/cgi-bin/webscr?${paypalPayParams(order).toString()}` +
+      `#Intent;scheme=https;package=com.paypal.android.p2pmobile;` +
+      `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+    window.location.href = intent;
+    return;
+  }
+
+  // iOS: same-tab https navigation lets Universal Links open the PayPal app when installed.
+  // (target=_blank often blocks that handoff.)
+  window.location.assign(webUrl);
 }
 
 async function copyText(value) {
@@ -224,7 +257,7 @@ export default function CartDrawer() {
                 </div>
                 <ol className="mt-4 space-y-2 text-sm leading-7 text-muted">
                   <li>
-                    <span className="text-[#79c3fc]">1.</span> לחצו על הכפתור הכחול — PayPal ייפתח עם הסכום מוכן
+                    <span className="text-[#79c3fc]">1.</span> לחצו על הכפתור הכחול — בטלפון תיפתח האפליקציה אם מותקנת, במחשב אתר PayPal עם הסכום
                   </li>
                   <li>
                     <span className="text-[#79c3fc]">2.</span> או העבירו ידנית אל{" "}
@@ -245,15 +278,14 @@ export default function CartDrawer() {
                   </li>
                 </ol>
 
-                <a
+                <button
+                  type="button"
                   className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
-                  href={paypalPayUrl(store.order)}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() => openPayPalPayment(store.order)}
                 >
                   <PayPalMark className="h-4 w-auto brightness-0 invert" />
                   שלם {formatPrice(store.order.total)} ב-PayPal
-                </a>
+                </button>
 
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <button type="button" className="btn-ghost h-11 text-xs" onClick={copyPaypalEmail}>
