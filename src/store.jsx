@@ -239,11 +239,14 @@ export function StoreProvider({ children }) {
       subtotal,
       shipping,
       lines: lines.map((line) => ({
+        id: line.product.id,
         name: line.product.name,
         kind: line.product.kind,
         model: line.product.model,
         label: line.offer.label,
+        variantId: line.variantId,
         qty: line.qty,
+        unitPrice: line.offer.price,
         lineTotal: line.lineTotal,
       })),
     };
