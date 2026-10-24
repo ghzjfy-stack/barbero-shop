@@ -146,13 +146,6 @@ export default function CartDrawer() {
   };
 
   const isPaypal = store.order?.payment === "paypal";
-  const payLabel = isPaypal ? "PayPal" : "ביט";
-
-  const whatsappHref = store.order
-    ? `https://wa.me/972543554888?text=${encodeURIComponent(
-        `שלום, אישור תשלום ב-${payLabel} עבור הזמנה ${store.order.number} בסכום ${formatPrice(store.order.total)} (כולל משלוח)`,
-      )}`
-    : "https://wa.me/972543554888";
 
   const copyOrderAmount = async () => {
     if (!store.order) return;
@@ -164,11 +157,6 @@ export default function CartDrawer() {
   const copyBitPhone = async () => {
     const ok = await copyText(BIT_PHONE);
     setPayHint(ok ? "המספר הועתק" : `העבירו ל־${BIT_PHONE}`);
-  };
-
-  const copyPaypalEmail = async () => {
-    const ok = await copyText(PAYPAL_EMAIL);
-    setPayHint(ok ? "המייל הועתק" : `העבירו אל ${PAYPAL_EMAIL}`);
   };
 
   return (
@@ -230,43 +218,35 @@ export default function CartDrawer() {
                   שלם עכשיו ב-PayPal
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="btn-gold h-14 w-full text-base"
-                  onClick={async () => {
-                    await copyOrderAmount();
-                    window.open(BIT_PERSONAL_URL, "_blank", "noopener,noreferrer");
-                  }}
-                >
-                  {amountCopied ? "הסכום הועתק — פתחו ביט" : "העתק סכום ופתח ביט"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="btn-gold h-14 w-full text-base"
+                    onClick={async () => {
+                      await copyOrderAmount();
+                      window.open(BIT_PERSONAL_URL, "_blank", "noopener,noreferrer");
+                    }}
+                  >
+                    {amountCopied ? "הסכום הועתק — פתחו ביט" : "העתק סכום ופתח ביט"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-ghost flex h-12 w-full items-center justify-between gap-3 px-4 text-sm"
+                    onClick={copyBitPhone}
+                  >
+                    <span className="text-muted">העתק מספר לקבלה</span>
+                    <span className="font-medium text-ivory tabular-nums" dir="ltr">
+                      {BIT_PHONE}
+                    </span>
+                  </button>
+                </>
               )}
-
-              <button
-                type="button"
-                className="btn-ghost flex h-12 w-full items-center justify-between gap-3 px-4 text-sm"
-                onClick={isPaypal ? copyPaypalEmail : copyBitPhone}
-              >
-                <span className="text-muted">{isPaypal ? "העתק מייל לקבלה" : "העתק מספר לקבלה"}</span>
-                <span className="font-medium text-ivory tabular-nums" dir="ltr">
-                  {isPaypal ? PAYPAL_EMAIL : BIT_PHONE}
-                </span>
-              </button>
 
               {payHint ? (
                 <p className="text-center text-xs leading-5 text-gold-soft" role="status">
                   {payHint}
                 </p>
               ) : null}
-
-              <a
-                className="inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-sm font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                אחרי התשלום — שלחו אישור בוואטסאפ
-              </a>
             </div>
 
             <details className="group mt-8 border-t border-white/10 pt-4">
