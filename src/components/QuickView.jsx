@@ -107,7 +107,7 @@ export default function QuickView() {
                   <IconChevron className="h-5 w-5" />
                 </button>
                 <p className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
-                  <span className="bg-ink/80 px-2 py-1 text-[11px] tabular-nums text-ivory">
+                  <span dir="ltr" className="bg-ink/80 px-2 py-1 text-[11px] tabular-nums text-ivory">
                     {photo + 1} / {gallery.length}
                   </span>
                 </p>
