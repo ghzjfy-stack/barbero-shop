@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage from "./ProductImage";
+import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 
 const sortOptions = [
@@ -284,6 +285,7 @@ function ProductCard({ product }) {
           >
             מבט מהיר
           </button>
+          <ProductShareButton product={product} variantId={variantId} />
         </div>
       </div>
     </article>

@@ -6,6 +6,7 @@ import {
   resolveOffer,
 } from "./data";
 import { notifyTelegramOrder } from "./notifyTelegram";
+import { syncProductQuery } from "./share";
 
 const StoreContext = createContext(null);
 
@@ -31,7 +32,14 @@ export function StoreProvider({ children }) {
   const [wishOpen, setWishOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [quickViewId, setQuickViewId] = useState(null);
+  const [quickViewId, setQuickViewId] = useState(() => {
+    try {
+      const id = new URLSearchParams(window.location.search).get("product");
+      return id && findProduct(id) ? id : null;
+    } catch {
+      return null;
+    }
+  });
   const [info, setInfo] = useState(null);
   const [category, setCategory] = useState("הכל");
   const [toast, setToast] = useState(null);
@@ -46,6 +54,10 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     localStorage.setItem("barbero-wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
+
+  useEffect(() => {
+    syncProductQuery(quickViewId);
+  }, [quickViewId]);
 
   useEffect(() => {
     if (!toast) return undefined;

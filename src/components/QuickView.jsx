@@ -4,6 +4,7 @@ import { useStore } from "../store";
 import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
+import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 
 export default function QuickView() {
@@ -236,6 +237,12 @@ export default function QuickView() {
             >
               <IconHeart filled={wished} />
             </button>
+            <ProductShareButton
+              product={quickView}
+              variantId={variantId}
+              iconOnly
+              className="grid h-12 w-12 place-items-center border border-white/15 text-gold-soft transition hover:border-gold/50 hover:text-gold"
+            />
           </div>
 
           <button
