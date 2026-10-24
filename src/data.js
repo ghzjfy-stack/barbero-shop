@@ -156,12 +156,11 @@ export const products = [
     price: 400,
     frame: "studio",
     image: "/products/wahl-g-whiz.jpg",
-    hoverImage: "/products/wahl-g-whiz-box.jpg",
+    hoverImage: "/products/wahl-g-whiz-pack.jpg",
     images: [
       "/products/wahl-g-whiz.jpg",
       "/products/wahl-g-whiz-features.jpg",
       "/products/wahl-g-whiz-use.jpg",
-      "/products/wahl-g-whiz-box.jpg",
       "/products/wahl-g-whiz-pack.jpg",
     ],
     blurb:
