@@ -81,8 +81,8 @@ export default async function handler(req, res) {
 
   const { data, error } = await client
     .from("customers")
-    .insert({ name, phone })
-    .select("id, created_at, name, phone")
+    .insert({ Name: name, Phone: phone })
+    .select("id, created_at, Name, Phone, Email")
     .single();
 
   if (error) {
@@ -94,5 +94,14 @@ export default async function handler(req, res) {
     return;
   }
 
-  sendJson(res, 200, { ok: true, customer: data });
+  sendJson(res, 200, {
+    ok: true,
+    customer: {
+      id: data.id,
+      created_at: data.created_at,
+      name: data.Name,
+      phone: data.Phone,
+      email: data.Email ?? null,
+    },
+  });
 }
