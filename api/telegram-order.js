@@ -93,14 +93,19 @@ function buildMessage(order) {
     ? order.lines.reduce((sum, line) => sum + (Number(line.qty) || 0), 0)
     : 0;
 
+  const payment = order.payment === "paypal" ? "paypal" : "bit";
+  const paymentLabel = payment === "paypal" ? "PayPal" : "ביט";
+  const statusLabel =
+    payment === "paypal" ? "ממתין להעברת PayPal מהלקוח" : "ממתין להעברת ביט מהלקוח";
+
   return [
     "🔔 <b>הזמנה חדשה — BARBERO</b>",
     "קבוצת הזמנות · התראה מהאתר",
     "",
     `<b>מספר הזמנה:</b> <code>${escapeHtml(order.number || "—")}</code>`,
     `<b>תאריך ושעה:</b> ${escapeHtml(when)}`,
-    `<b>אמצעי תשלום:</b> ביט בלבד`,
-    `<b>סטטוס:</b> ממתין להעברת ביט מהלקוח`,
+    `<b>אמצעי תשלום:</b> ${escapeHtml(paymentLabel)}`,
+    `<b>סטטוס:</b> ${escapeHtml(statusLabel)}`,
     "",
     "<b>פרטי לקוח</b>",
     `<b>שם מלא:</b> ${escapeHtml(details.name || "—")}`,
@@ -120,7 +125,7 @@ function buildMessage(order) {
     "<b>סיכום תשלום</b>",
     `<b>סכום ביניים:</b> ${escapeHtml(formatIls(order.subtotal))}`,
     `<b>משלוח:</b> ${escapeHtml(formatIls(order.shipping))}`,
-    `<b>סה״כ לתשלום בביט:</b> ${escapeHtml(formatIls(order.total))}`,
+    `<b>סה״כ לתשלום ב-${escapeHtml(paymentLabel)}:</b> ${escapeHtml(formatIls(order.total))}`,
   ].join("\n");
 }
 

@@ -245,10 +245,12 @@ export function StoreProvider({ children }) {
   };
 
   const placeOrder = (details) => {
+    const payment = details?.payment === "paypal" ? "paypal" : "bit";
     const snapshot = {
       number: `BRB-${Math.floor(100000 + Math.random() * 900000)}`,
       createdAt: new Date().toISOString(),
       details,
+      payment,
       total,
       subtotal,
       shipping,
