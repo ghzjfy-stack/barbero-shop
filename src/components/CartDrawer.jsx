@@ -6,18 +6,10 @@ import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
 
-const BIT_PHONE = "0543554888";
 /** Personal Bit receive link decoded from public/bit-qr.jpg */
 const BIT_PERSONAL_URL = "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
 
 const PAYPAL_EMAIL = "ghzjfyy@gmail.com";
-
-/** Whole shekels for clipboard helper text. */
-function paymentAmount(amount) {
-  const total = Number(amount);
-  if (!Number.isFinite(total) || total <= 0) return 0;
-  return Math.round(total);
-}
 
 function paypalPayParams(order) {
   return new URLSearchParams({
@@ -67,15 +59,6 @@ function openPayPalPayment(order) {
   window.location.assign(webUrl);
 }
 
-async function copyText(value) {
-  try {
-    await navigator.clipboard.writeText(String(value));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 const emptyDetails = {
   name: "",
   phone: "",
@@ -93,8 +76,6 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
-  const [payHint, setPayHint] = useState("");
-  const [amountCopied, setAmountCopied] = useState(false);
 
   const setField = (key, value) => {
     setDetails((current) => ({ ...current, [key]: value }));
@@ -131,8 +112,6 @@ export default function CartDrawer() {
     });
     setDetails(emptyDetails);
     setCopied(false);
-    setPayHint("");
-    setAmountCopied(false);
   };
 
   const copyNumber = async () => {
@@ -146,18 +125,6 @@ export default function CartDrawer() {
   };
 
   const isPaypal = store.order?.payment === "paypal";
-
-  const copyOrderAmount = async () => {
-    if (!store.order) return;
-    const ok = await copyText(paymentAmount(store.order.total));
-    setAmountCopied(ok);
-    setPayHint(ok ? "הסכום הועתק" : `הזינו ידנית ${formatPrice(store.order.total)}`);
-  };
-
-  const copyBitPhone = async () => {
-    const ok = await copyText(BIT_PHONE);
-    setPayHint(ok ? "המספר הועתק" : `העבירו ל־${BIT_PHONE}`);
-  };
 
   return (
     <Drawer open={store.cartOpen} onClose={store.closeCart} label="עגלת קניות">
@@ -207,7 +174,7 @@ export default function CartDrawer() {
               </p>
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-6">
               {isPaypal ? (
                 <button
                   type="button"
@@ -218,35 +185,15 @@ export default function CartDrawer() {
                   שלם עכשיו ב-PayPal
                 </button>
               ) : (
-                <>
-                  <button
-                    type="button"
-                    className="btn-gold h-14 w-full text-base"
-                    onClick={async () => {
-                      await copyOrderAmount();
-                      window.open(BIT_PERSONAL_URL, "_blank", "noopener,noreferrer");
-                    }}
-                  >
-                    {amountCopied ? "הסכום הועתק — פתחו ביט" : "העתק סכום ופתח ביט"}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-ghost flex h-12 w-full items-center justify-between gap-3 px-4 text-sm"
-                    onClick={copyBitPhone}
-                  >
-                    <span className="text-muted">העתק מספר לקבלה</span>
-                    <span className="font-medium text-ivory tabular-nums" dir="ltr">
-                      {BIT_PHONE}
-                    </span>
-                  </button>
-                </>
+                <a
+                  className="btn-gold inline-flex h-14 w-full items-center justify-center text-base"
+                  href={BIT_PERSONAL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  שלם עכשיו בביט
+                </a>
               )}
-
-              {payHint ? (
-                <p className="text-center text-xs leading-5 text-gold-soft" role="status">
-                  {payHint}
-                </p>
-              ) : null}
             </div>
 
             <details className="group mt-8 border-t border-white/10 pt-4">
