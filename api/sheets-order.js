@@ -64,8 +64,10 @@ function buildItemsText(lines = []) {
 /** Flat row the Apps Script appends into the sheet (column order matters). */
 export function buildSheetRow(order) {
   const details = order?.details || {};
+  const payment = order?.payment === "paypal" ? "PayPal" : "ביט";
+  const status = payment === "PayPal" ? "ממתין ל-PayPal" : "ממתין לביט";
   return {
-    status: "ממתין לביט",
+    status,
     createdAt: formatWhen(order?.createdAt),
     orderNumber: order?.number || "",
     name: details.name || "",
@@ -79,7 +81,7 @@ export function buildSheetRow(order) {
     subtotal: formatIls(order?.subtotal),
     shipping: formatIls(order?.shipping),
     total: formatIls(order?.total),
-    payment: "ביט",
+    payment,
   };
 }
 

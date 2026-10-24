@@ -108,9 +108,12 @@ export default function Footer() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 pb-[max(5.75rem,calc(5rem+env(safe-area-inset-bottom,0px)))] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-xs text-muted">© {year} BARBERO. כל הזכויות שמורות.</p>
           <div className="flex flex-wrap items-center gap-3" aria-label="אמצעי תשלום">
-            <span className="text-xs text-muted">תשלום בביט בלבד</span>
+            <span className="text-xs text-muted">תשלום בביט או PayPal</span>
             <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-3 text-sm font-semibold text-black" dir="ltr">
               bit
+            </span>
+            <span className="grid h-8 place-items-center rounded-full bg-[#0070ba] px-3 text-sm font-semibold text-white" dir="ltr">
+              PayPal
             </span>
           </div>
         </div>
