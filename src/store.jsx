@@ -5,6 +5,7 @@ import {
   findProduct,
   resolveOffer,
 } from "./data";
+import { notifyTelegramOrder } from "./notifyTelegram";
 
 const StoreContext = createContext(null);
 
@@ -232,6 +233,7 @@ export function StoreProvider({ children }) {
   const placeOrder = (details) => {
     const snapshot = {
       number: `BRB-${Math.floor(100000 + Math.random() * 900000)}`,
+      createdAt: new Date().toISOString(),
       details,
       total,
       subtotal,
@@ -249,6 +251,7 @@ export function StoreProvider({ children }) {
     setLastOrder(snapshot);
     setCart([]);
     setCheckoutStep("done");
+    notifyTelegramOrder(snapshot);
   };
 
   const finishCheckout = () => {
