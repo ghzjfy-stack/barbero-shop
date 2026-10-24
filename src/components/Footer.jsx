@@ -95,7 +95,16 @@ export default function Footer() {
           <h2 className="font-display text-2xl">יצירת קשר</h2>
           <ul className="mt-4 space-y-2 text-sm leading-7 text-muted">
             <li>שעות מענה: א׳–ה׳, 09:00–18:00</li>
-            <li>מענה בוואטסאפ/טלפון</li>
+            <li>
+              <a
+                className="hover:text-ivory"
+                href="https://wa.me/972543554888?text=%D7%A9%D7%9C%D7%95%D7%9D%20BARBERO%2C%20%D7%90%D7%A9%D7%9E%D7%97%20%D7%9C%D7%A7%D7%91%D7%9C%20%D7%9E%D7%99%D7%93%D7%A2%20%D7%99%D7%99%D7%A2%D7%95%D7%A5%20%D7%9C%D7%92%D7%91%D7%99%20%D7%94%D7%9E%D7%95%D7%A6%D7%A8%D7%99%D7%9D"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                מענה בוואטסאפ בלבד
+              </a>
+            </li>
             <li>
               <a className="hover:text-ivory" href="mailto:support@barbero.co.il">
                 support@barbero.co.il
