@@ -7,29 +7,33 @@ import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
 
 const BIT_PHONE = "0543554888";
+const BIT_ANDROID_PACKAGE = "com.bnhp.payments.paymentsapp";
 
-/** Whole shekels only — Bit P2P deep links are unreliable with decimals. */
+/** Whole shekels for clipboard helper text. */
 function bitAmount(amount) {
   const total = Number(amount);
   if (!Number.isFinite(total) || total <= 0) return 0;
   return Math.round(total);
 }
 
-/**
- * Consumer Bit deep link. Phone usually opens correctly; amount is best-effort
- * (Bit often ignores it without a business payment-request API).
- */
-function bitTransferUrl(amount, { orderNumber } = {}) {
-  const value = bitAmount(amount);
-  const params = new URLSearchParams({
-    phone: BIT_PHONE,
-    amount: String(value),
-  });
-  if (orderNumber) {
-    params.set("description", `BARBERO ${orderNumber}`);
-    params.set("desc", `BARBERO ${orderNumber}`);
-  }
+/** Open Bit on the transfer screen to our number — customer types the amount. */
+function bitTransferUrl() {
+  const params = new URLSearchParams({ phone: BIT_PHONE });
   return `https://www.bitpay.co.il/app/transfer?${params.toString()}`;
+}
+
+/** Android Chrome: force the Bit app transfer activity instead of a browser tab. */
+function bitAndroidIntentUrl() {
+  const fallback = encodeURIComponent(bitTransferUrl());
+  return (
+    `intent://www.bitpay.co.il/app/transfer?phone=${BIT_PHONE}` +
+    `#Intent;scheme=https;package=${BIT_ANDROID_PACKAGE};S.browser_fallback_url=${fallback};end`
+  );
+}
+
+function isAndroid() {
+  if (typeof navigator === "undefined") return false;
+  return /android/i.test(navigator.userAgent);
 }
 
 function prefersBitApp() {
@@ -118,19 +122,21 @@ export default function CartDrawer() {
       )}`
     : "https://wa.me/972543554888";
   const mobileBit = prefersBitApp();
+  const bitHref = isAndroid() ? bitAndroidIntentUrl() : bitTransferUrl();
   const bitLinkProps = mobileBit ? {} : { target: "_blank", rel: "noopener noreferrer" };
 
-  const openBitPayment = async (event, amount, orderNumber) => {
+  const openBitPayment = async (event, amount) => {
     const copiedAmount = await copyBitAmount(amount);
     setBitHint(
       copiedAmount
-        ? `הסכום ${formatPrice(amount)} הועתק — אם ביט לא מילאה אותו, הדביקו במסך הסכום`
-        : `העבירו בביט ${formatPrice(amount)} למספר 054-3554888 (כולל משלוח)`,
+        ? `נפתח מסך העברה בביט. הזינו ${formatPrice(amount)} (הועתק ללוח — אפשר להדביק)`
+        : `נפתח מסך העברה בביט. הזינו ידנית ${formatPrice(amount)} למספר 054-3554888`,
     );
-    // Let the browser continue to the Bit deep link (default <a> behavior).
-    if (!event.currentTarget?.href) {
+
+    // Prefer launching the Bit app transfer screen directly on mobile.
+    if (mobileBit) {
       event.preventDefault();
-      window.location.href = bitTransferUrl(amount, { orderNumber });
+      window.location.href = isAndroid() ? bitAndroidIntentUrl() : bitTransferUrl();
     }
   };
 
@@ -193,11 +199,11 @@ export default function CartDrawer() {
             </button>
             <a
               className="btn-gold mt-4 h-12 w-full"
-              href={bitTransferUrl(store.order.total, { orderNumber: store.order.number })}
+              href={bitHref}
               {...bitLinkProps}
-              onClick={(event) => openBitPayment(event, store.order.total, store.order.number)}
+              onClick={(event) => openBitPayment(event, store.order.total)}
             >
-              תשלום בביט · {formatPrice(store.order.total)}
+              פתיחת ביט להעברה · {formatPrice(store.order.total)}
             </a>
             {bitHint ? (
               <p className="mt-3 text-center text-xs leading-6 text-gold-soft" role="status">
@@ -205,7 +211,7 @@ export default function CartDrawer() {
               </p>
             ) : (
               <p className="mt-3 text-center text-xs leading-6 text-muted">
-                בלחיצה הסכום מועתק ללוח. אם ביט לא ממלאת אותו אוטומטית — הדביקו במסך הסכום.
+                ייפתח מסך ההעברה בביט למספר 054-3554888 — הזינו שם את הסכום שמוצג למעלה.
               </p>
             )}
             <a
