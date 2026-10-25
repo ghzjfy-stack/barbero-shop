@@ -10,7 +10,8 @@ export default function About() {
         <h1 className="mt-4 font-display text-4xl leading-tight sm:text-6xl">אודות</h1>
         <div className="mt-8 h-px w-16 bg-gold/70" aria-hidden="true" />
         <p className="mt-8 text-lg leading-9 text-ivory/85 sm:text-xl sm:leading-10">
-          BARBERO הוא בית ליבוא ישיר של ציוד תספורת וגילוח מקצועי ומקורי מארה״ב, המיועד למספרות ולשימוש ביתי ברמה הגבוהה ביותר.
+          BARBERO הוא בית ליבוא ישיר של ציוד תספורת וגילוח מקצועי ומקורי מארה״ב — למספרות ולשימוש ביתי. אנחנו בוחרים קולקציה
+          ייחודית, כולל דגמים נבחרים שזמינים אצלנו, עם אחריות יבואן ושירות ישירות מולנו.
         </p>
         <a href="/#collection" className="btn-gold mt-10 h-12 w-fit px-7" onClick={(event) => onNavClick(event, { href: "/#collection" })}>
           לקולקציה
