@@ -44,9 +44,38 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-function buildOrderEmailHtml({ orderNumber, customerName }) {
+function formatIls(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return "";
+  return `₪${n.toLocaleString("he-IL")}`;
+}
+
+function buildItemsHtml(lines = []) {
+  if (!Array.isArray(lines) || lines.length === 0) return "";
+  const rows = lines
+    .map((line) => {
+      const qty = Number(line.qty) || 1;
+      const label = line.label ? ` · ${escapeHtml(line.label)}` : "";
+      const total = formatIls(line.lineTotal);
+      return `<tr>
+        <td style="padding:8px 0;border-bottom:1px solid #2a2a2a;text-align:right;color:#f5f1e8;font-size:14px;">
+          ${escapeHtml(line.name || "מוצר")}${label} × ${qty}
+        </td>
+        <td style="padding:8px 0;border-bottom:1px solid #2a2a2a;text-align:left;color:#cfc8bb;font-size:14px;white-space:nowrap;">
+          ${escapeHtml(total)}
+        </td>
+      </tr>`;
+    })
+    .join("");
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:18px;">${rows}</table>`;
+}
+
+function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines }) {
   const safeOrder = escapeHtml(orderNumber);
   const safeName = escapeHtml(customerName || "לקוח/ה יקר/ה");
+  const totalText = formatIls(total);
+  const paymentLabel = payment === "paypal" ? "PayPal" : "ביט";
+  const itemsHtml = buildItemsHtml(lines);
 
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -74,17 +103,23 @@ function buildOrderEmailHtml({ orderNumber, customerName }) {
                   שלום ${safeName},
                 </p>
                 <p style="margin:0 0 18px;font-size:15px;line-height:1.75;color:#cfc8bb;">
-                  תודה שהזמנת מ־BARBERO. קיבלנו את ההזמנה שלך והיא בטיפול.
-                  זהו מייל בדיקה של מנגנון אישור ההזמנה.
+                  תודה שהזמנת מ־BARBERO. קיבלנו את ההזמנה שלך והיא ממתינה להשלמת התשלום ב־${escapeHtml(paymentLabel)}.
                 </p>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#1c1a17;border:1px solid #3a342a;border-radius:12px;">
                   <tr>
                     <td style="padding:16px 18px;text-align:right;direction:rtl;">
                       <div style="font-size:12px;color:#c6a15b;margin-bottom:6px;">מספר הזמנה</div>
                       <div style="font-size:20px;font-weight:700;color:#f5f1e8;letter-spacing:0.04em;">${safeOrder}</div>
+                      ${
+                        totalText
+                          ? `<div style="margin-top:12px;font-size:12px;color:#c6a15b;">סה״כ לתשלום</div>
+                             <div style="font-size:18px;font-weight:700;color:#f5f1e8;margin-top:4px;">${escapeHtml(totalText)}</div>`
+                          : ""
+                      }
                     </td>
                   </tr>
                 </table>
+                ${itemsHtml}
                 <p style="margin:20px 0 0;font-size:14px;line-height:1.7;color:#a89f90;">
                   המשלוח בדרך כלל תוך 7–14 ימי עסקים. לשאלות אפשר לפנות ל־
                   <a href="mailto:support@barbero.co.il" style="color:#c6a15b;text-decoration:none;">support@barbero.co.il</a>
@@ -165,6 +200,9 @@ export default async function handler(req, res) {
 
   const orderNumber = String(body?.orderNumber || `BRB-TEST-${Date.now().toString(36).toUpperCase()}`).trim();
   const customerName = String(body?.customerName || "").trim();
+  const total = body?.total;
+  const payment = body?.payment === "paypal" ? "paypal" : "bit";
+  const lines = Array.isArray(body?.lines) ? body.lines : [];
   const from = String(process.env.RESEND_FROM || "BARBERO <onboarding@resend.dev>").trim();
 
   try {
@@ -173,7 +211,7 @@ export default async function handler(req, res) {
       from,
       to: [to],
       subject: `אישור הזמנה ${orderNumber} — BARBERO`,
-      html: buildOrderEmailHtml({ orderNumber, customerName }),
+      html: buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines }),
     });
 
     if (error) {

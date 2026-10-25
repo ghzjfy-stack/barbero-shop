@@ -62,6 +62,7 @@ function openPayPalPayment(order) {
 const emptyDetails = {
   name: "",
   phone: "",
+  email: "",
   city: "",
   address: "",
   unit: "",
@@ -70,6 +71,10 @@ const emptyDetails = {
   agree: false,
   payment: "bit",
 };
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
 
 export default function CartDrawer() {
   const store = useStore();
@@ -87,6 +92,7 @@ export default function CartDrawer() {
     if (details.name.trim().length < 2) next.name = "נשמח לשם מלא";
     const phone = details.phone.replace(/[^\d]/g, "");
     if (phone.length < 9 || phone.length > 13) next.phone = "מספר טלפון לא תקין";
+    if (!isValidEmail(details.email)) next.email = "כתובת אימייל לא תקינה";
     if (details.city.trim().length < 2) next.city = "חסרה עיר";
     if (details.address.trim().length < 4) next.address = "חסרה כתובת למשלוח";
     const postal = details.postal.trim();
@@ -103,6 +109,7 @@ export default function CartDrawer() {
     store.placeOrder({
       name: details.name.trim(),
       phone: details.phone.trim(),
+      email: details.email.trim().toLowerCase(),
       city: details.city.trim(),
       address: details.address.trim(),
       unit: details.unit.trim(),
@@ -228,6 +235,9 @@ export default function CartDrawer() {
                     .filter(Boolean)
                     .join(", ")}
                 </p>
+                {store.order.details.email ? (
+                  <p className="text-sm text-muted">אימייל לאישור: {store.order.details.email}</p>
+                ) : null}
                 {store.order.details.notes ? <p className="text-sm leading-6 text-muted">{store.order.details.notes}</p> : null}
                 {!isPaypal ? (
                   <div className="border border-white/10 bg-black/30 px-4 py-4 text-center">
@@ -254,6 +264,17 @@ export default function CartDrawer() {
             </Field>
             <Field label="טלפון" error={errors.phone}>
               <input className="field" inputMode="tel" autoComplete="tel" value={details.phone} onChange={(event) => setField("phone", event.target.value)} />
+            </Field>
+            <Field label="אימייל" error={errors.email}>
+              <input
+                className="field"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="לאישור הזמנה"
+                value={details.email}
+                onChange={(event) => setField("email", event.target.value)}
+              />
             </Field>
             <Field label="עיר" error={errors.city}>
               <input className="field" autoComplete="address-level2" value={details.city} onChange={(event) => setField("city", event.target.value)} />
