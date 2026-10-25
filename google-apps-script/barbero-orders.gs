@@ -1,13 +1,15 @@
 /**
  * BARBERO → Google Sheets (הזמנות אוטומטיות + עיצוב)
  *
- * התקנה / עדכון (חובה אחרי שינוי קוד — אחרת מיילים נופלים לטאב הזמנות):
+ * התקנה / עדכון (חובה אחרי שינוי קוד — אחרת מיילים נופלים לטאב הזמנות
+ * וגם מעקב הזמנה מהאתר לא יעבוד):
  * 1. Extensions → Apps Script → מחקו הכול והדביקו את הקובץ הזה
  * 2. שמרו
  * 3. בחרו setupBarberoSheet → Run (פעם אחת) — יוצר גם טאב «ניוזלטר»
  * 4. Deploy → Manage deployments → עיפרון → New version → Deploy
  *
  * בלי עמודות שותפים. הזמנות → טאב «הזמנות». מיילים → טאב «ניוזלטר».
+ * מעקב מהאתר: POST { type:"track", orderNumber? , phone? }
  */
 
 var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
@@ -90,6 +92,11 @@ function doPost(e) {
       return json_({ ok: false, error: "unauthorized" });
     }
 
+    // מעקב הזמנה מהאתר — קריאה בלבד
+    if (body && body.type === "track") {
+      return trackOrder_(body);
+    }
+
     // הרשמת ניוזלטר — לא לכתוב לטאב הזמנות
     if (isNewsletterPayload_(body)) {
       return appendNewsletter_(body);
@@ -147,6 +154,106 @@ function isNewsletterPayload_(body) {
   var hasOrder =
     (body.row && body.row.orderNumber) || (body.order && body.order.number);
   return !hasOrder;
+}
+
+/** Normalize Israeli phone to last 9 digits for matching. */
+function phoneKey_(value) {
+  var digits = String(value || "").replace(/[^\d]/g, "");
+  if (digits.indexOf("972") === 0 && digits.length >= 11) {
+    digits = "0" + digits.slice(3);
+  }
+  if (digits.length > 9) digits = digits.slice(-9);
+  return digits;
+}
+
+function headerIndexMap_(headers) {
+  var map = {};
+  for (var i = 0; i < headers.length; i++) {
+    map[String(headers[i] || "").trim()] = i;
+  }
+  return map;
+}
+
+/**
+ * Public tracking payload — no full address / email / phone / notes.
+ */
+function publicTrackOrder_(row, col) {
+  var status = String(row[col["סטטוס"]] || "").trim();
+  var orderNumber = String(row[col["מספר הזמנה"]] || "").trim();
+  var city = String(row[col["עיר"]] || "").trim();
+  var items = String(row[col["מוצרים"]] || "").trim();
+  var payment = String(row[col["תשלום"]] || "").trim();
+  var createdAt = String(row[col["תאריך"]] || "").trim();
+  var shipDaysRaw = row[col["ימי משלוח"]];
+  var shipDays =
+    shipDaysRaw === "" || shipDaysRaw == null || shipDaysRaw === undefined
+      ? null
+      : Number(shipDaysRaw);
+  if (shipDays != null && isNaN(shipDays)) shipDays = null;
+
+  return {
+    orderNumber: orderNumber,
+    status: status,
+    createdAt: createdAt,
+    city: city,
+    items: items,
+    payment: payment,
+    shipDays: shipDays,
+  };
+}
+
+function trackOrder_(body) {
+  var orderNumber = String(body.orderNumber || body.o || "")
+    .trim()
+    .toUpperCase();
+  var phone = phoneKey_(body.phone || body.p || "");
+
+  if (!orderNumber && !phone) {
+    return json_({ ok: false, error: "missing_query" });
+  }
+
+  var sheet = getSheet_();
+  var last = sheet.getLastRow();
+  if (last < 2) {
+    return json_({ ok: false, error: "not_found" });
+  }
+
+  var width = Math.max(sheet.getLastColumn(), HEADERS.length);
+  var headers = sheet.getRange(1, 1, 1, width).getValues()[0];
+  var col = headerIndexMap_(headers);
+  if (col["מספר הזמנה"] == null || col["טלפון"] == null || col["סטטוס"] == null) {
+    return json_({ ok: false, error: "sheet_schema" });
+  }
+
+  var values = sheet.getRange(2, 1, last - 1, width).getValues();
+  var matches = [];
+
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    var rowOrder = String(row[col["מספר הזמנה"]] || "")
+      .trim()
+      .toUpperCase();
+    var rowPhone = phoneKey_(row[col["טלפון"]]);
+    if (!rowOrder) continue;
+
+    var orderOk = orderNumber ? rowOrder === orderNumber : true;
+    var phoneOk = phone ? rowPhone === phone : true;
+    if (orderOk && phoneOk) {
+      matches.push(publicTrackOrder_(row, col));
+    }
+  }
+
+  if (!matches.length) {
+    return json_({ ok: false, error: "not_found" });
+  }
+
+  // Most recent match (sheet is append-only; last win).
+  var order = matches[matches.length - 1];
+  return json_({
+    ok: true,
+    order: order,
+    matchCount: matches.length,
+  });
 }
 
 function doGet() {
