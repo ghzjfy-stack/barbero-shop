@@ -16,15 +16,23 @@ import QuickView from "./components/QuickView";
 import InfoDialog from "./components/InfoDialog";
 import Toast from "./components/Toast";
 import WhatsAppButton from "./components/WhatsAppButton";
+import PayPage from "./components/PayPage";
 
 function Shell() {
   const path = usePathname();
   const about = path === "/about";
+  const pay = path === "/pay";
 
   useEffect(() => {
-    document.title = about
-      ? "אודות | BARBERO"
-      : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
+    document.title = pay
+      ? "תשלום הזמנה | BARBERO"
+      : about
+        ? "אודות | BARBERO"
+        : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
+    if (pay) {
+      window.scrollTo(0, 0);
+      return;
+    }
     const sharedProduct = new URLSearchParams(window.location.search).get("product");
     if (sharedProduct && !about) {
       window.requestAnimationFrame(() => {
@@ -37,7 +45,11 @@ function Shell() {
       return;
     }
     document.querySelector(window.location.hash)?.scrollIntoView();
-  }, [about]);
+  }, [about, pay]);
+
+  if (pay) {
+    return <PayPage />;
+  }
 
   return (
     <>

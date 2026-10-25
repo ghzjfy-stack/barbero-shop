@@ -1,63 +1,11 @@
 import { useState } from "react";
 import { FREE_SHIPPING, formatPrice } from "../data";
+import { BIT_PERSONAL_URL, openPayPalPayment } from "../payment";
 import { useStore } from "../store";
 import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
-
-/** Personal Bit receive link decoded from public/bit-qr.jpg */
-const BIT_PERSONAL_URL = "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
-
-const PAYPAL_EMAIL = "ghzjfyy@gmail.com";
-
-function paypalPayParams(order) {
-  return new URLSearchParams({
-    cmd: "_xclick",
-    business: PAYPAL_EMAIL,
-    item_name: `BARBERO הזמנה ${order.number}`,
-    amount: Number(order.total).toFixed(2),
-    currency_code: "ILS",
-    no_shipping: "1",
-    no_note: "1",
-    charset: "utf-8",
-  });
-}
-
-/** One-click PayPal checkout with amount prefilled (ILS). */
-function paypalPayUrl(order) {
-  return `https://www.paypal.com/cgi-bin/webscr?${paypalPayParams(order).toString()}`;
-}
-
-/**
- * Phone: prefer the PayPal app when installed, else the mobile web checkout.
- * Desktop: open the PayPal website in a new tab.
- */
-function openPayPalPayment(order) {
-  const webUrl = paypalPayUrl(order);
-  const ua = navigator.userAgent || "";
-  const android = /Android/i.test(ua);
-  const ios = /iPhone|iPad|iPod/i.test(ua);
-
-  if (!android && !ios) {
-    window.open(webUrl, "_blank", "noopener,noreferrer");
-    return;
-  }
-
-  if (android) {
-    // Chrome Intent → PayPal app package if present, otherwise browser fallback.
-    const intent =
-      `intent://www.paypal.com/cgi-bin/webscr?${paypalPayParams(order).toString()}` +
-      `#Intent;scheme=https;package=com.paypal.android.p2pmobile;` +
-      `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
-    window.location.href = intent;
-    return;
-  }
-
-  // iOS: same-tab https navigation lets Universal Links open the PayPal app when installed.
-  // (target=_blank often blocks that handoff.)
-  window.location.assign(webUrl);
-}
 
 const emptyDetails = {
   name: "",

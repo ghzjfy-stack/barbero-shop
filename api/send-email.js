@@ -1,13 +1,16 @@
 /**
- * POST /api/send-email — send a Hebrew RTL order-confirmation test email via Resend.
+ * POST /api/send-email — send a Hebrew RTL order-confirmation email via Resend.
  *
  * Vercel / local env:
  *   RESEND_API_KEY   (required)
  *   RESEND_TO_EMAIL  (optional default recipient; body.to overrides)
  *   RESEND_FROM      (optional; default Barbero <onboarding@resend.dev>)
+ *   PUBLIC_SITE_URL  (optional; absolute origin for the pay-page CTA)
+ *   PAY_LINK_SECRET  (optional; defaults to RESEND_API_KEY for signed /pay links)
  */
 
 import { Resend } from "resend";
+import { buildPayPageUrl } from "../lib/payLink.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -70,12 +73,31 @@ function buildItemsHtml(lines = []) {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:18px;">${rows}</table>`;
 }
 
-function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines }) {
+function buildPayCtaHtml(payUrl) {
+  if (!payUrl) return "";
+  const href = escapeHtml(payUrl);
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:24px;">
+    <tr>
+      <td align="center" style="text-align:center;">
+        <a href="${href}"
+           style="display:inline-block;background:#c6a15b;color:#0b0b0c;font-size:16px;font-weight:700;text-decoration:none;padding:14px 28px;border-radius:999px;letter-spacing:0.02em;">
+          להשלמת התשלום
+        </a>
+        <div style="margin-top:12px;font-size:12px;line-height:1.6;color:#7d766b;">
+          הכפתור פותח דף תשלום קצר עם האמצעי שבחרתם בהזמנה.
+        </div>
+      </td>
+    </tr>
+  </table>`;
+}
+
+function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines, payUrl }) {
   const safeOrder = escapeHtml(orderNumber);
   const safeName = escapeHtml(customerName || "לקוח/ה יקר/ה");
   const totalText = formatIls(total);
   const paymentLabel = payment === "paypal" ? "PayPal" : "ביט";
   const itemsHtml = buildItemsHtml(lines);
+  const payCtaHtml = buildPayCtaHtml(payUrl);
 
   return `<!DOCTYPE html>
 <html lang="he" dir="rtl">
@@ -120,6 +142,7 @@ function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines 
                   </tr>
                 </table>
                 ${itemsHtml}
+                ${payCtaHtml}
                 <p style="margin:20px 0 0;font-size:14px;line-height:1.7;color:#a89f90;">
                   המשלוח בדרך כלל תוך 7–14 ימי עסקים. לשאלות אפשר לפנות ל־
                   <a href="mailto:support@barbero.co.il" style="color:#c6a15b;text-decoration:none;">support@barbero.co.il</a>
@@ -204,6 +227,7 @@ export default async function handler(req, res) {
   const payment = body?.payment === "paypal" ? "paypal" : "bit";
   const lines = Array.isArray(body?.lines) ? body.lines : [];
   const from = String(process.env.RESEND_FROM || "BARBERO <onboarding@resend.dev>").trim();
+  const payUrl = buildPayPageUrl({ orderNumber, total, payment });
 
   try {
     const resend = new Resend(apiKey);
@@ -211,7 +235,7 @@ export default async function handler(req, res) {
       from,
       to: [to],
       subject: `אישור הזמנה ${orderNumber} — BARBERO`,
-      html: buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines }),
+      html: buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines, payUrl }),
     });
 
     if (error) {
@@ -228,6 +252,7 @@ export default async function handler(req, res) {
       id: data?.id ?? null,
       to,
       orderNumber,
+      payUrl: payUrl || null,
     });
   } catch (error) {
     sendJson(res, 500, {
