@@ -115,7 +115,9 @@ export default function Footer() {
         <div>
           <h2 className="font-display text-2xl">יצירת קשר</h2>
           <ul className="mt-4 space-y-2 text-sm leading-7 text-muted">
-            <li>שעות מענה: א׳–ה׳, 09:00–18:00</li>
+            <li>האתר פתוח להזמנות 24/7</li>
+            <li>מענה אנושי (וואטסאפ / מייל): א׳–ה׳, 09:00–18:00</li>
+            <li>שישי: 09:00–13:00 · שבת: סגור</li>
             <li>
               <a className="hover:text-ivory" href="mailto:support@barbero.co.il">
                 support@barbero.co.il
