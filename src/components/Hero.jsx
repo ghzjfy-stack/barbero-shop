@@ -7,10 +7,16 @@ import ProductImage from "./ProductImage";
 
 const HERO_IMAGE =
   "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=2000&q=80";
-const HERO_PRODUCT = "/products/wahl-senior-cut.png";
+const HERO_PRODUCT = "/products/wahl-vapor-switch-cut.png";
+
+const HERO_HIGHLIGHTS = [
+  "מנוע 2 מהירויות עד 9,000 RPM",
+  "ידית טייפר מתחלפת ללא כלים",
+  "טעינת USB-C",
+];
 
 export default function Hero() {
-  const featured = products.find((product) => product.id === "wahl-senior") ?? products[0];
+  const featured = products.find((product) => product.id === "wahl-vapor-switch") ?? products[0];
   const { addToCart, openQuickView } = useStore();
   const [imageOk, setImageOk] = useState(true);
   const offer = resolveOffer(featured);
@@ -57,7 +63,7 @@ export default function Hero() {
 
         <aside className="rise border border-line bg-ink/80 p-4 backdrop-blur-md md:col-span-5">
           <p className="inline-block border border-gold/50 bg-gradient-to-l from-gold/20 via-gold/10 to-transparent px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-gold shadow-[0_0_24px_rgba(198,161,91,0.25)]">
-            הדגם הנמכר ביותר
+            השקה מיוחדת
           </p>
           <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
             <div className="relative mx-auto h-72 w-full overflow-hidden sm:h-80 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
@@ -82,6 +88,14 @@ export default function Hero() {
             <div className="mt-4">
               <p className="text-xs tracking-[0.14em] text-muted">{featured.brand}</p>
               <h2 className="mt-2 font-display text-xl leading-tight sm:text-2xl lg:text-3xl">{featured.name}</h2>
+              <ul className="mt-3 space-y-1.5 text-sm leading-6 text-ivory/70">
+                {HERO_HIGHLIGHTS.map((item) => (
+                  <li key={item} className="flex gap-2">
+                    <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-gold" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
               <div className="mt-3">
                 <Price price={fromPrice(featured)} compareAt={offer.compareAt} from={Boolean(featured.variants)} />
               </div>

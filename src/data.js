@@ -108,6 +108,41 @@ export const pages = {
 
 export const products = [
   {
+    id: "wahl-vapor-switch",
+    kind: "מכונת תספורת",
+    model: "5-Star Series Vapor Switch",
+    brand: "Wahl",
+    category: "מכונות תספורת",
+    rating: 5.0,
+    reviews: 12,
+    sku: "3027001",
+    voltage: "USB-C / סוללת Lithium Ion (אלחוטי)",
+    origin: "ארה״ב",
+    badge: "השקה מיוחדת",
+    stock: 6,
+    price: 1500,
+    frame: "studio",
+    image: "/products/wahl-vapor-switch.jpg",
+    hoverImage: "/products/wahl-vapor-switch-brand.jpg",
+    images: [
+      "/products/wahl-vapor-switch.jpg",
+      "/products/wahl-vapor-switch-brand.jpg",
+      "/products/wahl-vapor-switch-blade.jpg",
+      "/products/wahl-vapor-switch-features.jpg",
+      "/products/wahl-vapor-switch-use.jpg",
+    ],
+    blurb:
+      "דגם השקה מיוחדת מסדרת 5-Star: מנוע HYPERSHIFT™ Brushless ב־2 מהירויות עד 9,000 RPM, ידית טייפר מתחלפת ללא כלים, להב F32 DRIFT™ וטעינת USB-C.",
+    features: [
+      "מנוע HYPERSHIFT™ Brushless ב־2 מהירויות: 7,000 RPM (LED כחול) ו־9,000 RPM (LED סגול) עם Adaptive Speed Control.",
+      "ידית טייפר מתחלפת ללא כלים (Tool-less Interchangeable Taper Lever) — מעבר מהיר בין סגנונות עבודה.",
+      "להב F32 DRIFT™ עם ציפוי Black PVD Chrome + DLC — חדות ממושכת ו־Zero-Gap Adjustable.",
+      "טעינת USB-C נוחה; סוללת Lithium Ion עם אינדיקטור סוללה ב־4 נורות LED.",
+      "גוף מחוזק (Reinforced Housing) עם תאורת V LED דינמית ואחיזה ארגונומית Non-Slip.",
+      "מיועד למספרות מקצועיות ולשימוש ביתי ברמה גבוהה — יבוא מקורי מארה״ב עם אחריות יבואן.",
+    ],
+  },
+  {
     id: "wahl-lithium-ss",
     kind: "טרימר",
     model: "Lithium Ion+ Stainless Steel All-in-One",
