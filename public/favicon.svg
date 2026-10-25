@@ -1,5 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#090909"/>
-  <rect x="1.25" y="1.25" width="29.5" height="29.5" fill="none" stroke="#C6A15B"/>
-  <text x="16" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#C6A15B">B</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="BARBERO">
+  <defs>
+    <linearGradient id="gold" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#E4D2A2"/>
+      <stop offset="0.42" stop-color="#C6A15B"/>
+      <stop offset="1" stop-color="#9E7A3A"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="#090909"/>
+  <!-- Outer frame -->
+  <rect x="4" y="4" width="56" height="56" fill="none" stroke="url(#gold)" stroke-width="1.5"/>
+  <!-- Inner frame -->
+  <rect x="8.5" y="8.5" width="47" height="47" fill="none" stroke="url(#gold)" stroke-opacity="0.42" stroke-width="0.75"/>
+  <!-- Corner ticks -->
+  <g fill="url(#gold)">
+    <rect x="6.2" y="6.2" width="2" height="2"/>
+    <rect x="55.8" y="6.2" width="2" height="2"/>
+    <rect x="6.2" y="55.8" width="2" height="2"/>
+    <rect x="55.8" y="55.8" width="2" height="2"/>
+  </g>
+  <!-- Geometric B monogram -->
+  <path fill="url(#gold)" d="M21.2 15.5h13.1c6.55 0 11.05 3.55 11.05 8.85 0 3.35-1.7 5.85-4.55 7.25 4.2 1.35 6.95 4.55 6.95 8.95 0 5.85-4.95 10.15-12.85 10.15H21.2V15.5zm7.55 5.35v8.15h4.7c3.05 0 4.85-1.5 4.85-4.05s-1.8-4.1-4.85-4.1h-4.7zm0 13.55v9.65h5.55c3.65 0 5.95-1.85 5.95-4.85 0-2.95-2.3-4.8-5.95-4.8h-5.55z"/>
 </svg>

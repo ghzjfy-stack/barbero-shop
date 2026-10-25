@@ -25,9 +25,14 @@ export function Logo() {
       className="flex min-w-0 items-center gap-2.5 sm:gap-3"
       onClick={(event) => onNavClick(event, { href: "/" }, { closeMenu: () => setMenuOpen(false) })}
     >
-      <span className="grid h-9 w-9 shrink-0 place-items-center border border-gold/70 font-display text-base text-gold min-[360px]:h-10 min-[360px]:w-10 min-[360px]:text-lg sm:h-11 sm:w-11 sm:text-xl">
-        B
-      </span>
+      <img
+        src="/favicon.svg"
+        alt=""
+        width={44}
+        height={44}
+        className="h-9 w-9 shrink-0 min-[360px]:h-10 min-[360px]:w-10 sm:h-11 sm:w-11"
+        decoding="async"
+      />
       <span className="flex min-w-0 flex-col leading-none">
         <span className="font-display text-[0.95rem] tracking-[0.08em] text-ivory min-[360px]:text-[1.05rem] min-[360px]:tracking-[0.2em] sm:text-[1.35rem] sm:tracking-[0.28em]">
           BARBERO
