@@ -24,6 +24,7 @@ var HEADERS = [
   "מספר הזמנה",
   "שם",
   "טלפון",
+  "אימייל",
   "עיר",
   "כתובת",
   "דירה/קומה",
@@ -115,6 +116,7 @@ function doPost(e) {
       orderNumber,
       row.name || "",
       row.phone || "",
+      row.email || "",
       row.city || "",
       row.address || "",
       row.unit || "",
@@ -234,19 +236,31 @@ function ensureHeader_(sheet, forceRestyle) {
   if (lastRow === 0) {
     sheet.appendRow(HEADERS);
   } else {
-    // אם חסרה עמודת ימי משלוח — מוסיפים בסוף בלי לשבור נתונים קיימים
-    var width = sheet.getLastColumn();
-    var headers = sheet.getRange(1, 1, 1, Math.max(width, HEADERS.length)).getValues()[0];
+    var width = Math.max(sheet.getLastColumn(), 1);
+    var headers = sheet.getRange(1, 1, 1, width).getValues()[0];
+    var hasEmail = false;
     var hasShipDays = false;
+    var phoneCol = -1;
     for (var i = 0; i < headers.length; i++) {
-      if (String(headers[i]).indexOf("ימי משלוח") !== -1) {
-        hasShipDays = true;
-        break;
-      }
+      var label = String(headers[i] || "");
+      if (label.indexOf("אימייל") !== -1) hasEmail = true;
+      if (label.indexOf("ימי משלוח") !== -1) hasShipDays = true;
+      if (label.indexOf("טלפון") !== -1) phoneCol = i + 1;
     }
+
+    // Insert email column after phone without shifting header labels onto old data.
+    if (!hasEmail) {
+      var insertAt = phoneCol > 0 ? phoneCol + 1 : 6;
+      sheet.insertColumnAfter(insertAt - 1);
+      sheet.getRange(1, insertAt).setValue("אימייל");
+      width = Math.max(sheet.getLastColumn(), 1);
+      headers = sheet.getRange(1, 1, 1, width).getValues()[0];
+    }
+
     if (!hasShipDays) {
       sheet.getRange(1, HEADERS.length).setValue("ימי משלוח");
-    } else {
+    } else if (headers.length >= HEADERS.length) {
+      // Safe refresh only when column count already matches the schema.
       sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     }
   }
@@ -266,7 +280,7 @@ function styleSheet_(sheet) {
   var cols = HEADERS.length;
 
   // רוחב עמודות נוח למובייל / דסקטופ
-  var widths = [140, 130, 120, 120, 110, 90, 160, 90, 80, 140, 220, 100, 80, 90, 90, 90];
+  var widths = [140, 130, 120, 120, 110, 180, 90, 160, 90, 80, 140, 220, 100, 80, 90, 90, 90];
   for (var c = 0; c < widths.length; c++) {
     sheet.setColumnWidth(c + 1, widths[c]);
   }

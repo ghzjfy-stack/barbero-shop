@@ -74,6 +74,7 @@ export function buildSheetRow(order) {
     orderNumber: order?.number || "",
     name: details.name || "",
     phone: details.phone || "",
+    email: String(details.email || "").trim().toLowerCase(),
     city: details.city || "",
     address: details.address || "",
     unit: details.unit || "",

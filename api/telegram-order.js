@@ -110,6 +110,11 @@ function buildMessage(order) {
     "<b>פרטי לקוח</b>",
     `<b>שם מלא:</b> ${escapeHtml(details.name || "—")}`,
     `<b>טלפון:</b> ${phoneLine}`,
+    `<b>אימייל:</b> ${
+      details.email
+        ? `<a href="mailto:${escapeHtml(details.email)}">${escapeHtml(details.email)}</a>`
+        : "—"
+    }`,
     "",
     "<b>כתובת למשלוח</b>",
     `<b>רחוב / כתובת:</b> ${escapeHtml(details.address || "—")}`,
