@@ -8,8 +8,13 @@
  * 3. בחרו setupBarberoSheet → Run (פעם אחת) — יוצר גם טאב «ניוזלטר»
  * 4. Deploy → Manage deployments → עיפרון → New version → Deploy
  *
+ * איפוס דמו/בדיקות (בלי Deploy — רק Run):
+ *   בחרו resetBarberoDemoData → Run
+ *   מוחק את כל שורות הנתונים ב«הזמנות» ו«ניוזלטר», משאיר כותרות ועיצוב.
+ *
  * בלי עמודות שותפים. הזמנות → טאב «הזמנות». מיילים → טאב «ניוזלטר».
  * מעקב מהאתר: POST { type:"track", orderNumber? , phone? }
+ * איפוס מרחוק (אחרי Deploy): POST { type:"reset", confirm:"BARBERO_RESET_DEMO" }
  */
 
 var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
@@ -85,6 +90,56 @@ function setupBarberoSheet() {
   SpreadsheetApp.flush();
 }
 
+/**
+ * איפוס נתוני דמו/בדיקות — להריץ מעורך Apps Script (Run).
+ * מוחק שורות נתונים בלבד; הכותרות והעיצוב נשארים.
+ */
+function resetBarberoDemoData() {
+  var result = resetBarberoDemoData_();
+  SpreadsheetApp.flush();
+  Logger.log(JSON.stringify(result));
+  return result;
+}
+
+function resetBarberoDemoData_() {
+  var ordersCleared = clearSheetDataRows_(getSheet_(), HEADERS.length);
+  var newsletterCleared = clearSheetDataRows_(
+    getNewsletterSheet_(),
+    NEWSLETTER_HEADERS.length,
+  );
+
+  // משחזר כותרות + עיצוב נקי אחרי המחיקה
+  var orders = getSheet_();
+  ensureHeader_(orders, true);
+  styleSheet_(orders);
+  applyStatusValidation_(orders);
+  applyConditionalFormat_(orders);
+  formatMoneyColumns_(orders);
+  setupNewsletterSheet_();
+
+  return {
+    ok: true,
+    cleared: {
+      orders: ordersCleared,
+      newsletter: newsletterCleared,
+    },
+  };
+}
+
+/** מוחק שורות 2…last; מחזיר כמה שורות נתונים נמחקו. */
+function clearSheetDataRows_(sheet, headerWidth) {
+  var last = sheet.getLastRow();
+  var cleared = last >= 2 ? last - 1 : 0;
+  if (last >= 2) {
+    sheet.deleteRows(2, last - 1);
+  }
+  // מוודא שורה 1 היא כותרת (אם הגיליון היה ריק לגמרי)
+  if (sheet.getLastRow() === 0 && headerWidth > 0) {
+    // הכותרת תוחזר ע״י ensureHeader_ / setupNewsletterSheet_
+  }
+  return cleared;
+}
+
 function doPost(e) {
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
@@ -95,6 +150,14 @@ function doPost(e) {
     // מעקב הזמנה מהאתר — קריאה בלבד
     if (body && body.type === "track") {
       return trackOrder_(body);
+    }
+
+    // איפוס דמו — רק עם מחרוזת אישור מפורשת
+    if (body && body.type === "reset") {
+      if (body.confirm !== "BARBERO_RESET_DEMO") {
+        return json_({ ok: false, error: "confirm_required" });
+      }
+      return json_(resetBarberoDemoData_());
     }
 
     // הרשמת ניוזלטר — לא לכתוב לטאב הזמנות
