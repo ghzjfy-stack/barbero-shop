@@ -144,7 +144,7 @@ function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines,
                 ${itemsHtml}
                 ${payCtaHtml}
                 <p style="margin:20px 0 0;font-size:14px;line-height:1.7;color:#a89f90;">
-                  המשלוח בדרך כלל תוך 7–14 ימי עסקים. לשאלות אפשר לפנות ל־
+                  זמן האספקה המשוער הוא 7–14 ימי עסקים. לשאלות אפשר לפנות ל־
                   <a href="mailto:support@barbero.co.il" style="color:#c6a15b;text-decoration:none;">support@barbero.co.il</a>
                   או בוואטסאפ.
                 </p>
