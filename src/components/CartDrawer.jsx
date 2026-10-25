@@ -291,7 +291,7 @@ export default function CartDrawer() {
             </label>
             {errors.agree && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.agree}</p>}
             <p className="mt-4 text-xs leading-6 text-muted">
-              אחרי אישור ההזמנה תועברו לתשלום ב{details.payment === "paypal" ? "-PayPal" : "ביט"}. התשלום מאובטח בתקן SSL.
+              אחרי אישור ההזמנה תועברו לתשלום ב{details.payment === "paypal" ? "-PayPal" : "ביט"}. התשלום מתבצע ישירות באפליקציה / באתר של ספק התשלום.
             </p>
             <div className="mt-auto pt-6">
               <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
