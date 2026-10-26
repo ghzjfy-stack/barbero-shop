@@ -63,13 +63,14 @@ function buildItemsText(lines = []) {
     .join(" | ");
 }
 
-/** Flat row the Apps Script appends into the sheet (column order matters). */
+/** Flat row the Apps Script appends into the Minox-style sheet. */
 export function buildSheetRow(order) {
   const details = order?.details || {};
   const payment = order?.payment === "paypal" ? "PayPal" : "ביט";
   const status = payment === "PayPal" ? "ממתין ל-PayPal" : "ממתין לביט";
   return {
     status,
+    paid: "No",
     createdAt: formatWhen(order?.createdAt),
     orderNumber: order?.number || "",
     name: details.name || "",
@@ -81,10 +82,12 @@ export function buildSheetRow(order) {
     postal: details.postal || "",
     notes: details.notes || "",
     items: buildItemsText(order?.lines),
-    subtotal: formatIls(order?.subtotal),
-    shipping: formatIls(order?.shipping),
+    // מחיר סופי ללקוח — עלות מוצר/משלוח אמיתית ממלאים ידנית בשיטס לחישוב רווח
     total: formatIls(order?.total),
+    productCost: "",
+    shippingCost: "",
     payment,
+    share: "No",
   };
 }
 
