@@ -17,6 +17,7 @@ import InfoDialog from "./components/InfoDialog";
 import Toast from "./components/Toast";
 import WhatsAppButton from "./components/WhatsAppButton";
 import PayPage from "./components/PayPage";
+import SiteAnalytics from "./components/SiteAnalytics";
 
 function Shell() {
   const path = usePathname();
@@ -91,6 +92,7 @@ export default function App() {
   return (
     <StoreProvider>
       <Shell />
+      <SiteAnalytics />
     </StoreProvider>
   );
 }
