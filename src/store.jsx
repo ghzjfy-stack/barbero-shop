@@ -10,6 +10,12 @@ import { notifyOrderEmail } from "./notifyOrderEmail";
 import { notifySheetsOrder } from "./notifySheetsOrder";
 import { saveCustomer } from "./saveCustomer";
 import { syncProductQuery } from "./share";
+import {
+  trackMetaAddToCart,
+  trackMetaInitiateCheckout,
+  trackMetaPurchase,
+  trackMetaViewContent,
+} from "./metaPixel";
 
 const StoreContext = createContext(null);
 
@@ -167,6 +173,8 @@ export function StoreProvider({ children }) {
     setCheckoutStep("cart");
     setOrder(null);
 
+    trackMetaAddToCart(product, offer, Math.max(1, nextQty - current));
+
     if (options.open) {
       setWishOpen(false);
       setSearchOpen(false);
@@ -236,6 +244,8 @@ export function StoreProvider({ children }) {
   const openQuickView = (productId) => {
     closeTransient();
     setQuickViewId(productId);
+    const product = findProduct(productId);
+    if (product) trackMetaViewContent(product, resolveOffer(product));
   };
 
   const openInfo = (pageId) => {
@@ -271,6 +281,7 @@ export function StoreProvider({ children }) {
     setLastOrder(snapshot);
     setCart([]);
     setCheckoutStep("done");
+    trackMetaPurchase(snapshot);
     notifyTelegramOrder(snapshot);
     notifySheetsOrder(snapshot);
     notifyOrderEmail(snapshot);
@@ -286,6 +297,17 @@ export function StoreProvider({ children }) {
   const goToCategory = (next) => {
     setCategory(next || "הכל");
     setMenuOpen(false);
+  };
+
+  const goToCheckoutStep = (step) => {
+    if (step === "details" && checkoutStep !== "details") {
+      trackMetaInitiateCheckout({
+        value: total,
+        numItems: cartCount,
+        contentIds: lines.map((line) => line.product.id),
+      });
+    }
+    setCheckoutStep(step);
   };
 
   const value = {
@@ -311,7 +333,7 @@ export function StoreProvider({ children }) {
     toast,
     dismissToast: () => setToast(null),
     checkoutStep,
-    setCheckoutStep,
+    setCheckoutStep: goToCheckoutStep,
     order,
     lastOrder,
     addToCart,

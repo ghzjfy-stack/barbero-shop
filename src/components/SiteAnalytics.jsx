@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { usePathname } from "../navigate";
+import { ensureMetaPixel, isMetaPixelEnabled, trackMetaPageView } from "../metaPixel";
 
 /** Public GA4 Measurement ID (safe in the browser). Set in Vercel as VITE_GA_MEASUREMENT_ID. */
 const GA_ID = String(import.meta.env.VITE_GA_MEASUREMENT_ID || "").trim();
@@ -31,7 +32,7 @@ function ensureGtag(measurementId) {
   });
 }
 
-function trackPageView(path) {
+function trackGaPageView(path) {
   if (!GA_ID || typeof window === "undefined" || !window.gtag) return;
   window.gtag("event", "page_view", {
     page_path: path,
@@ -40,19 +41,25 @@ function trackPageView(path) {
   });
 }
 
-/** Vercel Web Analytics + optional Google Analytics 4 (SPA page views). */
+/** Vercel Web Analytics + optional GA4 + Meta Pixel (SPA page views). */
 export default function SiteAnalytics() {
   const path = usePathname();
 
   useEffect(() => {
-    if (!GA_ID) return;
-    ensureGtag(GA_ID);
+    if (GA_ID) ensureGtag(GA_ID);
+    if (isMetaPixelEnabled()) ensureMetaPixel();
   }, []);
 
   useEffect(() => {
-    if (!GA_ID) return;
-    ensureGtag(GA_ID);
-    trackPageView(path + window.location.search + window.location.hash);
+    const full = path + window.location.search + window.location.hash;
+    if (GA_ID) {
+      ensureGtag(GA_ID);
+      trackGaPageView(full);
+    }
+    if (isMetaPixelEnabled()) {
+      ensureMetaPixel();
+      trackMetaPageView();
+    }
   }, [path]);
 
   return (
