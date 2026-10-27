@@ -393,7 +393,7 @@ function findOrderRow_(orderNumber) {
   var col = headerIndexMap_(headers);
   if (col["מספר הזמנה"] == null) return null;
 
-  var values = sheet.getRange(2, 1, last, width).getValues();
+  var values = sheet.getRange(2, 1, last - 1, width).getValues();
   for (var i = values.length - 1; i >= 0; i--) {
     var row = values[i];
     var rowOrder = String(row[col["מספר הזמנה"]] || "")
@@ -453,11 +453,20 @@ function updateOrderStatus_(body) {
 
 function trackOrder_(body) {
   if (body && body.setStatus) {
-    return updateOrderStatus_({
-      orderNumber: body.orderNumber || body.o,
-      status: body.setStatus,
-      paid: body.paid,
-    });
+    var needle = String(body.orderNumber || body.o || "")
+      .trim()
+      .toUpperCase();
+    var next = String(body.setStatus || "").trim();
+    if (!needle || !next) return json_({ ok: false, error: "not_found" });
+    try {
+      return updateOrderStatus_({
+        orderNumber: needle,
+        status: next,
+        paid: body.paid,
+      });
+    } catch (err) {
+      return json_({ ok: false, error: String(err && err.message ? err.message : err) });
+    }
   }
 
   var orderNumber = String(body.orderNumber || body.o || "")

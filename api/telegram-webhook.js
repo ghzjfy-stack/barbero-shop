@@ -57,16 +57,24 @@ async function sheetsPost(payload) {
   return { ok: true, order: result.data.order };
 }
 
-/** Prefer type:get; the live Apps Script may only have type:track (customer lookup). */
+function sameStatus(order, status) {
+  return String(order?.status || "").trim() === String(status || "").trim();
+}
+
+/** Live Apps Script reliably supports type:track (same as /api/track-order). */
 async function sheetsGetOrder(orderNumber) {
-  const got = await sheetsPost({ type: "get", orderNumber });
-  if (got.ok) return got;
   return sheetsPost({ type: "track", orderNumber });
 }
 
 async function sheetsSetStatus(orderNumber, status) {
   const paid = status === "שולם" ? "Yes" : status === "בוטל" ? "No" : undefined;
-  return sheetsPost({ type: "status", orderNumber, status, paid });
+  const viaStatus = await sheetsPost({ type: "status", orderNumber, status, paid });
+  if (viaStatus.ok && sameStatus(viaStatus.order, status)) return viaStatus;
+  const viaTrack = await sheetsPost({ type: "track", orderNumber, setStatus: status, paid });
+  if (viaTrack.ok && sameStatus(viaTrack.order, status)) return viaTrack;
+  const exists = await sheetsPost({ type: "track", orderNumber });
+  if (exists.ok) return { ok: false, error: "status_not_supported", order: exists.order };
+  return { ok: false, error: viaStatus.error || viaTrack.error || "order_not_found" };
 }
 
 async function answerCallback(callbackQueryId, text, alert = false) {
@@ -179,7 +187,11 @@ export default async function handler(req, res) {
       const nextStatus = parsed.action === "approve" ? "שולם" : "בוטל";
       const updated = await sheetsSetStatus(parsed.orderNumber, nextStatus);
       if (!updated.ok) {
-        await answerCallback(cq.id, "לא מצאתי את ההזמנה בשיטס", true);
+        const msg =
+          updated.error === "status_not_supported"
+            ? "ההזמנה נמצאה בשיטס. אשר/בטל ייכנסו אחרי עדכון הסקריפט בגוגל"
+            : "לא מצאתי את ההזמנה בשיטס";
+        await answerCallback(cq.id, msg, true);
         sendJson(res, 200, { ok: false, error: updated.error });
         return;
       }
