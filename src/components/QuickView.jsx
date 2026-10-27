@@ -91,12 +91,15 @@ export default function QuickView() {
                 alt={`${quickView.name}, תמונה ${photo + 1} מתוך ${gallery.length}`}
                 className="h-full w-full object-contain"
               />
-              <div className="absolute top-3 end-3 z-10 flex flex-col gap-2">
-                <ProductShareButton
-                  product={quickView}
-                  variantId={variantId}
-                  className="grid h-11 w-11 place-items-center bg-ink/80 text-ivory transition hover:text-gold-soft"
-                />
+              {/* LTR corners: close is top-left on the dialog; share stays top-right and tappable */}
+              <div className="pointer-events-none absolute inset-0 z-30" dir="ltr">
+                <div className="pointer-events-auto absolute top-2 right-2">
+                  <ProductShareButton
+                    product={quickView}
+                    variantId={variantId}
+                    className="grid h-11 w-11 place-items-center bg-ink/80 text-ivory transition hover:text-gold-soft"
+                  />
+                </div>
               </div>
               {gallery.length > 1 && (
                 <>
