@@ -35,7 +35,7 @@ function Shell() {
         ? "אודות | BARBERO"
         : landedProduct
           ? `${landedProduct.name} | BARBERO`
-          : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
+          : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר מארה״ב";
     if (pay) {
       window.scrollTo(0, 0);
       return;
