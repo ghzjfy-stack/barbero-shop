@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { findProduct } from "./data";
 import { StoreProvider } from "./store";
 import { usePathname } from "./navigate";
+import { parseProductFromLocation } from "./share";
 import AnnouncementBar from "./components/AnnouncementBar";
 import Header from "./components/Header";
 import MobileMenu from "./components/MobileMenu";
@@ -23,22 +25,24 @@ function Shell() {
   const path = usePathname();
   const about = path === "/about";
   const pay = path === "/pay";
+  const productLanding = /^\/p\//.test(path);
 
   useEffect(() => {
+    const landedProduct = productLanding ? findProduct(parseProductFromLocation()) : null;
     document.title = pay
       ? "תשלום הזמנה | BARBERO"
       : about
         ? "אודות | BARBERO"
-        : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
+        : landedProduct
+          ? `${landedProduct.name} | BARBERO`
+          : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
     if (pay) {
       window.scrollTo(0, 0);
       return;
     }
-    const sharedProduct = new URLSearchParams(window.location.search).get("product");
-    if (sharedProduct && !about) {
-      window.requestAnimationFrame(() => {
-        document.getElementById("collection")?.scrollIntoView({ block: "start" });
-      });
+    // Ad / share deep-link: product modal opens on top — homepage underneath unchanged
+    if ((productLanding || new URLSearchParams(window.location.search).get("product")) && !about) {
+      window.scrollTo(0, 0);
       return;
     }
     if (about || !window.location.hash) {
@@ -46,7 +50,7 @@ function Shell() {
       return;
     }
     document.querySelector(window.location.hash)?.scrollIntoView();
-  }, [about, pay]);
+  }, [about, pay, productLanding, path]);
 
   if (pay) {
     return <PayPage />;

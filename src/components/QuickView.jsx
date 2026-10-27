@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { discountPercent, resolveOffer } from "../data";
+import { discountPercent, FREE_SHIPPING, formatPrice, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
 import Price from "./Price";
@@ -165,6 +165,9 @@ export default function QuickView() {
           <div className="mt-5">
             <Price price={offer.price} compareAt={offer.compareAt} size="lg" />
           </div>
+          <p className="mt-3 text-xs leading-5 text-ivory/65">
+            משלוח חינם מ־{formatPrice(FREE_SHIPPING)} · אחריות יבואן 12 חודשים · יבוא מקורי מארה״ב
+          </p>
           <p className="mt-4 text-sm leading-7 text-ivory/75">{quickView.blurb}</p>
           {quickView.features?.length > 0 && (
             <ul className="mt-4 list-disc space-y-2 ps-5 text-sm leading-7 text-ivory/75">

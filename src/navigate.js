@@ -28,6 +28,13 @@ export function navigate(href) {
   window.requestAnimationFrame(() => scrollToTarget(url.hash));
 }
 
+/** Same as navigate but replaceState (product deep-links / share sync). */
+export function replaceUrl(href) {
+  const url = new URL(href, window.location.origin);
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  notify();
+}
+
 export function usePathname() {
   const [path, setPath] = useState(currentPath);
 

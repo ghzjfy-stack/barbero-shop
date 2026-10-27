@@ -9,7 +9,7 @@ import { notifyTelegramOrder } from "./notifyTelegram";
 import { notifyOrderEmail } from "./notifyOrderEmail";
 import { notifySheetsOrder } from "./notifySheetsOrder";
 import { saveCustomer } from "./saveCustomer";
-import { syncProductQuery } from "./share";
+import { parseProductFromLocation, syncProductLocation } from "./share";
 import {
   trackMetaAddToCart,
   trackMetaInitiateCheckout,
@@ -41,14 +41,7 @@ export function StoreProvider({ children }) {
   const [wishOpen, setWishOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [quickViewId, setQuickViewId] = useState(() => {
-    try {
-      const id = new URLSearchParams(window.location.search).get("product");
-      return id && findProduct(id) ? id : null;
-    } catch {
-      return null;
-    }
-  });
+  const [quickViewId, setQuickViewId] = useState(() => parseProductFromLocation());
   const [info, setInfo] = useState(null);
   const [category, setCategory] = useState("הכל");
   const [toast, setToast] = useState(null);
@@ -65,7 +58,21 @@ export function StoreProvider({ children }) {
   }, [wishlist]);
 
   useEffect(() => {
-    syncProductQuery(quickViewId);
+    syncProductLocation(quickViewId);
+  }, [quickViewId]);
+
+  // Keep modal in sync when browser back/forward hits `/p/:id`
+  useEffect(() => {
+    const onPop = () => setQuickViewId(parseProductFromLocation());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // ViewContent on every product open — including cold land from ad `/p/:id`
+  useEffect(() => {
+    if (!quickViewId) return;
+    const product = findProduct(quickViewId);
+    if (product) trackMetaViewContent(product, resolveOffer(product));
   }, [quickViewId]);
 
   useEffect(() => {
@@ -244,8 +251,6 @@ export function StoreProvider({ children }) {
   const openQuickView = (productId) => {
     closeTransient();
     setQuickViewId(productId);
-    const product = findProduct(productId);
-    if (product) trackMetaViewContent(product, resolveOffer(product));
   };
 
   const openInfo = (pageId) => {
