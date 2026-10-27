@@ -1,138 +1,16 @@
 /**
- * Vercel serverless: push a full order alert into the Telegram orders group.
+ * Vercel serverless: Minox-style order card → Telegram orders group.
  *
- * Vercel → Project → Settings → Environment Variables (Production + Preview):
- *   TELEGRAM_BOT_TOKEN          — from @BotFather
- *   TELEGRAM_CHAT_ID            — group id (usually -100…) of קבוצת ההזמנות
- *   TELEGRAM_MESSAGE_THREAD_ID  — optional; forum topic id inside the group
+ * Env (Production + Preview):
+ *   TELEGRAM_BOT_TOKEN
+ *   TELEGRAM_CHAT_ID
+ *   TELEGRAM_MESSAGE_THREAD_ID  (optional forum topic)
  *
- * Setup:
- * 1. Create a bot with @BotFather → copy the token
- * 2. Add the bot to the orders group (admin recommended)
- * 3. Send any message in the group, then open:
- *      https://api.telegram.org/bot<TOKEN>/getUpdates
- *    and copy chat.id (negative for groups)
- * 4. Paste TOKEN + CHAT_ID into Vercel env and Redeploy
+ * Buttons (approve/cancel/refresh) need webhook:
+ *   POST /api/telegram-webhook  + setWebhook (see .env.example)
  */
 
-const MAX_TEXT = 3900;
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function formatIls(amount) {
-  const n = Number(amount);
-  if (!Number.isFinite(n)) return "—";
-  return `₪${n.toLocaleString("he-IL")}`;
-}
-
-function formatWhen(iso) {
-  try {
-    return new Intl.DateTimeFormat("he-IL", {
-      timeZone: "Asia/Jerusalem",
-      weekday: "short",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(iso || Date.now()));
-  } catch {
-    return new Date(iso || Date.now()).toISOString();
-  }
-}
-
-function digitsOnly(phone) {
-  return String(phone || "").replace(/[^\d+]/g, "");
-}
-
-function buildItems(lines = []) {
-  if (!Array.isArray(lines) || lines.length === 0) return "—";
-  return lines
-    .map((line, index) => {
-      const qty = Number(line.qty) || 1;
-      const unit = Number.isFinite(Number(line.unitPrice))
-        ? Number(line.unitPrice)
-        : qty > 0 && Number.isFinite(Number(line.lineTotal))
-          ? Number(line.lineTotal) / qty
-          : null;
-      const rows = [
-        `<b>${index + 1}.</b> ${escapeHtml(line.name || "מוצר")}`,
-        line.model ? `   דגם: ${escapeHtml(line.model)}` : null,
-        line.kind ? `   קטגוריה: ${escapeHtml(line.kind)}` : null,
-        line.label ? `   אפשרות: ${escapeHtml(line.label)}` : null,
-        line.variantId && line.variantId !== "default"
-          ? `   מזהה וריאנט: ${escapeHtml(line.variantId)}`
-          : null,
-        `   כמות: ${qty}`,
-        unit != null ? `   מחיר יחידה: ${escapeHtml(formatIls(unit))}` : null,
-        `   סה״כ שורה: ${escapeHtml(formatIls(line.lineTotal))}`,
-      ];
-      return rows.filter(Boolean).join("\n");
-    })
-    .join("\n\n");
-}
-
-function buildMessage(order) {
-  const details = order.details || {};
-  const when = formatWhen(order.createdAt);
-  const phone = String(details.phone || "").trim();
-  const phoneDigits = digitsOnly(phone);
-  const phoneLine = phone
-    ? phoneDigits
-      ? `<a href="tel:${escapeHtml(phoneDigits)}">${escapeHtml(phone)}</a>`
-      : escapeHtml(phone)
-    : "—";
-  const notes = String(details.notes || "").trim() || "אין";
-  const itemCount = Array.isArray(order.lines)
-    ? order.lines.reduce((sum, line) => sum + (Number(line.qty) || 0), 0)
-    : 0;
-
-  const payment = order.payment === "paypal" ? "paypal" : "bit";
-  const paymentLabel = payment === "paypal" ? "PayPal" : "ביט";
-  const statusLabel =
-    payment === "paypal" ? "ממתין להעברת PayPal מהלקוח" : "ממתין להעברת ביט מהלקוח";
-
-  return [
-    "🔔 <b>הזמנה חדשה — BARBERO</b>",
-    "קבוצת הזמנות · התראה מהאתר",
-    "",
-    `<b>מספר הזמנה:</b> <code>${escapeHtml(order.number || "—")}</code>`,
-    `<b>תאריך ושעה:</b> ${escapeHtml(when)}`,
-    `<b>אמצעי תשלום:</b> ${escapeHtml(paymentLabel)}`,
-    `<b>סטטוס:</b> ${escapeHtml(statusLabel)}`,
-    "",
-    "<b>פרטי לקוח</b>",
-    `<b>שם מלא:</b> ${escapeHtml(details.name || "—")}`,
-    `<b>טלפון:</b> ${phoneLine}`,
-    `<b>אימייל:</b> ${
-      details.email
-        ? `<a href="mailto:${escapeHtml(details.email)}">${escapeHtml(details.email)}</a>`
-        : "—"
-    }`,
-    "",
-    "<b>כתובת למשלוח</b>",
-    `<b>רחוב / כתובת:</b> ${escapeHtml(details.address || "—")}`,
-    `<b>דירה / קומה / כניסה:</b> ${escapeHtml(details.unit || "—")}`,
-    `<b>עיר:</b> ${escapeHtml(details.city || "—")}`,
-    `<b>מיקוד:</b> ${escapeHtml(details.postal || "—")}`,
-    "",
-    `<b>הערות מהלקוח:</b> ${escapeHtml(notes)}`,
-    "",
-    `<b>פריטים בהזמנה</b> (${itemCount})`,
-    buildItems(order.lines),
-    "",
-    "<b>סיכום תשלום</b>",
-    `<b>סכום ביניים:</b> ${escapeHtml(formatIls(order.subtotal))}`,
-    `<b>משלוח:</b> ${escapeHtml(formatIls(order.shipping))}`,
-    `<b>סה״כ לתשלום ב-${escapeHtml(paymentLabel)}:</b> ${escapeHtml(formatIls(order.total))}`,
-  ].join("\n");
-}
+import { buildOrderCard, buildOrderKeyboard } from "../lib/telegramOrderCard.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -156,7 +34,7 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function telegramConfig() {
+export function telegramConfig() {
   const token = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
   const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
   const threadRaw = String(process.env.TELEGRAM_MESSAGE_THREAD_ID || "").trim();
@@ -164,9 +42,39 @@ function telegramConfig() {
   return { token, chatId, threadId };
 }
 
-async function sendTelegramMessage(text) {
-  const { token, chatId, threadId } = telegramConfig();
-  if (!token || !chatId) {
+export async function telegramApi(method, payload) {
+  const { token } = telegramConfig();
+  if (!token) {
+    return { ok: false, status: 503, data: { ok: false, error: "telegram_not_configured" } };
+  }
+  let res;
+  try {
+    res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    return { ok: false, status: 502, data: { ok: false, error: "telegram_unreachable" } };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) {
+    return {
+      ok: false,
+      status: 502,
+      data: {
+        ok: false,
+        error: "telegram_rejected",
+        detail: data.description || res.statusText,
+      },
+    };
+  }
+  return { ok: true, status: 200, data };
+}
+
+export async function sendOrderCard(order, opts = {}) {
+  const { chatId, threadId } = telegramConfig();
+  if (!chatId) {
     return {
       ok: false,
       status: 503,
@@ -174,49 +82,51 @@ async function sendTelegramMessage(text) {
         ok: false,
         error: "telegram_not_configured",
         missing: {
-          TELEGRAM_BOT_TOKEN: !token,
-          TELEGRAM_CHAT_ID: !chatId,
+          TELEGRAM_BOT_TOKEN: !telegramConfig().token,
+          TELEGRAM_CHAT_ID: true,
         },
-        hint: "Set the missing vars in Vercel → Settings → Environment Variables for Production, then Redeploy",
       },
     };
   }
 
+  const card = buildOrderCard(order, opts);
+  const reply_markup = buildOrderKeyboard(order, { status: card.status });
   const payload = {
     chat_id: chatId,
-    text,
+    text: card.text,
     parse_mode: "HTML",
     disable_web_page_preview: true,
-    // false = phone push notification in the Telegram app
     disable_notification: false,
   };
+  if (reply_markup) payload.reply_markup = reply_markup;
   if (threadId) payload.message_thread_id = threadId;
 
-  let telegramRes;
-  try {
-    telegramRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-  } catch {
-    return { ok: false, status: 502, body: { ok: false, error: "telegram_unreachable" } };
+  const result = await telegramApi("sendMessage", payload);
+  if (!result.ok) {
+    return { ok: false, status: result.status, body: result.data };
   }
+  return {
+    ok: true,
+    status: 200,
+    body: { ok: true, message_id: result.data.result?.message_id },
+  };
+}
 
-  const data = await telegramRes.json().catch(() => ({}));
-  if (!telegramRes.ok || !data.ok) {
-    return {
-      ok: false,
-      status: 502,
-      body: {
-        ok: false,
-        error: "telegram_rejected",
-        detail: data.description || telegramRes.statusText,
-      },
-    };
-  }
+export async function editOrderCard(chatId, messageId, order, opts = {}) {
+  const card = buildOrderCard(order, opts);
+  const reply_markup = buildOrderKeyboard(order, { status: card.status });
+  const payload = {
+    chat_id: chatId,
+    message_id: messageId,
+    text: card.text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  };
+  if (reply_markup) payload.reply_markup = reply_markup;
+  else payload.reply_markup = { inline_keyboard: [] };
 
-  return { ok: true, status: 200, body: { ok: true, message_id: data.result?.message_id } };
+  const result = await telegramApi("editMessageText", payload);
+  return result;
 }
 
 export default async function handler(req, res) {
@@ -228,41 +138,30 @@ export default async function handler(req, res) {
     return;
   }
 
-  // GET ?test=1 — send a sample alert to the orders group (for setup checks)
   if (req.method === "GET") {
     const url = new URL(req.url || "/", "http://localhost");
     if (url.searchParams.get("test") !== "1") {
       sendJson(res, 405, { ok: false, error: "method_not_allowed" });
       return;
     }
-    const sample = buildMessage({
+    const sample = {
       number: "BRB-TEST",
       createdAt: new Date().toISOString(),
+      payment: "bit",
       details: {
         name: "בדיקת מערכת",
-        phone: "054-0000000",
+        phone: "0540000000",
+        email: "test@barbero.co.il",
         address: "רחוב לדוגמה 1",
         unit: "דירה 2",
         city: "תל אביב",
         postal: "6100000",
-        notes: "זו הודעת בדיקה מקבוצת ההזמנות",
+        notes: "הודעת בדיקה — כרטיס בסגנון מינוקס",
       },
-      lines: [
-        {
-          name: "מוצר בדיקה",
-          model: "Demo",
-          kind: "מכונות תספורת",
-          label: "רגיל",
-          qty: 1,
-          unitPrice: 100,
-          lineTotal: 100,
-        },
-      ],
-      subtotal: 100,
-      shipping: 39,
-      total: 139,
-    });
-    const result = await sendTelegramMessage(sample);
+      lines: [{ name: "טרימר בדיקה", qty: 1, unitPrice: 500, lineTotal: 500 }],
+      total: 500,
+    };
+    const result = await sendOrderCard(sample);
     sendJson(res, result.status, result.body);
     return;
   }
@@ -285,7 +184,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  const text = buildMessage(order).slice(0, MAX_TEXT);
-  const result = await sendTelegramMessage(text);
+  const result = await sendOrderCard(order);
   sendJson(res, result.status, result.body);
 }
