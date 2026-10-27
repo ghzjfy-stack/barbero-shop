@@ -61,6 +61,47 @@ function sameStatus(order, status) {
   return String(order?.status || "").trim() === String(status || "").trim();
 }
 
+function grabCardField(text, label) {
+  const m = String(text || "").match(new RegExp(`${label}\\s*:\\s*(.+)`, "m"));
+  const value = m ? String(m[1] || "").trim() : "";
+  return !value || value === "—" ? "" : value;
+}
+
+/** Rebuild order fields from the Telegram card when Sheets track is thin. */
+function orderFromTelegramMessage(message, orderNumber) {
+  const text = String(message?.text || "");
+  const totalRaw = grabCardField(text, "סכום").replace(/[^\d.]/g, "");
+  return {
+    orderNumber,
+    number: orderNumber,
+    status: grabCardField(text, "סטטוס"),
+    name: grabCardField(text, "לקוח"),
+    email: grabCardField(text, "אימייל"),
+    phone: grabCardField(text, "טלפון"),
+    items: grabCardField(text, "מוצר"),
+    total: totalRaw ? Number(totalRaw) : "",
+    address: grabCardField(text, "כתובת"),
+    unit: grabCardField(text, "קומה/דירה"),
+    notes: grabCardField(text, "הערות"),
+    createdAt: grabCardField(text, "נוצרה"),
+    payment: "ביט",
+  };
+}
+
+function mergeOrder(...parts) {
+  const out = {};
+  for (const part of parts) {
+    if (!part || typeof part !== "object") continue;
+    for (const [key, value] of Object.entries(part)) {
+      if (value == null) continue;
+      const s = typeof value === "string" ? value.trim() : value;
+      if (s === "" || s === "—") continue;
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
 /** Live Apps Script reliably supports type:track (same as /api/track-order). */
 async function sheetsGetOrder(orderNumber) {
   return sheetsPost({ type: "track", orderNumber });
@@ -115,14 +156,17 @@ async function sheetsAppendStatus(orderNumber, status, paid, prev = {}) {
   return { ok: false, error: tracked.error || "status_not_supported", order };
 }
 
-async function sheetsSetStatus(orderNumber, status) {
+async function sheetsSetStatus(orderNumber, status, prev = {}) {
   const paid = status === "שולם" ? "Yes" : status === "בוטל" ? "No" : undefined;
   const viaStatus = await sheetsPost({ type: "status", orderNumber, status, paid });
   if (viaStatus.ok && sameStatus(viaStatus.order, status)) return viaStatus;
   const viaTrack = await sheetsPost({ type: "track", orderNumber, setStatus: status, paid });
   if (viaTrack.ok && sameStatus(viaTrack.order, status)) return viaTrack;
   const exists = await sheetsPost({ type: "track", orderNumber });
-  if (exists.ok) return sheetsAppendStatus(orderNumber, status, paid, exists.order);
+  const seed = mergeOrder(prev, exists.ok ? exists.order : null, { orderNumber, status });
+  if (exists.ok || prev.name || prev.items || prev.phone) {
+    return sheetsAppendStatus(orderNumber, status, paid, seed);
+  }
   return { ok: false, error: viaStatus.error || viaTrack.error || "order_not_found" };
 }
 
@@ -186,6 +230,7 @@ export default async function handler(req, res) {
       ok: true,
       service: "telegram-webhook",
       configured: Boolean(telegramConfig().token),
+      rev: "card-merge",
     });
     return;
   }
@@ -234,19 +279,21 @@ export default async function handler(req, res) {
   try {
     if (parsed.action === "approve" || parsed.action === "cancel") {
       const nextStatus = parsed.action === "approve" ? "שולם" : "בוטל";
-      const updated = await sheetsSetStatus(parsed.orderNumber, nextStatus);
-      if (!updated.ok) {
-        const msg =
-          updated.error === "status_not_supported"
-            ? "ההזמנה נמצאה בשיטס. אשר/בטל ייכנסו אחרי עדכון הסקריפט בגוגל"
-            : "לא מצאתי את ההזמנה בשיטס";
-        await answerCallback(cq.id, msg, true);
-        sendJson(res, 200, { ok: false, error: updated.error });
-        return;
-      }
-      const cardOrder = toCardOrder(updated.order || { orderNumber: parsed.orderNumber, status: nextStatus });
+      const fromMsg = orderFromTelegramMessage(cq.message, parsed.orderNumber);
+      const updated = await sheetsSetStatus(parsed.orderNumber, nextStatus, fromMsg);
+      const cardOrder = toCardOrder(
+        mergeOrder(fromMsg, updated.order, {
+          orderNumber: parsed.orderNumber,
+          status: nextStatus,
+        }),
+      );
       if (chatId && messageId) {
         await editOrderCard(chatId, messageId, cardOrder, { status: nextStatus });
+      }
+      if (!updated.ok) {
+        await answerCallback(cq.id, "הכרטיס עודכן. לא הצלחתי לכתוב לשיטס", true);
+        sendJson(res, 200, { ok: false, error: updated.error, status: nextStatus });
+        return;
       }
       const mark = parsed.action === "approve" ? "✅" : "❌";
       const label = parsed.action === "approve" ? "אשר" : "בטל";
@@ -263,17 +310,20 @@ export default async function handler(req, res) {
     }
 
     if (parsed.action === "refresh") {
+      const fromMsg = orderFromTelegramMessage(cq.message, parsed.orderNumber);
       const got = await sheetsGetOrder(parsed.orderNumber);
-      if (!got.ok) {
-        await answerCallback(cq.id, "לא מצאתי את ההזמנה לרענון", true);
-        sendJson(res, 200, { ok: false, error: got.error });
-        return;
-      }
-      const cardOrder = toCardOrder(got.order);
+      const cardOrder = toCardOrder(
+        mergeOrder(fromMsg, got.ok ? got.order : null, { orderNumber: parsed.orderNumber }),
+      );
       if (chatId && messageId) {
         await editOrderCard(chatId, messageId, cardOrder, {
           status: cardOrder.status || waitingStatusOf(cardOrder.payment),
         });
+      }
+      if (!got.ok && !fromMsg.name && !fromMsg.items) {
+        await answerCallback(cq.id, "לא מצאתי את ההזמנה לרענון", true);
+        sendJson(res, 200, { ok: false, error: got.error });
+        return;
       }
       await answerCallback(cq.id, "כרטיס עודכן");
       sendJson(res, 200, { ok: true, refreshed: true });
