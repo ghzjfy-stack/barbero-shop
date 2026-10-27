@@ -66,6 +66,55 @@ async function sheetsGetOrder(orderNumber) {
   return sheetsPost({ type: "track", orderNumber });
 }
 
+async function sheetsAppendStatus(orderNumber, status, paid, prev = {}) {
+  const { url, secret } = sheetsConfig();
+  if (!url) return { ok: false, error: "sheets_not_configured" };
+  const payload = {
+    order: { number: orderNumber },
+    row: {
+      orderNumber,
+      status,
+      paid: paid || (status === "שולם" ? "Yes" : "No"),
+      createdAt: prev.createdAt || "",
+      name: prev.name || "",
+      phone: prev.phone || "",
+      email: prev.email || "",
+      city: prev.city || "",
+      items: prev.items || "",
+      payment: prev.payment || "ביט",
+      // Empty total so סיכומים SUM does not double the original row.
+      total: "",
+      share: "No",
+      notes: "עדכון סטטוס מטלגרם",
+    },
+  };
+  if (secret) payload.secret = secret;
+  const result = await postAppsScript(url, payload);
+  if (!result.ok || result.data?.ok === false) {
+    return { ok: false, error: result.data?.error || "append_failed" };
+  }
+  const tracked = await sheetsGetOrder(orderNumber);
+  const order = {
+    ...prev,
+    ...(tracked.order || {}),
+    orderNumber,
+    status,
+    total: tracked.order?.total || prev.total,
+    name: tracked.order?.name || prev.name,
+    phone: tracked.order?.phone || prev.phone,
+    email: tracked.order?.email || prev.email,
+    items: tracked.order?.items || prev.items,
+    payment: tracked.order?.payment || prev.payment,
+  };
+  if (tracked.ok && sameStatus(tracked.order, status)) {
+    return { ok: true, order };
+  }
+  if (result.data?.ok) {
+    return { ok: true, order };
+  }
+  return { ok: false, error: tracked.error || "status_not_supported", order };
+}
+
 async function sheetsSetStatus(orderNumber, status) {
   const paid = status === "שולם" ? "Yes" : status === "בוטל" ? "No" : undefined;
   const viaStatus = await sheetsPost({ type: "status", orderNumber, status, paid });
@@ -73,7 +122,7 @@ async function sheetsSetStatus(orderNumber, status) {
   const viaTrack = await sheetsPost({ type: "track", orderNumber, setStatus: status, paid });
   if (viaTrack.ok && sameStatus(viaTrack.order, status)) return viaTrack;
   const exists = await sheetsPost({ type: "track", orderNumber });
-  if (exists.ok) return { ok: false, error: "status_not_supported", order: exists.order };
+  if (exists.ok) return sheetsAppendStatus(orderNumber, status, paid, exists.order);
   return { ok: false, error: viaStatus.error || viaTrack.error || "order_not_found" };
 }
 
