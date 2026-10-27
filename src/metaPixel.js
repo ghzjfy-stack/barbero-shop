@@ -3,7 +3,7 @@
  * Events Manager → Data sources → Pixel → copy Pixel ID (numbers only).
  */
 
-const PIXEL_ID = String(import.meta.env.VITE_META_PIXEL_ID || "").trim();
+const PIXEL_ID = String(import.meta.env.VITE_META_PIXEL_ID || "1131099525966263").trim();
 
 export function isMetaPixelEnabled() {
   return Boolean(PIXEL_ID);
