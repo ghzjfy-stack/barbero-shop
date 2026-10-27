@@ -45,33 +45,28 @@ function sheetsConfig() {
   return { url, secret };
 }
 
-async function sheetsGetOrder(orderNumber) {
+async function sheetsPost(payload) {
   const { url, secret } = sheetsConfig();
   if (!url) return { ok: false, error: "sheets_not_configured" };
-  const payload = { type: "get", orderNumber };
-  if (secret) payload.secret = secret;
-  const result = await postAppsScript(url, payload);
-  if (!result.ok || !result.data?.ok || !result.data?.order) {
+  const body = { ...payload };
+  if (secret) body.secret = secret;
+  const result = await postAppsScript(url, body);
+  if (!result.ok || result.data?.ok === false || !result.data?.order) {
     return { ok: false, error: result.data?.error || "order_not_found" };
   }
   return { ok: true, order: result.data.order };
 }
 
+/** Prefer type:get; the live Apps Script may only have type:track (customer lookup). */
+async function sheetsGetOrder(orderNumber) {
+  const got = await sheetsPost({ type: "get", orderNumber });
+  if (got.ok) return got;
+  return sheetsPost({ type: "track", orderNumber });
+}
+
 async function sheetsSetStatus(orderNumber, status) {
-  const { url, secret } = sheetsConfig();
-  if (!url) return { ok: false, error: "sheets_not_configured" };
-  const payload = {
-    type: "status",
-    orderNumber,
-    status,
-    paid: status === "שולם" ? "Yes" : status === "בוטל" ? "No" : undefined,
-  };
-  if (secret) payload.secret = secret;
-  const result = await postAppsScript(url, payload);
-  if (!result.ok || result.data?.ok === false) {
-    return { ok: false, error: result.data?.error || "status_update_failed" };
-  }
-  return { ok: true, order: result.data?.order };
+  const paid = status === "שולם" ? "Yes" : status === "בוטל" ? "No" : undefined;
+  return sheetsPost({ type: "status", orderNumber, status, paid });
 }
 
 async function answerCallback(callbackQueryId, text, alert = false) {

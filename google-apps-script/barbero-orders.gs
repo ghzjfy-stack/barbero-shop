@@ -452,6 +452,14 @@ function updateOrderStatus_(body) {
 }
 
 function trackOrder_(body) {
+  if (body && body.setStatus) {
+    return updateOrderStatus_({
+      orderNumber: body.orderNumber || body.o,
+      status: body.setStatus,
+      paid: body.paid,
+    });
+  }
+
   var orderNumber = String(body.orderNumber || body.o || "")
     .trim()
     .toUpperCase();
