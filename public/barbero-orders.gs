@@ -171,6 +171,14 @@ function doPost(e) {
       return trackOrder_(body);
     }
 
+    if (body && body.type === "get") {
+      return getOrder_(body);
+    }
+
+    if (body && body.type === "status") {
+      return updateOrderStatus_(body);
+    }
+
     if (body && body.type === "reset") {
       if (body.confirm !== "BARBERO_RESET_DEMO") {
         return json_({ ok: false, error: "confirm_required" });
@@ -287,6 +295,7 @@ function publicTrackOrder_(row, col) {
     extractFieldFromAllData_(allData, "עיר");
   var items =
     (col["מוצרים"] != null ? String(row[col["מוצרים"]] || "").trim() : "") ||
+    (col["פריטים"] != null ? String(row[col["פריטים"]] || "").trim() : "") ||
     "";
   var payment =
     (col["תשלום"] != null ? String(row[col["תשלום"]] || "").trim() : "") ||
@@ -328,6 +337,118 @@ function publicTrackOrder_(row, col) {
     trackingNumber: tracking || null,
     shippingStatus: shippingStatus || null,
   };
+}
+
+/** Full order card fields for Telegram bot (approve / refresh). */
+function fullOrderFromRow_(row, col) {
+  var allData = col["כל הנתונים"] != null ? String(row[col["כל הנתונים"]] || "") : "";
+  var base = publicTrackOrder_(row, col);
+  var total =
+    col["מחיר סופי"] != null
+      ? row[col["מחיר סופי"]]
+      : col["סה״כ"] != null
+        ? row[col["סה״כ"]]
+        : "";
+  return {
+    orderNumber: base.orderNumber,
+    status: base.status,
+    createdAt: base.createdAt,
+    payment: base.payment,
+    items: base.items,
+    total: total === "" || total == null ? "" : Number(total),
+    name: col["שם"] != null ? String(row[col["שם"]] || "").trim() : "",
+    phone:
+      (col["טלפון"] != null ? String(row[col["טלפון"]] || "").trim() : "") ||
+      extractFieldFromAllData_(allData, "טלפון"),
+    email:
+      (col["אימייל"] != null ? String(row[col["אימייל"]] || "").trim() : "") ||
+      extractFieldFromAllData_(allData, "אימייל"),
+    address:
+      extractFieldFromAllData_(allData, "כתובת") ||
+      (col["כתובת"] != null ? String(row[col["כתובת"]] || "").trim() : ""),
+    city: base.city,
+    postal:
+      extractFieldFromAllData_(allData, "מיקוד") ||
+      (col["מיקוד"] != null ? String(row[col["מיקוד"]] || "").trim() : ""),
+    unit:
+      extractFieldFromAllData_(allData, "דירה/קומה") ||
+      extractFieldFromAllData_(allData, "דירה") ||
+      "",
+    notes: extractFieldFromAllData_(allData, "הערות") || "",
+  };
+}
+
+function findOrderRow_(orderNumber) {
+  var needle = String(orderNumber || "")
+    .trim()
+    .toUpperCase();
+  if (!needle) return null;
+
+  var sheet = getSheet_();
+  var last = sheet.getLastRow();
+  if (last < 2) return null;
+
+  var width = Math.max(sheet.getLastColumn(), HEADERS.length);
+  var headers = sheet.getRange(1, 1, 1, width).getValues()[0];
+  var col = headerIndexMap_(headers);
+  if (col["מספר הזמנה"] == null) return null;
+
+  var values = sheet.getRange(2, 1, last, width).getValues();
+  for (var i = values.length - 1; i >= 0; i--) {
+    var row = values[i];
+    var rowOrder = String(row[col["מספר הזמנה"]] || "")
+      .trim()
+      .toUpperCase();
+    if (rowOrder === needle) {
+      return { row: row, col: col, sheet: sheet, rowIndex: i + 2 };
+    }
+  }
+  return null;
+}
+
+function getOrder_(body) {
+  var found = findOrderRow_(body.orderNumber || body.o);
+  if (!found) return json_({ ok: false, error: "not_found" });
+  return json_({ ok: true, order: fullOrderFromRow_(found.row, found.col) });
+}
+
+function updateOrderStatus_(body) {
+  var found = findOrderRow_(body.orderNumber || body.o);
+  if (!found) return json_({ ok: false, error: "not_found" });
+
+  var next = String(body.status || "").trim();
+  var allowed = {
+    "ממתין לביט": true,
+    "ממתין ל-PayPal": true,
+    שולם: true,
+    בהכנה: true,
+    "משלוח מארה״ב": true,
+    נמסר: true,
+    בוטל: true,
+  };
+  if (!allowed[next]) {
+    return json_({ ok: false, error: "invalid_status" });
+  }
+
+  var sheet = found.sheet;
+  var col = found.col;
+  var rowIndex = found.rowIndex;
+  sheet.getRange(rowIndex, col["סטטוס"] + 1).setValue(next);
+
+  if (col["שולם"] != null) {
+    var paid =
+      body.paid != null
+        ? String(body.paid)
+        : next === "שולם" || next === "בהכנה" || next === "משלוח מארה״ב" || next === "נמסר"
+          ? "Yes"
+          : "No";
+    sheet.getRange(rowIndex, col["שולם"] + 1).setValue(paid);
+  }
+
+  refreshSummarySheet_();
+  var width = Math.max(sheet.getLastColumn(), HEADERS.length);
+  var refreshed = sheet.getRange(rowIndex, 1, 1, width).getValues()[0];
+  return json_({ ok: true, order: fullOrderFromRow_(refreshed, col) });
 }
 
 function trackOrder_(body) {
