@@ -80,9 +80,16 @@ export function buildSheetRow(order) {
     address: details.address || "",
     unit: details.unit || "",
     postal: details.postal || "",
-    notes: details.notes || "",
+    notes: [
+      details.notes || "",
+      order?.coupon && order?.discount
+        ? `קופון ${order.coupon}: −₪${order.discount}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" · "),
     items: buildItemsText(order?.lines),
-    // מחיר סופי ללקוח — עלות מוצר/משלוח אמיתית ממלאים ידנית בשיטס לחישוב רווח
+    // מחיר סופי ללקוח (אחרי קופון אם יש) — עלות מוצר/משלוח אמיתית ממלאים ידנית בשיטס
     total: formatIls(order?.total),
     productCost: "",
     shippingCost: "",

@@ -6,6 +6,20 @@ export const announcements = [
   "אחריות יבואן 12 חודשים",
 ];
 
+/** First-order promo — shown in the top bar (ASOS-style) and redeemable in cart. */
+export const FIRST_ORDER_COUPON = {
+  code: "BARBERO50",
+  amount: 50,
+  label: "₪50 הנחה להזמנה ראשונה",
+};
+
+export function normalizeCouponCode(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+}
+
 export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;
 
