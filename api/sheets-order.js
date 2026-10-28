@@ -87,7 +87,6 @@ export function buildSheetRow(order) {
     productCost: "",
     shippingCost: "",
     payment,
-    share: "No",
   };
 }
 

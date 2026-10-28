@@ -14,11 +14,11 @@
  * מעקב מהאתר: POST { type:"track", orderNumber? , phone? }
  * איפוס מרחוק: POST { type:"reset", confirm:"BARBERO_RESET_DEMO" }
  *
- * עמודות הזמנות (כמו מינוקס):
+ * עמודות הזמנות (סולו — בלי חלוקת רווחים):
  *  A סטטוס | B ימי משלוח | C מספר הזמנה | D תאריך | E שם
  *  F שולם | G תשלום | H מחיר סופי | I עלות מוצר | J עלות משלוח
- *  K רווח (=H−I−J) | L לשותף (=K/2) | M חלוקה | N מוצרים
- *  O כל הנתונים | P מספר מעקב | Q סטטוס משלוח | R טלפון | S אימייל
+ *  K רווח (=H−I−J) | L מוצרים | M כל הנתונים | N מספר מעקב
+ *  O סטטוס משלוח | P טלפון | Q אימייל
  */
 
 var SPREADSHEET_ID = "1024eC15y0slevJ-aESRrLzshAnOCoArxV6jcZnouJeQ";
@@ -45,14 +45,12 @@ var HEADERS = [
   "עלות מוצר", // I  — ממלאים ידנית
   "עלות משלוח", // J  — ממלאים ידנית (עלות אמיתית מארה״ב)
   "רווח", // K  — נוסחה
-  "לשותף", // L  — נוסחה (חצי רווח)
-  "חלוקה", // M
-  "מוצרים", // N
-  "כל הנתונים", // O
-  "מספר מעקב", // P
-  "סטטוס משלוח", // Q
-  "טלפון", // R — למעקב באתר
-  "אימייל", // S
+  "מוצרים", // L
+  "כל הנתונים", // M
+  "מספר מעקב", // N
+  "סטטוס משלוח", // O
+  "טלפון", // P — למעקב באתר
+  "אימייל", // Q
 ];
 
 var STATUS_OPTIONS = [
@@ -67,7 +65,6 @@ var STATUS_OPTIONS = [
 
 var PAID_OPTIONS = ["Yes", "No"];
 var PAYMENT_OPTIONS = ["ביט", "PayPal", "PayBox"];
-var SHARE_OPTIONS = ["Yes", "No"];
 
 /** צבעי מותג / מינוקס */
 var COLOR = {
@@ -219,14 +216,12 @@ function doPost(e) {
       blankToNumber_(row.productCost), // I עלות מוצר (אופציונלי מהאתר)
       blankToNumber_(row.shippingCost), // J עלות משלוח אמיתית
       "", // K רווח — נוסחה
-      "", // L לשותף — נוסחה
-      row.share || "No", // M
-      row.items || "", // N
-      allData, // O
-      row.trackingNumber || "", // P
-      row.shippingStatus || "", // Q
-      row.phone || "", // R
-      row.email || "", // S
+      row.items || "", // L
+      allData, // M
+      row.trackingNumber || "", // N
+      row.shippingStatus || "", // O
+      row.phone || "", // P
+      row.email || "", // Q
     ]);
 
     var last = sheet.getLastRow();
@@ -676,10 +671,9 @@ function setupSummarySheet_() {
     ["רווח גולמי (מכירות − מוצר − משלוח)", 'SUM(\'הזמנות\'!K2:K)'],
     ["סה״כ קידום ממומן", 'SUM(\'קידום ממומן\'!C2:C)'],
     ["רווח נטו אחרי פרסום", "B7-B8"],
-    ["רווח לשותף (50%)", "B9/2"],
   ];
 
-  // Rows 3–10 for metrics (leave row 2 as spacer)
+  // Rows 3–9 for metrics (leave row 2 as spacer)
   sheet.getRange("A2").setValue("");
   for (var i = 0; i < labels.length; i++) {
     var r = i + 3;
@@ -687,20 +681,19 @@ function setupSummarySheet_() {
     sheet.getRange(r, 2).setFormula("=" + labels[i][1]);
   }
 
-  sheet.getRange("A3:A10").setFontFamily("Arial").setFontSize(11).setFontColor(COLOR.ink);
+  sheet.getRange("A3:A9").setFontFamily("Arial").setFontSize(11).setFontColor(COLOR.ink);
   sheet
-    .getRange("B3:B10")
+    .getRange("B3:B9")
     .setFontFamily("Arial")
     .setFontSize(12)
     .setFontWeight("bold")
     .setHorizontalAlignment("center");
 
   sheet.getRange("B3").setNumberFormat("0");
-  sheet.getRange("B4:B10").setNumberFormat("₪#,##0.00");
+  sheet.getRange("B4:B9").setNumberFormat("₪#,##0.00");
 
   // Highlight net profit
   sheet.getRange("A9:B9").setBackground("#D8F3DC");
-  sheet.getRange("A10:B10").setBackground("#FFF3CD");
 
   sheet.getRange("A12").setValue("הערה: מלאו «עלות מוצר» ו«עלות משלוח» בכל שורת הזמנה — הרווח מחושב אוטומטית.");
   sheet.getRange("A12:B12").merge();
@@ -743,26 +736,38 @@ function formatNow_() {
 }
 
 function ensureHeader_(sheet, forceRestyle) {
+  migrateDropPartnerColumns_(sheet);
   var lastRow = sheet.getLastRow();
   if (lastRow === 0) {
     sheet.appendRow(HEADERS);
   } else {
-    // אם הסכמה הישנה — דורסים כותרות לסכמת מינוקס (אחרי איפוס/סetup)
-    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    // אם הסכמה הישנה — דורסים כותרות לסכמה הנוכחית (אחרי איפוס/setup)
     if (sheet.getMaxColumns() < HEADERS.length) {
       sheet.insertColumnsAfter(sheet.getMaxColumns(), HEADERS.length - sheet.getMaxColumns());
     }
+    sheet.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
   }
   if (forceRestyle || lastRow <= 1) {
     styleHeaderOnly_(sheet);
   }
 }
 
+/** מוחק עמודות לשותף/חלוקה אם נשארו מפריסה ישנה עם שותף. */
+function migrateDropPartnerColumns_(sheet) {
+  var lastCol = Math.max(sheet.getLastColumn(), 1);
+  if (lastCol < 1) return;
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  for (var c = headers.length; c >= 1; c--) {
+    var h = String(headers[c - 1] || "").trim();
+    if (h === "לשותף" || h === "חלוקה") {
+      sheet.deleteColumn(c);
+    }
+  }
+}
+
 function writeProfitFormulas_(sheet, row) {
   // K = H - I - J
   sheet.getRange(row, 11).setFormula("=IF(H" + row + "=\"\",\"\",H" + row + "-IF(I" + row + "=\"\",0,I" + row + ")-IF(J" + row + "=\"\",0,J" + row + "))");
-  // L = K / 2
-  sheet.getRange(row, 12).setFormula("=IF(K" + row + "=\"\",\"\",K" + row + "/2)");
 }
 
 function ensureProfitFormulas_(sheet) {
@@ -789,14 +794,12 @@ function styleSheet_(sheet) {
     100, // I product cost
     100, // J ship cost
     100, // K profit
-    100, // L partner
-    90, // M share
-    200, // N items
-    260, // O all data
-    140, // P tracking
-    200, // Q ship status
-    110, // R phone
-    180, // S email
+    200, // L items
+    260, // M all data
+    140, // N tracking
+    200, // O ship status
+    110, // P phone
+    180, // Q email
   ];
   for (var i = 0; i < widths.length; i++) {
     sheet.setColumnWidth(i + 1, widths[i]);
@@ -843,14 +846,14 @@ function styleDataRow_(sheet, row) {
   if (row % 2 === 0) {
     sheet.getRange(row, 2, 1, HEADERS.length - 1).setBackground(COLOR.stripe);
   }
-  sheet.getRange(row, 8, 1, 5).setNumberFormat("₪#,##0.00"); // H–L
-  sheet.getRange(row, 15).setHorizontalAlignment("right"); // כל הנתונים
+  sheet.getRange(row, 8, 1, 4).setNumberFormat("₪#,##0.00"); // H–K
+  sheet.getRange(row, 13).setHorizontalAlignment("right"); // כל הנתונים
 }
 
 function formatMoneyColumns_(sheet) {
   var last = sheet.getLastRow();
   if (last < 2) return;
-  sheet.getRange(2, 8, last - 1, 5).setNumberFormat("₪#,##0.00");
+  sheet.getRange(2, 8, last - 1, 4).setNumberFormat("₪#,##0.00");
 }
 
 function applyValidations_(sheet) {
@@ -874,12 +877,6 @@ function applyValidations_(sheet) {
     .setAllowInvalid(false)
     .build();
   sheet.getRange(2, 7, maxRows - 1, 1).setDataValidation(payRule);
-
-  var shareRule = SpreadsheetApp.newDataValidation()
-    .requireValueInList(SHARE_OPTIONS, true)
-    .setAllowInvalid(false)
-    .build();
-  sheet.getRange(2, 13, maxRows - 1, 1).setDataValidation(shareRule);
 }
 
 function applyConditionalFormat_(sheet) {
@@ -889,7 +886,6 @@ function applyConditionalFormat_(sheet) {
   var daysRange = sheet.getRange(2, 2, maxRows - 1, 1);
   var paidRange = sheet.getRange(2, 6, maxRows - 1, 1);
   var payRange = sheet.getRange(2, 7, maxRows - 1, 1);
-  var shareRange = sheet.getRange(2, 13, maxRows - 1, 1);
   var rules = [];
 
   function statusRule(text, bg, fg) {
@@ -945,22 +941,6 @@ function applyConditionalFormat_(sheet) {
       .whenTextEqualTo("PayBox")
       .setBackground(COLOR.paybox)
       .setRanges([payRange])
-      .build(),
-  );
-
-  // Profit share
-  rules.push(
-    SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo("Yes")
-      .setBackground(COLOR.yes)
-      .setRanges([shareRange])
-      .build(),
-  );
-  rules.push(
-    SpreadsheetApp.newConditionalFormatRule()
-      .whenTextEqualTo("No")
-      .setBackground(COLOR.no)
-      .setRanges([shareRange])
       .build(),
   );
 
