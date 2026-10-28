@@ -1,10 +1,32 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
+  FIRST_ORDER_COUPON,
   FREE_SHIPPING,
+  normalizeCouponCode,
   shippingFeeFor,
   findProduct,
   resolveOffer,
 } from "./data";
+
+const HAS_ORDERED_KEY = "barbero-has-ordered";
+const COUPON_KEY = "barbero-coupon";
+
+function readHasOrdered() {
+  try {
+    return localStorage.getItem(HAS_ORDERED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function readSavedCoupon() {
+  try {
+    const code = normalizeCouponCode(localStorage.getItem(COUPON_KEY) || "");
+    return code === FIRST_ORDER_COUPON.code ? code : "";
+  } catch {
+    return "";
+  }
+}
 import { notifyTelegramOrder } from "./notifyTelegram";
 import { notifyOrderEmail } from "./notifyOrderEmail";
 import { notifySheetsOrder } from "./notifySheetsOrder";
@@ -48,6 +70,10 @@ export function StoreProvider({ children }) {
   const [checkoutStep, setCheckoutStep] = useState("cart");
   const [order, setOrder] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
+  const [appliedCoupon, setAppliedCoupon] = useState(() =>
+    readHasOrdered() ? "" : readSavedCoupon(),
+  );
+  const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
     localStorage.setItem("barbero-cart", JSON.stringify(cart));
@@ -56,6 +82,15 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     localStorage.setItem("barbero-wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
+
+  useEffect(() => {
+    try {
+      if (appliedCoupon) localStorage.setItem(COUPON_KEY, appliedCoupon);
+      else localStorage.removeItem(COUPON_KEY);
+    } catch {
+      /* ignore quota */
+    }
+  }, [appliedCoupon]);
 
   useEffect(() => {
     syncProductLocation(quickViewId);
@@ -132,10 +167,46 @@ export function StoreProvider({ children }) {
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
   const shipping = shippingFeeFor(subtotal);
-  const total = subtotal + shipping;
+  const firstOrderEligible = !readHasOrdered() && !lastOrder;
+  const couponValid =
+    Boolean(appliedCoupon) &&
+    appliedCoupon === FIRST_ORDER_COUPON.code &&
+    firstOrderEligible &&
+    subtotal > 0;
+  const discount = couponValid ? Math.min(FIRST_ORDER_COUPON.amount, subtotal) : 0;
+  const total = Math.max(0, subtotal - discount) + shipping;
   const remaining = Math.max(0, FREE_SHIPPING - subtotal);
   const progress = subtotal <= 0 ? 0 : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
   const cartCount = cart.reduce((sum, line) => sum + line.qty, 0);
+
+  const applyCoupon = (rawCode) => {
+    const code = normalizeCouponCode(rawCode);
+    setCouponError("");
+    if (!code) {
+      setCouponError("הזינו קוד קופון");
+      return false;
+    }
+    if (code !== FIRST_ORDER_COUPON.code) {
+      setCouponError("קוד לא תקין");
+      return false;
+    }
+    if (!firstOrderEligible) {
+      setCouponError("הקוד להזמנה ראשונה בלבד");
+      return false;
+    }
+    if (subtotal <= 0) {
+      setCouponError("הוסיפו מוצר לעגלה לפני מימוש הקוד");
+      return false;
+    }
+    setAppliedCoupon(code);
+    notify("הקופון הוחל — ₪50 הנחה");
+    return true;
+  };
+
+  const clearCoupon = () => {
+    setAppliedCoupon("");
+    setCouponError("");
+  };
 
   const notify = (message, action = null) => {
     setToast({ id: Date.now(), message, action });
@@ -262,14 +333,21 @@ export function StoreProvider({ children }) {
 
   const placeOrder = (details) => {
     const payment = details?.payment === "paypal" ? "paypal" : "bit";
+    const couponNote =
+      discount > 0 && appliedCoupon
+        ? `קופון ${appliedCoupon}: −₪${discount} (הזמנה ראשונה)`
+        : "";
+    const notes = [details?.notes, couponNote].filter(Boolean).join(" · ");
     const snapshot = {
       number: `BRB-${Math.floor(100000 + Math.random() * 900000)}`,
       createdAt: new Date().toISOString(),
-      details,
+      details: { ...details, notes },
       payment,
       total,
       subtotal,
       shipping,
+      discount,
+      coupon: discount > 0 ? appliedCoupon : "",
       lines: lines.map((line) => ({
         id: line.product.id,
         name: line.product.name,
@@ -285,6 +363,14 @@ export function StoreProvider({ children }) {
     setOrder(snapshot);
     setLastOrder(snapshot);
     setCart([]);
+    setAppliedCoupon("");
+    setCouponError("");
+    try {
+      localStorage.setItem(HAS_ORDERED_KEY, "1");
+      localStorage.removeItem(COUPON_KEY);
+    } catch {
+      /* ignore */
+    }
     setCheckoutStep("done");
     trackMetaPurchase(snapshot);
     notifyTelegramOrder(snapshot);
@@ -323,9 +409,15 @@ export function StoreProvider({ children }) {
     wishCount: wishlist.length,
     subtotal,
     shipping,
+    discount,
     total,
     remaining,
     progress,
+    appliedCoupon,
+    couponError,
+    applyCoupon,
+    clearCoupon,
+    firstOrderEligible,
     cartOpen,
     wishOpen,
     searchOpen,

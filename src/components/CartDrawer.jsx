@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FREE_SHIPPING, formatPrice } from "../data";
+import { FIRST_ORDER_COUPON, FREE_SHIPPING, formatPrice } from "../data";
 import { BIT_PERSONAL_URL, openPayPalPayment } from "../payment";
 import { useStore } from "../store";
 import Drawer from "./Drawer";
@@ -29,6 +29,7 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
+  const [couponDraft, setCouponDraft] = useState("");
 
   const setField = (key, value) => {
     setDetails((current) => ({ ...current, [key]: value }));
@@ -166,7 +167,13 @@ export default function CartDrawer() {
                     {copied ? "הועתק" : store.order.number}
                   </button>
                 </div>
-                <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
+                <Totals
+                  subtotal={store.order.subtotal}
+                  shipping={store.order.shipping}
+                  discount={store.order.discount || 0}
+                  coupon={store.order.coupon || ""}
+                  total={store.order.total}
+                />
                 <ul className="space-y-2 text-sm">
                   {store.order.lines.map((line) => (
                     <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
@@ -295,7 +302,13 @@ export default function CartDrawer() {
             </p>
             <div className="mt-auto pt-6">
               <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
-              <Totals subtotal={store.subtotal} shipping={store.shipping} total={store.total} />
+              <Totals
+                subtotal={store.subtotal}
+                shipping={store.shipping}
+                discount={store.discount}
+                coupon={store.appliedCoupon}
+                total={store.total}
+              />
               <div className="mt-4 grid gap-2">
                 <button type="submit" className="btn-gold h-12">
                   אישור הזמנה · {formatPrice(store.total)}
@@ -383,9 +396,27 @@ export default function CartDrawer() {
 
             <footer className="border-t border-white/10 px-5 py-4">
               <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
+              {store.lines.length > 0 && (
+                <CouponField
+                  draft={couponDraft}
+                  setDraft={setCouponDraft}
+                  applied={store.appliedCoupon}
+                  error={store.couponError}
+                  eligible={store.firstOrderEligible}
+                  onApply={() => {
+                    if (store.applyCoupon(couponDraft || FIRST_ORDER_COUPON.code)) setCouponDraft("");
+                  }}
+                  onClear={() => {
+                    store.clearCoupon();
+                    setCouponDraft("");
+                  }}
+                />
+              )}
               <Totals
                 subtotal={store.subtotal}
                 shipping={store.shipping}
+                discount={store.discount}
+                coupon={store.appliedCoupon}
                 total={store.total}
                 empty={store.lines.length === 0}
               />
@@ -487,11 +518,70 @@ function ShippingProgress({ subtotal, remaining, progress }) {
   );
 }
 
-function Totals({ subtotal, shipping, total, empty = false }) {
+function CouponField({ draft, setDraft, applied, error, eligible, onApply, onClear }) {
+  if (applied) {
+    return (
+      <div className="mb-3 flex items-center justify-between gap-3 border border-dashed border-gold/40 bg-gold/5 px-3 py-2.5 text-sm">
+        <p>
+          <span className="text-muted">קופון </span>
+          <span className="font-semibold tracking-wide text-gold-soft" dir="ltr">
+            {applied}
+          </span>
+          <span className="text-gold-soft"> · −{formatPrice(FIRST_ORDER_COUPON.amount)}</span>
+        </p>
+        <button type="button" className="text-xs text-muted underline-offset-2 hover:text-ivory hover:underline" onClick={onClear}>
+          הסרה
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3">
+      <div className="flex gap-2">
+        <input
+          className="field h-10 flex-1 text-sm tracking-wide"
+          dir="ltr"
+          placeholder={eligible ? FIRST_ORDER_COUPON.code : "קוד קופון"}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onApply();
+            }
+          }}
+          aria-label="קוד קופון"
+        />
+        <button type="button" className="btn-ghost h-10 shrink-0 px-4 text-sm" onClick={onApply}>
+          מימוש
+        </button>
+      </div>
+      {error ? (
+        <p className="mt-1.5 text-xs text-[#e7b2a4]">{error}</p>
+      ) : (
+        <p className="mt-1.5 text-[11px] text-muted">
+          {eligible
+            ? `${FIRST_ORDER_COUPON.label} · הזינו ${FIRST_ORDER_COUPON.code}`
+            : "קופון הזמנה ראשונה כבר נוצל במכשיר זה"}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Totals({ subtotal, shipping, discount = 0, coupon = "", total, empty = false }) {
   const free = !empty && shipping === 0;
   return (
     <div className="space-y-2 text-sm">
       <Row label="סיכום ביניים" value={formatPrice(subtotal)} />
+      {!empty && discount > 0 && (
+        <Row
+          label={coupon ? `הנחה (${coupon})` : "הנחה"}
+          value={`−${formatPrice(discount)}`}
+          gold
+        />
+      )}
       <Row label="משלוח" value={empty ? "—" : free ? "חינם" : formatPrice(shipping)} gold={free} />
       <Row label="לתשלום" value={formatPrice(total)} strong />
     </div>
