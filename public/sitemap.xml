@@ -11,67 +11,72 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.barbero.co.il/?product=wahl-vapor-switch</loc>
+    <loc>https://www.barbero.co.il/p/wahl-vapor-switch</loc>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.barbero.co.il/?product=wahl-lithium-ss</loc>
+    <loc>https://www.barbero.co.il/p/wahl-extreme-visibility</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-lithium-ss</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.barbero.co.il/?product=wahl-lithium-aio</loc>
+    <loc>https://www.barbero.co.il/p/wahl-lithium-aio</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.barbero.co.il/?product=wahl-vacuum-trimmer</loc>
+    <loc>https://www.barbero.co.il/p/wahl-g-whiz</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-vapor</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-senior</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-cordless-designer</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-head-shaver</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-vanish</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-aqua</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.barbero.co.il/p/wahl-vacuum-trimmer</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.barbero.co.il/?product=wahl-g-whiz</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-vapor</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-senior</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-cordless-designer</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-head-shaver</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-vanish</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-aqua</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://www.barbero.co.il/?product=wahl-micro-groomsman</loc>
+    <loc>https://www.barbero.co.il/p/wahl-micro-groomsman</loc>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.barbero.co.il/?product=wahl-blade-oil</loc>
+    <loc>https://www.barbero.co.il/p/wahl-blade-oil</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
