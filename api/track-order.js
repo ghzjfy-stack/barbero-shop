@@ -8,7 +8,7 @@
  * Vercel env: GOOGLE_SHEETS_WEBHOOK_URL (+ optional GOOGLE_SHEETS_WEBHOOK_SECRET)
  */
 
-import { postAppsScript, safeWebhookHint } from "../lib/appsScriptWebhook.js";
+import { postAppsScript, safeWebhookHint, sheetsWebhookUrl } from "../lib/appsScriptWebhook.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -136,7 +136,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const webhook = String(process.env.GOOGLE_SHEETS_WEBHOOK_URL || "").trim();
+  const webhook = sheetsWebhookUrl();
 
   if (req.method === "GET") {
     sendJson(res, 200, {

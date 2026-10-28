@@ -7,7 +7,7 @@
  *   GOOGLE_SHEETS_WEBHOOK_SECRET  — optional shared secret (must match the script)
  */
 
-import { postAppsScript, safeWebhookHint } from "../lib/appsScriptWebhook.js";
+import { postAppsScript, safeWebhookHint, sheetsWebhookUrl } from "../lib/appsScriptWebhook.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -99,7 +99,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const webhook = String(process.env.GOOGLE_SHEETS_WEBHOOK_URL || "").trim();
+  const webhook = sheetsWebhookUrl();
 
   // Lightweight status check (no secrets): confirms env is set on this deployment.
   if (req.method === "GET") {

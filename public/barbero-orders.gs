@@ -529,6 +529,7 @@ function doGet() {
   return json_({
     ok: true,
     service: "barbero-orders",
+    rev: "inplace-status",
     sheet: SHEET_NAME,
     summary: SUMMARY_SHEET_NAME,
     ads: ADS_SHEET_NAME,

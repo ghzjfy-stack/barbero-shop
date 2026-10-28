@@ -13,7 +13,7 @@
  *   GOOGLE_SHEETS_WEBHOOK_URL (+ optional GOOGLE_SHEETS_WEBHOOK_SECRET)
  */
 
-import { postAppsScript } from "../lib/appsScriptWebhook.js";
+import { postAppsScript, sheetsWebhookUrl } from "../lib/appsScriptWebhook.js";
 import { parseCallbackData, waitingStatusOf } from "../lib/telegramOrderCard.js";
 import { editOrderCard, telegramApi, telegramConfig } from "./telegram-order.js";
 
@@ -40,7 +40,7 @@ function sendJson(res, status, body) {
 }
 
 function sheetsConfig() {
-  const url = String(process.env.GOOGLE_SHEETS_WEBHOOK_URL || "").trim();
+  const url = sheetsWebhookUrl();
   const secret = String(process.env.GOOGLE_SHEETS_WEBHOOK_SECRET || "").trim();
   return { url, secret };
 }
@@ -229,7 +229,7 @@ export default async function handler(req, res) {
       ok: true,
       service: "telegram-webhook",
       configured: Boolean(telegramConfig().token),
-      rev: "card-merge",
+      rev: "inplace-status",
     });
     return;
   }
