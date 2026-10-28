@@ -125,7 +125,6 @@ async function sheetsAppendStatus(orderNumber, status, paid, prev = {}) {
       payment: prev.payment || "ביט",
       // Empty total so סיכומים SUM does not double the original row.
       total: "",
-      share: "No",
       notes: "עדכון סטטוס מטלגרם",
     },
   };
