@@ -6,11 +6,12 @@ export const announcements = [
   "אחריות יבואן 12 חודשים",
 ];
 
-/** First-order promo — shown in the top bar (ASOS-style) and redeemable in cart. */
+/** Opening promo — top bar (ASOS-style) + cart redeem. Aliases keep old ads working. */
 export const FIRST_ORDER_COUPON = {
-  code: "BARBERO50",
-  amount: 50,
-  label: "₪50 הנחה להזמנה ראשונה",
+  code: "BARBERO100",
+  aliases: ["BARBERO50"],
+  amount: 100,
+  label: "הטבת פתיחה · ₪100 הנחה להזמנה ראשונה",
 };
 
 export function normalizeCouponCode(value) {
@@ -19,6 +20,20 @@ export function normalizeCouponCode(value) {
     .toUpperCase()
     .replace(/\s+/g, "");
 }
+
+export function isFirstOrderCouponCode(value) {
+  const code = normalizeCouponCode(value);
+  if (!code) return false;
+  if (code === FIRST_ORDER_COUPON.code) return true;
+  return (FIRST_ORDER_COUPON.aliases || []).includes(code);
+}
+
+/** Short trust lines near buy / checkout — not a redesign, just reassurance. */
+export const purchaseTrustLines = [
+  "יבוא מקורי מארה״ב · אחריות יבואן 12 חודשים",
+  "תשלום מאובטח בביט או PayPal",
+  "החזרה 14 יום באריזה מקורית סגורה · משלוח חינם מ־₪499",
+];
 
 export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   FIRST_ORDER_COUPON,
   FREE_SHIPPING,
+  isFirstOrderCouponCode,
   normalizeCouponCode,
   shippingFeeFor,
   findProduct,
@@ -22,7 +23,7 @@ function readHasOrdered() {
 function readSavedCoupon() {
   try {
     const code = normalizeCouponCode(localStorage.getItem(COUPON_KEY) || "");
-    return code === FIRST_ORDER_COUPON.code ? code : "";
+    return isFirstOrderCouponCode(code) ? code : "";
   } catch {
     return "";
   }
@@ -170,7 +171,7 @@ export function StoreProvider({ children }) {
   const firstOrderEligible = !readHasOrdered() && !lastOrder;
   const couponValid =
     Boolean(appliedCoupon) &&
-    appliedCoupon === FIRST_ORDER_COUPON.code &&
+    isFirstOrderCouponCode(appliedCoupon) &&
     firstOrderEligible &&
     subtotal > 0;
   const discount = couponValid ? Math.min(FIRST_ORDER_COUPON.amount, subtotal) : 0;
@@ -186,7 +187,7 @@ export function StoreProvider({ children }) {
       setCouponError("הזינו קוד קופון");
       return false;
     }
-    if (code !== FIRST_ORDER_COUPON.code) {
+    if (!isFirstOrderCouponCode(code)) {
       setCouponError("קוד לא תקין");
       return false;
     }
@@ -199,7 +200,7 @@ export function StoreProvider({ children }) {
       return false;
     }
     setAppliedCoupon(code);
-    notify("הקופון הוחל — ₪50 הנחה");
+    notify(`הקופון הוחל — ₪${FIRST_ORDER_COUPON.amount} הנחה`);
     return true;
   };
 

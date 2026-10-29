@@ -6,6 +6,7 @@ import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
+import PurchaseTrust from "./PurchaseTrust";
 
 const emptyDetails = {
   name: "",
@@ -317,6 +318,7 @@ export default function CartDrawer() {
                   חזרה לעגלה
                 </button>
               </div>
+              <PurchaseTrust className="mt-3" />
             </div>
           </form>
         ) : (
@@ -433,8 +435,9 @@ export default function CartDrawer() {
                   המשך לתשלום · {formatPrice(store.total)}
                 </button>
               )}
+              {store.lines.length > 0 && <PurchaseTrust className="mt-3" />}
               <p className="mt-3 text-center text-[11px] text-muted">
-                הסכום כולל משלוח במידת הצורך · תשלום בביט או PayPal אחרי אישור ההזמנה
+                הסכום כולל משלוח במידת הצורך · התשלום מתבצע בביט או PayPal אחרי אישור ההזמנה
               </p>
             </footer>
           </>
