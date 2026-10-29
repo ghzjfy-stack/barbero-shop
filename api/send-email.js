@@ -91,12 +91,59 @@ function buildPayCtaHtml(payUrl) {
   </table>`;
 }
 
-function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines, payUrl }) {
+function buildTotalsHtml({ subtotal, shipping, discount, coupon, total }) {
+  const totalText = formatIls(total);
+  if (!totalText) return "";
+  const discountN = Number(discount) || 0;
+  const rows = [];
+  const subtotalText = formatIls(subtotal);
+  if (subtotalText) {
+    rows.push(`<tr>
+      <td style="padding:4px 0;text-align:right;color:#a89f90;font-size:13px;">סיכום ביניים</td>
+      <td style="padding:4px 0;text-align:left;color:#cfc8bb;font-size:13px;white-space:nowrap;">${escapeHtml(subtotalText)}</td>
+    </tr>`);
+  }
+  if (discountN > 0) {
+    const couponLabel = coupon ? ` (${escapeHtml(String(coupon))})` : "";
+    rows.push(`<tr>
+      <td style="padding:4px 0;text-align:right;color:#c6a15b;font-size:13px;">הנחה${couponLabel}</td>
+      <td style="padding:4px 0;text-align:left;color:#c6a15b;font-size:13px;white-space:nowrap;">−${escapeHtml(formatIls(discountN))}</td>
+    </tr>`);
+  }
+  if (shipping != null && shipping !== "") {
+    const shipN = Number(shipping);
+    const shipText = Number.isFinite(shipN) && shipN === 0 ? "חינם" : formatIls(shipping);
+    if (shipText) {
+      rows.push(`<tr>
+        <td style="padding:4px 0;text-align:right;color:#a89f90;font-size:13px;">משלוח</td>
+        <td style="padding:4px 0;text-align:left;color:#cfc8bb;font-size:13px;white-space:nowrap;">${escapeHtml(shipText)}</td>
+      </tr>`);
+    }
+  }
+  rows.push(`<tr>
+    <td style="padding:10px 0 0;text-align:right;color:#c6a15b;font-size:12px;border-top:1px solid #3a342a;">סה״כ לתשלום</td>
+    <td style="padding:10px 0 0;text-align:left;color:#f5f1e8;font-size:18px;font-weight:700;white-space:nowrap;border-top:1px solid #3a342a;">${escapeHtml(totalText)}</td>
+  </tr>`);
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:12px;">${rows.join("")}</table>`;
+}
+
+function buildOrderEmailHtml({
+  orderNumber,
+  customerName,
+  total,
+  subtotal,
+  shipping,
+  discount,
+  coupon,
+  payment,
+  lines,
+  payUrl,
+}) {
   const safeOrder = escapeHtml(orderNumber);
   const safeName = escapeHtml(customerName || "לקוח/ה יקר/ה");
-  const totalText = formatIls(total);
   const paymentLabel = payment === "paypal" ? "PayPal" : "ביט";
   const itemsHtml = buildItemsHtml(lines);
+  const totalsHtml = buildTotalsHtml({ subtotal, shipping, discount, coupon, total });
   const payCtaHtml = buildPayCtaHtml(payUrl);
 
   return `<!DOCTYPE html>
@@ -132,12 +179,7 @@ function buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines,
                     <td style="padding:16px 18px;text-align:right;direction:rtl;">
                       <div style="font-size:12px;color:#c6a15b;margin-bottom:6px;">מספר הזמנה</div>
                       <div style="font-size:20px;font-weight:700;color:#f5f1e8;letter-spacing:0.04em;">${safeOrder}</div>
-                      ${
-                        totalText
-                          ? `<div style="margin-top:12px;font-size:12px;color:#c6a15b;">סה״כ לתשלום</div>
-                             <div style="font-size:18px;font-weight:700;color:#f5f1e8;margin-top:4px;">${escapeHtml(totalText)}</div>`
-                          : ""
-                      }
+                      ${totalsHtml}
                     </td>
                   </tr>
                 </table>
@@ -224,6 +266,10 @@ export default async function handler(req, res) {
   const orderNumber = String(body?.orderNumber || `BRB-TEST-${Date.now().toString(36).toUpperCase()}`).trim();
   const customerName = String(body?.customerName || "").trim();
   const total = body?.total;
+  const subtotal = body?.subtotal;
+  const shipping = body?.shipping;
+  const discount = body?.discount;
+  const coupon = String(body?.coupon || "").trim();
   const payment = body?.payment === "paypal" ? "paypal" : "bit";
   const lines = Array.isArray(body?.lines) ? body.lines : [];
   const from = String(process.env.RESEND_FROM || "BARBERO <onboarding@resend.dev>").trim();
@@ -235,7 +281,18 @@ export default async function handler(req, res) {
       from,
       to: [to],
       subject: `אישור הזמנה ${orderNumber} — BARBERO`,
-      html: buildOrderEmailHtml({ orderNumber, customerName, total, payment, lines, payUrl }),
+      html: buildOrderEmailHtml({
+        orderNumber,
+        customerName,
+        total,
+        subtotal,
+        shipping,
+        discount,
+        coupon,
+        payment,
+        lines,
+        payUrl,
+      }),
     });
 
     if (error) {
