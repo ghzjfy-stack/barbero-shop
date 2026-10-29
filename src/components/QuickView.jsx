@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { discountPercent, FREE_SHIPPING, formatPrice, resolveOffer } from "../data";
+import { discountPercent, FIRST_ORDER_COUPON, resolveOffer } from "../data";
 import { useStore } from "../store";
 import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
+import PurchaseTrust from "./PurchaseTrust";
 
 export default function QuickView() {
   const { quickView, closeQuickView, addToCart, toggleWish, isWished } = useStore();
@@ -172,9 +173,14 @@ export default function QuickView() {
             <div className="mt-3 sm:mt-5">
               <Price price={offer.price} compareAt={offer.compareAt} size="lg" />
             </div>
-            <p className="mt-2 text-xs leading-5 text-ivory/65">
-              משלוח חינם מ־{formatPrice(FREE_SHIPPING)} · אחריות יבואן 12 חודשים · יבוא מקורי מארה״ב
+            <p className="mt-2 text-[12px] leading-5 text-gold-soft">
+              {FIRST_ORDER_COUPON.label}
+              <span className="text-muted"> · קוד </span>
+              <span className="font-semibold tracking-wide" dir="ltr">
+                {FIRST_ORDER_COUPON.code}
+              </span>
             </p>
+            <PurchaseTrust className="mt-2.5" />
 
             {quickView.variants && (
               <div className="mt-4" role="group" aria-label="בחירת דגם">

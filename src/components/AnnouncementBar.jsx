@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FIRST_ORDER_COUPON } from "../data";
 
-/** ASOS-style promo strip: offer + dashed code chip (copy on tap). */
+/** ASOS-style promo strip: opening offer + dashed code chip (copy on tap). */
 export default function AnnouncementBar() {
   const [copied, setCopied] = useState(false);
 
