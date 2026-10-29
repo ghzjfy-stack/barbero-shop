@@ -10,6 +10,10 @@ export function notifyOrderEmail(order) {
     orderNumber: order.number,
     customerName: String(order?.details?.name || "").trim(),
     total: order.total,
+    subtotal: order.subtotal,
+    shipping: order.shipping,
+    discount: order.discount || 0,
+    coupon: order.coupon || "",
     payment: order.payment,
     lines: Array.isArray(order.lines)
       ? order.lines.map((line) => ({
