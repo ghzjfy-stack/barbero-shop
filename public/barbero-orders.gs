@@ -176,6 +176,10 @@ function doPost(e) {
       return updateOrderStatus_(body);
     }
 
+    if (body && body.type === "list") {
+      return listOrders_(body);
+    }
+
     if (body && body.type === "reset") {
       if (body.confirm !== "BARBERO_RESET_DEMO") {
         return json_({ ok: false, error: "confirm_required" });
@@ -407,6 +411,48 @@ function getOrder_(body) {
   return json_({ ok: true, order: fullOrderFromRow_(found.row, found.col) });
 }
 
+/** Telegram menu — recent orders, optional status filter. */
+function listOrders_(body) {
+  var filter = String((body && body.filter) || "all").trim();
+  var limit = Number((body && body.limit) || 10);
+  if (!limit || limit < 1) limit = 10;
+  if (limit > 20) limit = 20;
+
+  var groups = {
+    wait: { "ממתין לביט": true, "ממתין ל-PayPal": true },
+    paid: { שולם: true },
+    prep: { בהכנה: true },
+    ship: { "משלוח מארה״ב": true },
+    done: { נמסר: true },
+    cancel: { בוטל: true },
+    all: null,
+  };
+  var allowed = groups[filter] !== undefined ? groups[filter] : null;
+
+  var sheet = getSheet_();
+  var last = sheet.getLastRow();
+  if (last < 2) return json_({ ok: true, filter: filter, orders: [] });
+
+  var width = Math.max(sheet.getLastColumn(), HEADERS.length);
+  var headers = sheet.getRange(1, 1, 1, width).getValues()[0];
+  var col = headerIndexMap_(headers);
+  if (col["מספר הזמנה"] == null || col["סטטוס"] == null) {
+    return json_({ ok: false, error: "bad_headers" });
+  }
+
+  var values = sheet.getRange(2, 1, last - 1, width).getValues();
+  var orders = [];
+  for (var i = values.length - 1; i >= 0 && orders.length < limit; i--) {
+    var row = values[i];
+    var orderNumber = String(row[col["מספר הזמנה"]] || "").trim();
+    if (!orderNumber) continue;
+    var status = String(row[col["סטטוס"]] || "").trim();
+    if (allowed && !allowed[status]) continue;
+    orders.push(fullOrderFromRow_(row, col));
+  }
+  return json_({ ok: true, filter: filter, orders: orders });
+}
+
 function updateOrderStatus_(body) {
   var found = findOrderRow_(body.orderNumber || body.o);
   if (!found) return json_({ ok: false, error: "not_found" });
@@ -529,7 +575,7 @@ function doGet() {
   return json_({
     ok: true,
     service: "barbero-orders",
-    rev: "inplace-status",
+    rev: "list-orders-menu",
     sheet: SHEET_NAME,
     summary: SUMMARY_SHEET_NAME,
     ads: ADS_SHEET_NAME,
