@@ -1,20 +1,27 @@
 /**
- * Save a customer (name + phone) via /api/customers → Supabase `customers`.
- * Fire-and-forget friendly — checkout must not block on Supabase.
+ * Save full customer details via /api/customers → Supabase `customers`.
+ * Fire-and-forget — checkout must not block on Supabase.
  */
-export function saveCustomer({ name, phone }) {
-  const payload = {
-    name: String(name || "").trim(),
-    phone: String(phone || "").trim(),
+export function saveCustomer(payload = {}) {
+  const body = {
+    name: String(payload.name || "").trim(),
+    phone: String(payload.phone || "").trim(),
+    email: String(payload.email || "").trim().toLowerCase(),
+    city: String(payload.city || "").trim(),
+    address: String(payload.address || "").trim(),
+    unit: String(payload.unit || "").trim(),
+    postal: String(payload.postal || "").trim(),
+    notes: String(payload.notes || "").trim(),
+    last_order_number: String(payload.last_order_number || payload.orderNumber || "").trim(),
   };
-  if (payload.name.length < 2 || payload.phone.replace(/[^\d]/g, "").length < 9) {
+  if (body.name.length < 2 || body.phone.replace(/[^\d]/g, "").length < 9) {
     return;
   }
 
   void fetch("/api/customers", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(body),
     keepalive: true,
   }).catch(() => {
     // Network / env failures should not break checkout.

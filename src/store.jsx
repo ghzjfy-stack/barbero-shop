@@ -32,6 +32,7 @@ import { notifyTelegramOrder } from "./notifyTelegram";
 import { notifyOrderEmail } from "./notifyOrderEmail";
 import { notifySheetsOrder } from "./notifySheetsOrder";
 import { saveCustomer } from "./saveCustomer";
+import { notifySupabaseOrder } from "./notifySupabaseOrder";
 import { parseProductFromLocation, syncProductLocation } from "./share";
 import {
   trackMetaAddToCart,
@@ -376,8 +377,19 @@ export function StoreProvider({ children }) {
     trackMetaPurchase(snapshot);
     notifyTelegramOrder(snapshot);
     notifySheetsOrder(snapshot);
+    notifySupabaseOrder(snapshot);
     notifyOrderEmail(snapshot);
-    saveCustomer({ name: details.name, phone: details.phone });
+    saveCustomer({
+      name: details.name,
+      phone: details.phone,
+      email: details.email,
+      city: details.city,
+      address: details.address,
+      unit: details.unit,
+      postal: details.postal,
+      notes: details.notes,
+      last_order_number: snapshot.number,
+    });
   };
 
   const finishCheckout = () => {
