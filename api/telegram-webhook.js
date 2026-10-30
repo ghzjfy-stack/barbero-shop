@@ -11,9 +11,11 @@
  *   TELEGRAM_BOT_TOKEN
  *   TELEGRAM_WEBHOOK_SECRET   — random string; must match setWebhook secret_token
  *   GOOGLE_SHEETS_WEBHOOK_URL (+ optional GOOGLE_SHEETS_WEBHOOK_SECRET)
+ *   SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY  — status sync on approve/cancel
  */
 
 import { postAppsScript, sheetsWebhookUrl } from "../lib/appsScriptWebhook.js";
+import { getOrderByNumber, setOrderStatus } from "../lib/supabaseOrders.js";
 import { parseCallbackData, waitingStatusOf } from "../lib/telegramOrderCard.js";
 import { editOrderCard, telegramApi, telegramConfig } from "./telegram-order.js";
 
@@ -229,7 +231,7 @@ export default async function handler(req, res) {
       ok: true,
       service: "telegram-webhook",
       configured: Boolean(telegramConfig().token),
-      rev: "inplace-status",
+      rev: "sheets-supabase-status",
     });
     return;
   }
@@ -278,8 +280,12 @@ export default async function handler(req, res) {
   try {
     if (parsed.action === "approve" || parsed.action === "cancel") {
       const nextStatus = parsed.action === "approve" ? "שולם" : "בוטל";
+      const paid = nextStatus === "שולם" ? "Yes" : "No";
       const fromMsg = orderFromTelegramMessage(cq.message, parsed.orderNumber);
-      const updated = await sheetsSetStatus(parsed.orderNumber, nextStatus, fromMsg);
+      const [updated, supabase] = await Promise.all([
+        sheetsSetStatus(parsed.orderNumber, nextStatus, fromMsg),
+        setOrderStatus(parsed.orderNumber, nextStatus, { ...fromMsg, paid }),
+      ]);
       const cardOrder = toCardOrder(
         mergeOrder(fromMsg, updated.order, {
           orderNumber: parsed.orderNumber,
@@ -289,43 +295,88 @@ export default async function handler(req, res) {
       if (chatId && messageId) {
         await editOrderCard(chatId, messageId, cardOrder, { status: nextStatus });
       }
-      if (!updated.ok) {
-        await answerCallback(cq.id, "הכרטיס עודכן. לא הצלחתי לכתוב לשיטס", true);
-        sendJson(res, 200, { ok: false, error: updated.error, status: nextStatus });
+      if (!updated.ok && !supabase.ok) {
+        await answerCallback(cq.id, "הכרטיס עודכן. סנכרון שיטס/Supabase נכשל", true);
+        sendJson(res, 200, {
+          ok: false,
+          error: updated.error || supabase.error,
+          status: nextStatus,
+          sheets: updated,
+          supabase,
+        });
         return;
       }
       const mark = parsed.action === "approve" ? "✅" : "❌";
       const label = parsed.action === "approve" ? "אשר" : "בטל";
       if (chatId) {
+        const syncNote =
+          updated.ok && supabase.ok
+            ? ""
+            : updated.ok
+              ? " (שיטס OK · Supabase חלקי)"
+              : " (Supabase OK · שיטס חלקי)";
         await announceAction(
           chatId,
           threadId,
-          `BARBERO Orders: ${who}: ${mark} ${label} #${parsed.orderNumber}`,
+          `BARBERO Orders: ${who}: ${mark} ${label} #${parsed.orderNumber}${syncNote}`,
         );
       }
       await answerCallback(cq.id, `${label} #${parsed.orderNumber}`);
-      sendJson(res, 200, { ok: true, status: nextStatus });
+      sendJson(res, 200, {
+        ok: true,
+        status: nextStatus,
+        sheets: { ok: updated.ok, error: updated.error },
+        supabase: { ok: supabase.ok, error: supabase.error, order: supabase.order },
+      });
       return;
     }
 
     if (parsed.action === "refresh") {
       const fromMsg = orderFromTelegramMessage(cq.message, parsed.orderNumber);
-      const got = await sheetsGetOrder(parsed.orderNumber);
+      const [got, supabaseOrder] = await Promise.all([
+        sheetsGetOrder(parsed.orderNumber),
+        getOrderByNumber(parsed.orderNumber),
+      ]);
+      const fromSupabase = supabaseOrder.ok
+        ? {
+            orderNumber: supabaseOrder.order.order_number,
+            status: supabaseOrder.order.status,
+            paid: supabaseOrder.order.paid,
+            payment: supabaseOrder.order.payment,
+            total: supabaseOrder.order.total,
+            name: supabaseOrder.order.customer_name,
+            phone: supabaseOrder.order.customer_phone,
+            email: supabaseOrder.order.customer_email,
+            city: supabaseOrder.order.city,
+            address: supabaseOrder.order.address,
+            unit: supabaseOrder.order.unit,
+            postal: supabaseOrder.order.postal,
+            notes: supabaseOrder.order.notes,
+            items: supabaseOrder.order.items,
+          }
+        : null;
       const cardOrder = toCardOrder(
-        mergeOrder(fromMsg, got.ok ? got.order : null, { orderNumber: parsed.orderNumber }),
+        mergeOrder(fromMsg, got.ok ? got.order : null, fromSupabase, {
+          orderNumber: parsed.orderNumber,
+        }),
       );
       if (chatId && messageId) {
         await editOrderCard(chatId, messageId, cardOrder, {
           status: cardOrder.status || waitingStatusOf(cardOrder.payment),
         });
       }
-      if (!got.ok && !fromMsg.name && !fromMsg.items) {
+      if (!got.ok && !supabaseOrder.ok && !fromMsg.name && !fromMsg.items) {
         await answerCallback(cq.id, "לא מצאתי את ההזמנה לרענון", true);
-        sendJson(res, 200, { ok: false, error: got.error });
+        sendJson(res, 200, { ok: false, error: got.error || supabaseOrder.error });
         return;
       }
       await answerCallback(cq.id, "כרטיס עודכן");
-      sendJson(res, 200, { ok: true, refreshed: true });
+      sendJson(res, 200, {
+        ok: true,
+        refreshed: true,
+        sheets: { ok: got.ok },
+        supabase: { ok: supabaseOrder.ok },
+      });
       return;
     }
 

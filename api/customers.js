@@ -1,11 +1,13 @@
 /**
- * POST /api/customers — insert a row into public.customers (Name, Phone).
+ * POST /api/customers — upsert customer details into public.customers.
+ * GET  /api/customers — health check.
  *
- * Body: { "name": "...", "phone": "..." }
- * Table columns (as created in Supabase): id, created_at, Name, Phone, Email
+ * Prefers full checkout details (name, phone, email, address…).
+ * Also used as a lightweight fallback from older clients (name + phone only).
  */
 
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
+import { upsertCustomerFromOrder } from "../lib/supabaseOrders.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -29,10 +31,6 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
-function normalizePhone(phone) {
-  return String(phone || "").trim();
-}
-
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -42,18 +40,29 @@ export default async function handler(req, res) {
     return;
   }
 
+  const { client, missing } = getSupabaseAdmin();
+
+  if (req.method === "GET") {
+    sendJson(res, 200, {
+      ok: true,
+      service: "supabase-customers",
+      configured: Boolean(client),
+      missing: missing || undefined,
+    });
+    return;
+  }
+
   if (req.method !== "POST") {
     sendJson(res, 405, { ok: false, error: "method_not_allowed" });
     return;
   }
 
-  const { client, missing } = getSupabaseAdmin();
   if (!client) {
     sendJson(res, 503, {
       ok: false,
       error: "supabase_not_configured",
       missing,
-      hint: "Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel env, then Redeploy",
+      hint: "Set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel → Production, then Redeploy",
     });
     return;
   }
@@ -66,9 +75,8 @@ export default async function handler(req, res) {
     return;
   }
 
-  const name = String(body?.name || "").trim();
-  const phone = normalizePhone(body?.phone);
-
+  const name = String(body?.name || body?.details?.name || "").trim();
+  const phone = String(body?.phone || body?.details?.phone || "").trim();
   if (name.length < 2) {
     sendJson(res, 400, { ok: false, error: "invalid_name" });
     return;
@@ -79,31 +87,29 @@ export default async function handler(req, res) {
     return;
   }
 
-  // Note: in this Supabase table, "Phone" was created as type `time` by mistake,
-  // so we store the phone number in the text column "Email" until Phone is altered to text.
-  const { data, error } = await client
-    .from("customers")
-    .insert({ Name: name, Email: phone })
-    .select("id, created_at, Name, Phone, Email")
-    .single();
+  const result = await upsertCustomerFromOrder({
+    number: body?.last_order_number || body?.orderNumber || body?.number || "",
+    details: {
+      name,
+      phone,
+      email: body?.email || body?.details?.email || "",
+      city: body?.city || body?.details?.city || "",
+      address: body?.address || body?.details?.address || "",
+      unit: body?.unit || body?.details?.unit || "",
+      postal: body?.postal || body?.details?.postal || "",
+      notes: body?.notes || body?.details?.notes || "",
+    },
+  });
 
-  if (error) {
+  if (!result.ok) {
     sendJson(res, 502, {
       ok: false,
-      error: "supabase_insert_failed",
-      detail: error.message,
+      error: "supabase_upsert_failed",
+      detail: result.error,
+      hint: "Run supabase/schema.sql in Supabase SQL Editor (fixes legacy Phone/Email columns).",
     });
     return;
   }
 
-  sendJson(res, 200, {
-    ok: true,
-    customer: {
-      id: data.id,
-      created_at: data.created_at,
-      name: data.Name,
-      phone: data.Phone,
-      email: data.Email ?? null,
-    },
-  });
+  sendJson(res, 200, { ok: true, customer: result.customer });
 }

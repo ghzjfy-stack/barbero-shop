@@ -8,6 +8,7 @@
  */
 
 import { postAppsScript, safeWebhookHint, sheetsWebhookUrl } from "../lib/appsScriptWebhook.js";
+import { upsertOrder } from "../lib/supabaseOrders.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -156,13 +157,27 @@ export default async function handler(req, res) {
     order,
   };
 
+  // Dual-write to Supabase so Sheets + DB stay aligned even if the browser
+  // notifySupabaseOrder call is blocked.
+  const supabasePromise = upsertOrder(order).catch((error) => ({
+    ok: false,
+    error: error?.message || String(error),
+  }));
+
   let result;
   try {
     result = await postAppsScript(webhook, payload);
   } catch {
-    sendJson(res, 502, { ok: false, error: "sheets_unreachable" });
+    const supabase = await supabasePromise;
+    sendJson(res, 502, {
+      ok: false,
+      error: "sheets_unreachable",
+      supabase: supabase?.ok ? { ok: true, order: supabase.order } : supabase,
+    });
     return;
   }
+
+  const supabase = await supabasePromise;
 
   if (!result.ok || result.data?.ok === false) {
     const detail = result.data?.error || result.data?.raw || result.statusText;
@@ -175,9 +190,14 @@ export default async function handler(req, res) {
         ? "GOOGLE_SHEETS_WEBHOOK_URL is wrong or outdated. Set the current Web App /exec URL in Vercel Production and Redeploy."
         : undefined,
       webhookHost: safeWebhookHint(webhook),
+      supabase: supabase?.ok ? { ok: true, order: supabase.order } : supabase,
     });
     return;
   }
 
-  sendJson(res, 200, { ok: true, sheets: result.data });
+  sendJson(res, 200, {
+    ok: true,
+    sheets: result.data,
+    supabase: supabase?.ok ? { ok: true, order: supabase.order } : supabase,
+  });
 }
