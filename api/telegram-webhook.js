@@ -17,6 +17,7 @@
  */
 
 import { postAppsScript, sheetsWebhookUrl } from "../lib/appsScriptWebhook.js";
+import { sendMetaPurchaseCapi } from "../lib/metaCapi.js";
 import { getSupabaseAdmin } from "../lib/supabaseAdmin.js";
 import {
   countOrdersByFilter,
@@ -473,6 +474,22 @@ async function applyStatusChange({ orderNumber, status, fromMsg, chatId, message
     await announceAction(chatId, threadId, `BARBERO Orders: ${who}: ${status} #${orderNumber}${syncNote}`);
   }
   await answerCallback(callbackId, `${status} #${orderNumber}`);
+
+  // True Meta Purchase only when ops marks paid — matches cash, not cart abandon.
+  if (status === "שולם") {
+    const row = supabase.order || updated.order || {};
+    const capiOrder = {
+      number: orderNumber,
+      total: Number(row.total ?? cardOrder.total) || 0,
+      lines: row.lines || cardOrder.lines || [],
+      details: {
+        email: row.email || row.details?.email || cardOrder.email || "",
+        phone: row.phone || row.details?.phone || cardOrder.phone || "",
+      },
+    };
+    sendMetaPurchaseCapi(capiOrder).catch(() => {});
+  }
+
   return {
     ok: true,
     status,

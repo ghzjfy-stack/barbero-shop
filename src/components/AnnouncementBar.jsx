@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { FIRST_ORDER_COUPON } from "../data";
+import { useStore } from "../store";
 
-/** ASOS-style promo strip: opening offer + dashed code chip (copy on tap). */
+/** ASOS-style promo strip: opening offer + dashed code chip (apply + copy on tap). */
 export default function AnnouncementBar() {
+  const store = useStore();
   const [copied, setCopied] = useState(false);
 
-  const copyCode = async () => {
+  const claimCode = async () => {
+    if (store.firstOrderEligible) {
+      store.applyCoupon(FIRST_ORDER_COUPON.code, { quiet: true });
+    }
     try {
       await navigator.clipboard.writeText(FIRST_ORDER_COUPON.code);
       setCopied(true);
@@ -26,15 +31,15 @@ export default function AnnouncementBar() {
           <span className="text-muted">קוד</span>
           <button
             type="button"
-            onClick={copyCode}
+            onClick={claimCode}
             className="inline-flex items-center border border-dashed border-gold/55 bg-ink/40 px-2 py-0.5 font-semibold tracking-[0.14em] text-gold transition-colors hover:border-gold hover:bg-gold/10"
-            aria-label={`העתקת קוד קופון ${FIRST_ORDER_COUPON.code}`}
+            aria-label={`החלת והעתקת קוד קופון ${FIRST_ORDER_COUPON.code}`}
             dir="ltr"
           >
             {FIRST_ORDER_COUPON.code}
           </button>
           <span className={`text-[11px] ${copied ? "text-gold" : "text-muted"}`} aria-live="polite">
-            {copied ? "הועתק" : "העתיקו"}
+            {copied ? "הוחל" : store.appliedCoupon ? "פעיל בעגלה" : "לחצו להחלה"}
           </span>
         </span>
       </div>

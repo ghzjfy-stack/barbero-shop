@@ -11,7 +11,7 @@ export const FIRST_ORDER_COUPON = {
   code: "BARBERO100",
   aliases: ["BARBERO50"],
   amount: 100,
-  label: "הטבת פתיחה · ₪100 הנחה להזמנה ראשונה",
+  label: "הטבת פתיחה · ₪100 הנחה + משלוח חינם להזמנה ראשונה",
 };
 
 export function normalizeCouponCode(value) {
@@ -32,13 +32,18 @@ export function isFirstOrderCouponCode(value) {
 export const purchaseTrustLines = [
   "יבוא מקורי מארה״ב · אחריות יבואן 12 חודשים",
   "תשלום מאובטח בביט או PayPal",
-  "החזרה 14 יום באריזה מקורית סגורה · משלוח חינם מ־₪499",
+  "החזרה 14 יום באריזה מקורית סגורה · עם קופון פתיחה — משלוח חינם",
 ];
 
 export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;
 
-export function shippingFeeFor(subtotal) {
+/**
+ * Shipping fee. First-order coupon waives the ₪39 fee so ad landings
+ * (e.g. Lithium AIO ₪450 − ₪100) checkout without a surprise delivery charge.
+ */
+export function shippingFeeFor(subtotal, { waive = false } = {}) {
+  if (waive) return 0;
   if (subtotal > 0 && subtotal < FREE_SHIPPING) return SHIPPING_FEE;
   return 0;
 }

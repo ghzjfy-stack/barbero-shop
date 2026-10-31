@@ -37,7 +37,6 @@ import { parseProductFromLocation, syncProductLocation } from "./share";
 import {
   trackMetaAddToCart,
   trackMetaInitiateCheckout,
-  trackMetaPurchase,
   trackMetaViewContent,
 } from "./metaPixel";
 
@@ -72,9 +71,12 @@ export function StoreProvider({ children }) {
   const [checkoutStep, setCheckoutStep] = useState("cart");
   const [order, setOrder] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
-  const [appliedCoupon, setAppliedCoupon] = useState(() =>
-    readHasOrdered() ? "" : readSavedCoupon(),
-  );
+  // Auto-seed first-order coupon for eligible visitors (ads / cold land) —
+  // discount + free shipping apply as soon as the cart has items.
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    if (readHasOrdered()) return "";
+    return readSavedCoupon() || FIRST_ORDER_COUPON.code;
+  });
   const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
@@ -168,7 +170,6 @@ export function StoreProvider({ children }) {
   );
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-  const shipping = shippingFeeFor(subtotal);
   const firstOrderEligible = !readHasOrdered() && !lastOrder;
   const couponValid =
     Boolean(appliedCoupon) &&
@@ -176,12 +177,22 @@ export function StoreProvider({ children }) {
     firstOrderEligible &&
     subtotal > 0;
   const discount = couponValid ? Math.min(FIRST_ORDER_COUPON.amount, subtotal) : 0;
+  const shipping = shippingFeeFor(subtotal, { waive: couponValid });
   const total = Math.max(0, subtotal - discount) + shipping;
-  const remaining = Math.max(0, FREE_SHIPPING - subtotal);
-  const progress = subtotal <= 0 ? 0 : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
+  const remaining = couponValid ? 0 : Math.max(0, FREE_SHIPPING - subtotal);
+  const progress = couponValid
+    ? 100
+    : subtotal <= 0
+      ? 0
+      : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
   const cartCount = cart.reduce((sum, line) => sum + line.qty, 0);
+  const freeShippingReason = couponValid
+    ? "coupon"
+    : subtotal > 0 && shipping === 0
+      ? "threshold"
+      : null;
 
-  const applyCoupon = (rawCode) => {
+  const applyCoupon = (rawCode, { quiet = false } = {}) => {
     const code = normalizeCouponCode(rawCode);
     setCouponError("");
     if (!code) {
@@ -196,12 +207,12 @@ export function StoreProvider({ children }) {
       setCouponError("הקוד להזמנה ראשונה בלבד");
       return false;
     }
-    if (subtotal <= 0) {
-      setCouponError("הוסיפו מוצר לעגלה לפני מימוש הקוד");
-      return false;
-    }
     setAppliedCoupon(code);
-    notify(`הקופון הוחל — ₪${FIRST_ORDER_COUPON.amount} הנחה`);
+    if (!quiet && subtotal > 0) {
+      notify(`הקופון הוחל — ₪${FIRST_ORDER_COUPON.amount} הנחה + משלוח חינם`);
+    } else if (!quiet && subtotal <= 0) {
+      notify("הקופון מוכן — יוחל בעגלה עם משלוח חינם");
+    }
     return true;
   };
 
@@ -374,7 +385,7 @@ export function StoreProvider({ children }) {
       /* ignore */
     }
     setCheckoutStep("done");
-    trackMetaPurchase(snapshot);
+    // Purchase pixel fires only after real payment (Bit/PayPal confirm or ops «שולם»).
     notifyTelegramOrder(snapshot);
     notifySheetsOrder(snapshot);
     notifySupabaseOrder(snapshot);
@@ -426,6 +437,7 @@ export function StoreProvider({ children }) {
     total,
     remaining,
     progress,
+    freeShippingReason,
     appliedCoupon,
     couponError,
     applyCoupon,

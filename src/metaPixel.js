@@ -88,23 +88,58 @@ export function trackMetaInitiateCheckout({ value, numItems, contentIds } = {}) 
   });
 }
 
-export function trackMetaPurchase(order) {
-  if (!order) return;
+function orderPixelPayload(order) {
   const contents = (order.lines || []).map((line) => ({
     id: String(line.id || line.name),
     quantity: Number(line.qty) || 1,
     item_price: Number(line.unitPrice) || undefined,
   }));
+  return {
+    value: Number(order.total) || 0,
+    currency: "ILS",
+    contents,
+    content_ids: contents.map((c) => c.id),
+    content_type: "product",
+    num_items: contents.reduce((sum, c) => sum + c.quantity, 0),
+  };
+}
+
+/** Click into Bit / PayPal — not a completed sale. */
+export function trackMetaAddPaymentInfo(order) {
+  if (!order) return;
+  fbqTrack(
+    "AddPaymentInfo",
+    orderPixelPayload(order),
+    order.number ? { eventID: `pay-${order.number}` } : undefined,
+  );
+}
+
+/**
+ * True Purchase — only after payment (customer confirms, or ops marks שולם via CAPI).
+ * Always pass eventID = order.number so browser + CAPI can dedupe.
+ */
+export function trackMetaPurchase(order) {
+  if (!order) return;
   fbqTrack(
     "Purchase",
-    {
-      value: Number(order.total) || 0,
-      currency: "ILS",
-      contents,
-      content_ids: contents.map((c) => c.id),
-      content_type: "product",
-      num_items: contents.reduce((sum, c) => sum + c.quantity, 0),
-    },
+    orderPixelPayload(order),
     order.number ? { eventID: String(order.number) } : undefined,
   );
+}
+
+const PURCHASE_ONCE_KEY = "barbero-purchase-pixel";
+
+/** Fire Purchase at most once per order number in this browser session. */
+export function trackMetaPurchaseOnce(order) {
+  if (!order?.number) return false;
+  try {
+    const seen = new Set(String(sessionStorage.getItem(PURCHASE_ONCE_KEY) || "").split(",").filter(Boolean));
+    if (seen.has(order.number)) return false;
+    seen.add(order.number);
+    sessionStorage.setItem(PURCHASE_ONCE_KEY, [...seen].join(","));
+  } catch {
+    /* still fire once this call */
+  }
+  trackMetaPurchase(order);
+  return true;
 }

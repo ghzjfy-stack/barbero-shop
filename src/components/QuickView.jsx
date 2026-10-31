@@ -9,7 +9,15 @@ import ProductTitle from "./ProductTitle";
 import PurchaseTrust from "./PurchaseTrust";
 
 export default function QuickView() {
-  const { quickView, closeQuickView, addToCart, toggleWish, isWished } = useStore();
+  const {
+    quickView,
+    closeQuickView,
+    addToCart,
+    toggleWish,
+    isWished,
+    firstOrderEligible,
+    appliedCoupon,
+  } = useStore();
   const [variantId, setVariantId] = useState(null);
   const [qty, setQty] = useState(1);
   const [photo, setPhoto] = useState(0);
@@ -173,13 +181,22 @@ export default function QuickView() {
             <div className="mt-3 sm:mt-5">
               <Price price={offer.price} compareAt={offer.compareAt} size="lg" />
             </div>
-            <p className="mt-2 text-[12px] leading-5 text-gold-soft">
-              {FIRST_ORDER_COUPON.label}
-              <span className="text-muted"> · קוד </span>
-              <span className="font-semibold tracking-wide" dir="ltr">
-                {FIRST_ORDER_COUPON.code}
-              </span>
-            </p>
+            {firstOrderEligible ? (
+              <p className="mt-2 text-[12px] leading-5 text-gold-soft">
+                עם קופון{" "}
+                <span className="font-semibold tracking-wide" dir="ltr">
+                  {appliedCoupon || FIRST_ORDER_COUPON.code}
+                </span>
+                :{" "}
+                <span className="font-semibold tabular-nums" dir="ltr">
+                  ₪
+                  {Math.max(0, offer.price - FIRST_ORDER_COUPON.amount).toLocaleString("he-IL")}
+                </span>
+                <span className="text-muted"> כולל משלוח חינם עד הבית</span>
+              </p>
+            ) : (
+              <p className="mt-2 text-[12px] leading-5 text-muted">משלוח חינם מ־₪499</p>
+            )}
             <PurchaseTrust className="mt-2.5" />
 
             {quickView.variants && (
