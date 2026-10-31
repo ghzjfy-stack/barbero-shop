@@ -7,7 +7,7 @@ import { copyBitAmount, openBitPayment } from "../payment";
  * Clean personal-Bit pay screen: quiet auto-copy, minimal copy, one CTA.
  * (Bit personal links cannot prefill amount — clipboard is the only assist.)
  */
-export default function BitPayPanel({ order, onPaidConfirm, paidMarked = false }) {
+export default function BitPayPanel({ order }) {
   const [amountCopied, setAmountCopied] = useState(false);
   const [opening, setOpening] = useState(false);
 
@@ -67,19 +67,6 @@ export default function BitPayPanel({ order, onPaidConfirm, paidMarked = false }
         disabled={opening}
       >
         {opening ? "פותחים…" : "שלם עכשיו בביט"}
-      </button>
-
-      <button
-        type="button"
-        className={`mt-3 h-11 w-full border text-sm transition ${
-          paidMarked
-            ? "border-gold/50 bg-gold/10 text-gold-soft"
-            : "border-white/15 text-ivory hover:border-gold/40"
-        }`}
-        onClick={onPaidConfirm}
-        disabled={paidMarked}
-      >
-        {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
       </button>
     </div>
   );

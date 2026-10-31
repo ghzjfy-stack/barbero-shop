@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatPrice } from "../data";
-import { trackMetaAddPaymentInfo, trackMetaPurchaseOnce } from "../metaPixel";
+import { trackMetaAddPaymentInfo } from "../metaPixel";
 import { openPayPalPayment } from "../payment";
 import BitPayPanel from "./BitPayPanel";
 import { Logo } from "./Header";
@@ -18,7 +18,6 @@ function PayPalMark({ className = "h-4 w-auto" }) {
 
 export default function PayPage() {
   const [state, setState] = useState({ status: "loading", order: null, error: "" });
-  const [paidMarked, setPaidMarked] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -51,12 +50,6 @@ export default function PayPage() {
 
   const order = state.order;
   const isPaypal = order?.payment === "paypal";
-
-  const confirmPaid = () => {
-    if (!order) return;
-    trackMetaPurchaseOnce(order);
-    setPaidMarked(true);
-  };
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
@@ -107,21 +100,9 @@ export default function PayPage() {
                       <PayPalMark className="h-4 w-auto brightness-0 invert" />
                       שלם עכשיו ב-PayPal
                     </button>
-                    <button
-                      type="button"
-                      className={`mt-3 h-11 w-full border text-sm transition ${
-                        paidMarked
-                          ? "border-gold/50 bg-gold/10 text-gold-soft"
-                          : "border-white/15 text-ivory hover:border-gold/40"
-                      }`}
-                      onClick={confirmPaid}
-                      disabled={paidMarked}
-                    >
-                      {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
-                    </button>
                   </div>
                 ) : (
-                  <BitPayPanel order={order} onPaidConfirm={confirmPaid} paidMarked={paidMarked} />
+                  <BitPayPanel order={order} />
                 )}
               </div>
             </>
