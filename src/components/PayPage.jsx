@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { formatPrice } from "../data";
+import { trackMetaAddPaymentInfo, trackMetaPurchaseOnce } from "../metaPixel";
 import { BIT_PERSONAL_URL, openPayPalPayment } from "../payment";
 import { Logo } from "./Header";
 
@@ -16,6 +17,8 @@ function PayPalMark({ className = "h-4 w-auto" }) {
 
 export default function PayPage() {
   const [state, setState] = useState({ status: "loading", order: null, error: "" });
+  const [amountCopied, setAmountCopied] = useState(false);
+  const [paidMarked, setPaidMarked] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -48,6 +51,23 @@ export default function PayPage() {
 
   const order = state.order;
   const isPaypal = order?.payment === "paypal";
+
+  const copyAmount = async () => {
+    if (!order) return;
+    try {
+      await navigator.clipboard.writeText(String(Number(order.total) || 0));
+      setAmountCopied(true);
+      window.setTimeout(() => setAmountCopied(false), 1800);
+    } catch {
+      setAmountCopied(false);
+    }
+  };
+
+  const confirmPaid = () => {
+    if (!order) return;
+    trackMetaPurchaseOnce(order);
+    setPaidMarked(true);
+  };
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
@@ -82,6 +102,15 @@ export default function PayPage() {
                 <p className="mt-2 font-display text-5xl leading-none text-gold-soft tabular-nums" dir="ltr">
                   {formatPrice(order.total)}
                 </p>
+                {!isPaypal ? (
+                  <button
+                    type="button"
+                    className="mt-3 text-xs text-gold-soft underline-offset-2 hover:underline"
+                    onClick={copyAmount}
+                  >
+                    {amountCopied ? "הסכום הועתק" : "העתיקו את הסכום לביט"}
+                  </button>
+                ) : null}
               </div>
 
               <div className="mt-6">
@@ -89,7 +118,10 @@ export default function PayPage() {
                   <button
                     type="button"
                     className="inline-flex h-14 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
-                    onClick={() => openPayPalPayment(order)}
+                    onClick={() => {
+                      trackMetaAddPaymentInfo(order);
+                      openPayPalPayment(order);
+                    }}
                   >
                     <PayPalMark className="h-4 w-auto brightness-0 invert" />
                     שלם עכשיו ב-PayPal
@@ -100,14 +132,34 @@ export default function PayPage() {
                     href={BIT_PERSONAL_URL}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => trackMetaAddPaymentInfo(order)}
                   >
                     שלם עכשיו בביט
                   </a>
                 )}
               </div>
 
+              {!isPaypal ? (
+                <p className="mt-3 text-center text-[11px] leading-5 text-muted">
+                  בביט הזינו ידנית {formatPrice(order.total)} וציינו את מספר ההזמנה.
+                </p>
+              ) : null}
+
+              <button
+                type="button"
+                className={`mt-4 h-11 w-full border text-sm transition ${
+                  paidMarked
+                    ? "border-gold/50 bg-gold/10 text-gold-soft"
+                    : "border-white/15 text-ivory hover:border-gold/40"
+                }`}
+                onClick={confirmPaid}
+                disabled={paidMarked}
+              >
+                {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
+              </button>
+
               <p className="mt-5 text-center text-xs leading-6 text-muted">
-                אחרי התשלום אין צורך בפעולה נוספת — אנחנו מקבלים התראה וממשיכים לטיפול בהזמנה.
+                אחרי התשלום אנחנו מקבלים התראה וממשיכים לטיפול בהזמנה.
               </p>
             </>
           ) : null}

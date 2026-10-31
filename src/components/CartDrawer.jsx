@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FIRST_ORDER_COUPON, FREE_SHIPPING, formatPrice } from "../data";
+import { trackMetaAddPaymentInfo, trackMetaPurchaseOnce } from "../metaPixel";
 import { BIT_PERSONAL_URL, openPayPalPayment } from "../payment";
 import { useStore } from "../store";
 import Drawer from "./Drawer";
@@ -30,6 +31,8 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
+  const [amountCopied, setAmountCopied] = useState(false);
+  const [paidMarked, setPaidMarked] = useState(false);
   const [couponDraft, setCouponDraft] = useState("");
 
   const setField = (key, value) => {
@@ -81,6 +84,29 @@ export default function CartDrawer() {
     }
   };
 
+  const copyAmount = async () => {
+    if (!store.order) return;
+    try {
+      await navigator.clipboard.writeText(String(Number(store.order.total) || 0));
+      setAmountCopied(true);
+      window.setTimeout(() => setAmountCopied(false), 1800);
+    } catch {
+      setAmountCopied(false);
+    }
+  };
+
+  const startPayment = () => {
+    if (!store.order) return;
+    trackMetaAddPaymentInfo(store.order);
+    if (store.order.payment === "paypal") openPayPalPayment(store.order);
+  };
+
+  const confirmPaid = () => {
+    if (!store.order) return;
+    trackMetaPurchaseOnce(store.order);
+    setPaidMarked(true);
+  };
+
   const isPaypal = store.order?.payment === "paypal";
 
   return (
@@ -129,6 +155,15 @@ export default function CartDrawer() {
               <p className="mt-2 text-xs text-muted">
                 {store.order.shipping > 0 ? `כולל משלוח ${formatPrice(store.order.shipping)}` : "כולל משלוח חינם"}
               </p>
+              {!isPaypal ? (
+                <button
+                  type="button"
+                  className="mt-3 text-xs text-gold-soft underline-offset-2 hover:underline"
+                  onClick={copyAmount}
+                >
+                  {amountCopied ? "הסכום הועתק" : "העתיקו את הסכום לביט"}
+                </button>
+              ) : null}
             </div>
 
             <div className="mt-6">
@@ -136,7 +171,7 @@ export default function CartDrawer() {
                 <button
                   type="button"
                   className="inline-flex h-14 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
-                  onClick={() => openPayPalPayment(store.order)}
+                  onClick={startPayment}
                 >
                   <PayPalMark className="h-4 w-auto brightness-0 invert" />
                   שלם עכשיו ב-PayPal
@@ -147,11 +182,31 @@ export default function CartDrawer() {
                   href={BIT_PERSONAL_URL}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackMetaAddPaymentInfo(store.order)}
                 >
                   שלם עכשיו בביט
                 </a>
               )}
             </div>
+
+            {!isPaypal ? (
+              <p className="mt-3 text-center text-[11px] leading-5 text-muted">
+                בביט הזינו ידנית את הסכום {formatPrice(store.order.total)} (העתיקו למעלה) וציינו את מספר ההזמנה.
+              </p>
+            ) : null}
+
+            <button
+              type="button"
+              className={`mt-4 h-11 w-full border text-sm transition ${
+                paidMarked
+                  ? "border-gold/50 bg-gold/10 text-gold-soft"
+                  : "border-white/15 text-ivory hover:border-gold/40"
+              }`}
+              onClick={confirmPaid}
+              disabled={paidMarked}
+            >
+              {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
+            </button>
 
             <details className="group mt-8 border-t border-white/10 pt-4">
               <summary className="cursor-pointer list-none text-sm text-muted transition hover:text-ivory [&::-webkit-details-marker]:hidden">
@@ -302,7 +357,12 @@ export default function CartDrawer() {
               אחרי אישור ההזמנה תועברו לתשלום ב{details.payment === "paypal" ? "-PayPal" : "ביט"}. התשלום מתבצע ישירות באפליקציה / באתר של ספק התשלום.
             </p>
             <div className="mt-auto pt-6">
-              <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
+              <ShippingProgress
+                subtotal={store.subtotal}
+                remaining={store.remaining}
+                progress={store.progress}
+                freeReason={store.freeShippingReason}
+              />
               <Totals
                 subtotal={store.subtotal}
                 shipping={store.shipping}
@@ -397,7 +457,12 @@ export default function CartDrawer() {
             </div>
 
             <footer className="border-t border-white/10 px-5 py-4">
-              <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
+              <ShippingProgress
+                subtotal={store.subtotal}
+                remaining={store.remaining}
+                progress={store.progress}
+                freeReason={store.freeShippingReason}
+              />
               {store.lines.length > 0 && (
                 <CouponField
                   draft={couponDraft}
@@ -424,7 +489,7 @@ export default function CartDrawer() {
               />
               {store.lines.length === 0 ? (
                 <button type="button" className="btn-gold mt-4 h-12 w-full" disabled>
-                  המשך לתשלום
+                  המשך לפרטי משלוח
                 </button>
               ) : (
                 <button
@@ -432,12 +497,16 @@ export default function CartDrawer() {
                   className="btn-gold mt-4 h-12 w-full"
                   onClick={() => store.setCheckoutStep("details")}
                 >
-                  המשך לתשלום · {formatPrice(store.total)}
+                  המשך לפרטי משלוח · {formatPrice(store.total)}
                 </button>
               )}
               {store.lines.length > 0 && <PurchaseTrust className="mt-3" />}
               <p className="mt-3 text-center text-[11px] text-muted">
-                הסכום כולל משלוח במידת הצורך · התשלום מתבצע בביט או PayPal אחרי אישור ההזמנה
+                {store.freeShippingReason === "coupon"
+                  ? "עם קופון הפתיחה — משלוח חינם עד הבית"
+                  : "הסכום כולל משלוח במידת הצורך"}
+                {" · "}
+                התשלום בביט או PayPal אחרי אישור ההזמנה
               </p>
             </footer>
           </>
@@ -497,15 +566,25 @@ function PayPalMark({ className = "h-4 w-auto" }) {
   );
 }
 
-function ShippingProgress({ subtotal, remaining, progress }) {
+function ShippingProgress({ subtotal, remaining, progress, freeReason = null }) {
   const qualified = remaining === 0 && subtotal > 0;
+  const label =
+    freeReason === "coupon"
+      ? "משלוח חינם עם קופון הפתיחה"
+      : `משלוח חינם מעל ${formatPrice(FREE_SHIPPING)}`;
+  const status =
+    subtotal === 0
+      ? "התחילו להוסיף"
+      : freeReason === "coupon"
+        ? "המשלוח עלינו (קופון)"
+        : qualified
+          ? "המשלוח עלינו"
+          : `עוד ${formatPrice(remaining)}`;
   return (
     <div className="mb-4">
       <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-        <span className="text-muted">משלוח חינם מעל {formatPrice(FREE_SHIPPING)}</span>
-        <span className={qualified ? "text-gold-soft" : "text-ivory"}>
-          {subtotal === 0 ? "התחילו להוסיף" : qualified ? "המשלוח עלינו" : `עוד ${formatPrice(remaining)}`}
-        </span>
+        <span className="text-muted">{label}</span>
+        <span className={qualified ? "text-gold-soft" : "text-ivory"}>{status}</span>
       </div>
       <div
         className="h-1.5 bg-white/10"
