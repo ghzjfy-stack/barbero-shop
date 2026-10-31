@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { FIRST_ORDER_COUPON, FREE_SHIPPING, formatPrice } from "../data";
-import { trackMetaAddPaymentInfo, trackMetaPurchaseOnce } from "../metaPixel";
+import { trackMetaAddPaymentInfo } from "../metaPixel";
 import { openPayPalPayment } from "../payment";
 import { useStore } from "../store";
 import BitPayPanel from "./BitPayPanel";
@@ -32,7 +32,6 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
-  const [paidMarked, setPaidMarked] = useState(false);
   const [couponDraft, setCouponDraft] = useState("");
 
   const setField = (key, value) => {
@@ -72,7 +71,6 @@ export default function CartDrawer() {
     });
     setDetails(emptyDetails);
     setCopied(false);
-    setPaidMarked(false);
   };
 
   const copyNumber = async () => {
@@ -89,12 +87,6 @@ export default function CartDrawer() {
     if (!store.order) return;
     trackMetaAddPaymentInfo(store.order);
     if (store.order.payment === "paypal") openPayPalPayment(store.order);
-  };
-
-  const confirmPaid = () => {
-    if (!store.order) return;
-    trackMetaPurchaseOnce(store.order);
-    setPaidMarked(true);
   };
 
   const isPaypal = store.order?.payment === "paypal";
@@ -154,21 +146,9 @@ export default function CartDrawer() {
                     <PayPalMark className="h-4 w-auto brightness-0 invert" />
                     שלם עכשיו ב-PayPal
                   </button>
-                  <button
-                    type="button"
-                    className={`mt-3 h-11 w-full border text-sm transition ${
-                      paidMarked
-                        ? "border-gold/50 bg-gold/10 text-gold-soft"
-                        : "border-white/15 text-ivory hover:border-gold/40"
-                    }`}
-                    onClick={confirmPaid}
-                    disabled={paidMarked}
-                  >
-                    {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
-                  </button>
                 </div>
               ) : (
-                <BitPayPanel order={store.order} onPaidConfirm={confirmPaid} paidMarked={paidMarked} />
+                <BitPayPanel order={store.order} />
               )}
             </div>
 
