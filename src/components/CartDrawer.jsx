@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { FIRST_ORDER_COUPON, FREE_SHIPPING, formatPrice } from "../data";
 import { trackMetaAddPaymentInfo, trackMetaPurchaseOnce } from "../metaPixel";
-import { BIT_PERSONAL_URL, openPayPalPayment } from "../payment";
+import { openPayPalPayment } from "../payment";
 import { useStore } from "../store";
+import BitPayPanel from "./BitPayPanel";
 import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import ProductImage, { imageFrame } from "./ProductImage";
@@ -31,7 +32,6 @@ export default function CartDrawer() {
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
-  const [amountCopied, setAmountCopied] = useState(false);
   const [paidMarked, setPaidMarked] = useState(false);
   const [couponDraft, setCouponDraft] = useState("");
 
@@ -72,6 +72,7 @@ export default function CartDrawer() {
     });
     setDetails(emptyDetails);
     setCopied(false);
+    setPaidMarked(false);
   };
 
   const copyNumber = async () => {
@@ -81,17 +82,6 @@ export default function CartDrawer() {
       setCopied(true);
     } catch {
       setCopied(false);
-    }
-  };
-
-  const copyAmount = async () => {
-    if (!store.order) return;
-    try {
-      await navigator.clipboard.writeText(String(Number(store.order.total) || 0));
-      setAmountCopied(true);
-      window.setTimeout(() => setAmountCopied(false), 1800);
-    } catch {
-      setAmountCopied(false);
     }
   };
 
@@ -147,66 +137,40 @@ export default function CartDrawer() {
             <p className="text-sm text-muted">תודה, {store.order.details.name}</p>
             <p className="mt-1 text-sm leading-6 text-ivory/80">צעד אחרון — תשלום קצר וסיימנו</p>
 
-            <div className="mt-6 text-center">
-              <p className="text-xs tracking-wide text-muted">{isPaypal ? "לתשלום ב-PayPal" : "לתשלום בביט"}</p>
-              <p className="mt-2 font-display text-5xl leading-none text-gold-soft tabular-nums" dir="ltr">
-                {formatPrice(store.order.total)}
-              </p>
-              <p className="mt-2 text-xs text-muted">
-                {store.order.shipping > 0 ? `כולל משלוח ${formatPrice(store.order.shipping)}` : "כולל משלוח חינם"}
-              </p>
-              {!isPaypal ? (
-                <button
-                  type="button"
-                  className="mt-3 text-xs text-gold-soft underline-offset-2 hover:underline"
-                  onClick={copyAmount}
-                >
-                  {amountCopied ? "הסכום הועתק" : "העתיקו את הסכום לביט"}
-                </button>
-              ) : null}
-            </div>
-
-            <div className="mt-6">
+            <div className="mt-5">
               {isPaypal ? (
-                <button
-                  type="button"
-                  className="inline-flex h-14 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
-                  onClick={startPayment}
-                >
-                  <PayPalMark className="h-4 w-auto brightness-0 invert" />
-                  שלם עכשיו ב-PayPal
-                </button>
+                <div>
+                  <div className="text-center">
+                    <p className="text-xs tracking-wide text-muted">לתשלום ב-PayPal</p>
+                    <p className="mt-2 font-display text-5xl leading-none text-gold-soft tabular-nums" dir="ltr">
+                      {formatPrice(store.order.total)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
+                    onClick={startPayment}
+                  >
+                    <PayPalMark className="h-4 w-auto brightness-0 invert" />
+                    שלם עכשיו ב-PayPal
+                  </button>
+                  <button
+                    type="button"
+                    className={`mt-3 h-11 w-full border text-sm transition ${
+                      paidMarked
+                        ? "border-gold/50 bg-gold/10 text-gold-soft"
+                        : "border-white/15 text-ivory hover:border-gold/40"
+                    }`}
+                    onClick={confirmPaid}
+                    disabled={paidMarked}
+                  >
+                    {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
+                  </button>
+                </div>
               ) : (
-                <a
-                  className="btn-gold inline-flex h-14 w-full items-center justify-center text-base"
-                  href={BIT_PERSONAL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => trackMetaAddPaymentInfo(store.order)}
-                >
-                  שלם עכשיו בביט
-                </a>
+                <BitPayPanel order={store.order} onPaidConfirm={confirmPaid} paidMarked={paidMarked} />
               )}
             </div>
-
-            {!isPaypal ? (
-              <p className="mt-3 text-center text-[11px] leading-5 text-muted">
-                בביט הזינו ידנית את הסכום {formatPrice(store.order.total)} (העתיקו למעלה) וציינו את מספר ההזמנה.
-              </p>
-            ) : null}
-
-            <button
-              type="button"
-              className={`mt-4 h-11 w-full border text-sm transition ${
-                paidMarked
-                  ? "border-gold/50 bg-gold/10 text-gold-soft"
-                  : "border-white/15 text-ivory hover:border-gold/40"
-              }`}
-              onClick={confirmPaid}
-              disabled={paidMarked}
-            >
-              {paidMarked ? "תודה — קיבלנו אישור תשלום" : "אישרתי ששילמתי"}
-            </button>
 
             <details className="group mt-8 border-t border-white/10 pt-4">
               <summary className="cursor-pointer list-none text-sm text-muted transition hover:text-ivory [&::-webkit-details-marker]:hidden">
