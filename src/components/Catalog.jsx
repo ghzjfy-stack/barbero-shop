@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { categories, discountPercent, fromPrice, products, resolveOffer } from "../data";
+import StockUrgency from "./StockUrgency";
 import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
@@ -219,6 +220,7 @@ function ProductCard({ product }) {
   const soldOut = product.stock <= 0;
   const off = discountPercent(offer.price, offer.compareAt);
   const lowStock = product.stock > 0 && product.stock <= 3;
+  const flashStock = Boolean(product.freeShipping || product.excludeFirstOrderCoupon) && !soldOut;
 
   return (
     <article className="group flex h-full flex-col border border-white/10 bg-charcoal transition duration-300 hover:border-gold/40">
@@ -271,7 +273,11 @@ function ProductCard({ product }) {
           <div className="mt-3 flex min-h-12 items-start">
             <Price price={offer.price} compareAt={offer.compareAt} />
           </div>
-          {lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>}
+          {flashStock ? (
+            <StockUrgency stock={product.stock} className="mt-2" />
+          ) : (
+            lowStock && <p className="mt-2 text-xs text-gold-soft">נותרו {product.stock} יחידות</p>
+          )}
         </div>
 
         <div className="mt-auto grid gap-1 pt-4">

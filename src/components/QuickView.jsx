@@ -7,6 +7,7 @@ import ProductImage, { imageFrame } from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 import PurchaseTrust from "./PurchaseTrust";
+import StockUrgency from "./StockUrgency";
 
 export default function QuickView() {
   const {
@@ -188,9 +189,6 @@ export default function QuickView() {
                   ₪{offer.price.toLocaleString("he-IL")}
                 </span>
                 <span className="text-muted"> עד הבית · משלוח חינם</span>
-                {quickView.stock > 0 && quickView.stock <= 25 ? (
-                  <span className="text-muted"> · נשארו {quickView.stock}</span>
-                ) : null}
               </p>
             ) : firstOrderEligible ? (
               <p className="mt-2 text-[12px] leading-5 text-gold-soft">
@@ -208,6 +206,9 @@ export default function QuickView() {
             ) : (
               <p className="mt-2 text-[12px] leading-5 text-muted">משלוח חינם מ־₪499</p>
             )}
+            {(quickView.excludeFirstOrderCoupon || quickView.freeShipping) && !soldOut ? (
+              <StockUrgency stock={quickView.stock} className="mt-3" />
+            ) : null}
             <PurchaseTrust className="mt-2.5" />
 
             {quickView.variants && (
@@ -234,7 +235,9 @@ export default function QuickView() {
               </div>
             )}
 
-            {quickView.stock > 0 && quickView.stock <= 3 && (
+            {!(quickView.excludeFirstOrderCoupon || quickView.freeShipping) &&
+              quickView.stock > 0 &&
+              quickView.stock <= 3 && (
               <p className="mt-3 text-sm text-gold-soft">נותרו {quickView.stock} יחידות</p>
             )}
 
