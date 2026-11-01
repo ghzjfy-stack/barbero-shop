@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   FIRST_ORDER_COUPON,
   FREE_SHIPPING,
+  cartHasFreeShippingSku,
+  couponableSubtotal,
   isFirstOrderCouponCode,
   normalizeCouponCode,
   shippingFeeFor,
@@ -171,26 +173,32 @@ export function StoreProvider({ children }) {
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
   const firstOrderEligible = !readHasOrdered() && !lastOrder;
+  const couponBase = couponableSubtotal(lines);
   const couponValid =
     Boolean(appliedCoupon) &&
     isFirstOrderCouponCode(appliedCoupon) &&
     firstOrderEligible &&
-    subtotal > 0;
-  const discount = couponValid ? Math.min(FIRST_ORDER_COUPON.amount, subtotal) : 0;
-  const shipping = shippingFeeFor(subtotal, { waive: couponValid });
+    couponBase > 0;
+  const discount = couponValid ? Math.min(FIRST_ORDER_COUPON.amount, couponBase) : 0;
+  const freeShipSku = cartHasFreeShippingSku(lines);
+  const shipping = shippingFeeFor(subtotal, { waive: couponValid || freeShipSku });
   const total = Math.max(0, subtotal - discount) + shipping;
-  const remaining = couponValid ? 0 : Math.max(0, FREE_SHIPPING - subtotal);
-  const progress = couponValid
-    ? 100
-    : subtotal <= 0
-      ? 0
-      : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
+  const remaining =
+    couponValid || freeShipSku ? 0 : Math.max(0, FREE_SHIPPING - subtotal);
+  const progress =
+    couponValid || freeShipSku
+      ? 100
+      : subtotal <= 0
+        ? 0
+        : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
   const cartCount = cart.reduce((sum, line) => sum + line.qty, 0);
   const freeShippingReason = couponValid
     ? "coupon"
-    : subtotal > 0 && shipping === 0
-      ? "threshold"
-      : null;
+    : freeShipSku
+      ? "flash"
+      : subtotal > 0 && shipping === 0
+        ? "threshold"
+        : null;
 
   const applyCoupon = (rawCode, { quiet = false } = {}) => {
     const code = normalizeCouponCode(rawCode);

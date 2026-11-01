@@ -39,13 +39,25 @@ export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;
 
 /**
- * Shipping fee. First-order coupon waives the ₪39 fee so ad landings
- * (e.g. Lithium AIO ₪450 − ₪100) checkout without a surprise delivery charge.
+ * Shipping fee. Waive for first-order coupon or carts with a freeShipping SKU
+ * (e.g. Lithium AIO flash at ₪289 door-to-door).
  */
 export function shippingFeeFor(subtotal, { waive = false } = {}) {
   if (waive) return 0;
   if (subtotal > 0 && subtotal < FREE_SHIPPING) return SHIPPING_FEE;
   return 0;
+}
+
+/** Subtotal that BARBERO100 may discount (flash SKUs are excluded). */
+export function couponableSubtotal(lines = []) {
+  return lines.reduce((sum, line) => {
+    if (line?.product?.excludeFirstOrderCoupon) return sum;
+    return sum + (Number(line.lineTotal) || 0);
+  }, 0);
+}
+
+export function cartHasFreeShippingSku(lines = []) {
+  return lines.some((line) => line?.product?.freeShipping);
 }
 
 export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח", "אביזרים ונלווים"];
@@ -222,8 +234,13 @@ export const products = [
     sku: "9854L",
     voltage: "USB / סוללת Lithium Ion (אלחוטי)",
     origin: "ארה״ב",
-    stock: 14,
-    price: 450,
+    // Flash clearance — ad price ₪289 door-to-door (no BARBERO100 stack).
+    badge: "מבצע חיסול",
+    stock: 21,
+    price: 289,
+    compareAt: 450,
+    freeShipping: true,
+    excludeFirstOrderCoupon: true,
     frame: "studio",
     image: "/products/wahl-lithium-aio.jpg",
     hoverImage: "/products/wahl-lithium-aio-kit.jpg",
