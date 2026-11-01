@@ -181,7 +181,18 @@ export default function QuickView() {
             <div className="mt-3 sm:mt-5">
               <Price price={offer.price} compareAt={offer.compareAt} size="lg" />
             </div>
-            {firstOrderEligible ? (
+            {quickView.excludeFirstOrderCoupon || quickView.freeShipping ? (
+              <p className="mt-2 text-[12px] leading-5 text-gold-soft">
+                {quickView.badge ? `${quickView.badge} · ` : ""}
+                <span className="font-semibold tabular-nums" dir="ltr">
+                  ₪{offer.price.toLocaleString("he-IL")}
+                </span>
+                <span className="text-muted"> עד הבית · משלוח חינם</span>
+                {quickView.stock > 0 && quickView.stock <= 25 ? (
+                  <span className="text-muted"> · נשארו {quickView.stock}</span>
+                ) : null}
+              </p>
+            ) : firstOrderEligible ? (
               <p className="mt-2 text-[12px] leading-5 text-gold-soft">
                 עם קופון{" "}
                 <span className="font-semibold tracking-wide" dir="ltr">

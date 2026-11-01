@@ -412,6 +412,7 @@ export default function CartDrawer() {
                   draft={couponDraft}
                   setDraft={setCouponDraft}
                   applied={store.appliedCoupon}
+                  discount={store.discount}
                   error={store.couponError}
                   eligible={store.firstOrderEligible}
                   onApply={() => {
@@ -448,7 +449,9 @@ export default function CartDrawer() {
               <p className="mt-3 text-center text-[11px] text-muted">
                 {store.freeShippingReason === "coupon"
                   ? "עם קופון הפתיחה — משלוח חינם עד הבית"
-                  : "הסכום כולל משלוח במידת הצורך"}
+                  : store.freeShippingReason === "flash"
+                    ? "מבצע חיסול — משלוח חינם עד הבית"
+                    : "הסכום כולל משלוח במידת הצורך"}
                 {" · "}
                 התשלום בביט או PayPal אחרי אישור ההזמנה
               </p>
@@ -515,15 +518,19 @@ function ShippingProgress({ subtotal, remaining, progress, freeReason = null }) 
   const label =
     freeReason === "coupon"
       ? "משלוח חינם עם קופון הפתיחה"
-      : `משלוח חינם מעל ${formatPrice(FREE_SHIPPING)}`;
+      : freeReason === "flash"
+        ? "משלוח חינם במבצע חיסול"
+        : `משלוח חינם מעל ${formatPrice(FREE_SHIPPING)}`;
   const status =
     subtotal === 0
       ? "התחילו להוסיף"
       : freeReason === "coupon"
         ? "המשלוח עלינו (קופון)"
-        : qualified
+        : freeReason === "flash"
           ? "המשלוח עלינו"
-          : `עוד ${formatPrice(remaining)}`;
+          : qualified
+            ? "המשלוח עלינו"
+            : `עוד ${formatPrice(remaining)}`;
   return (
     <div className="mb-4">
       <div className="mb-2 flex items-center justify-between gap-3 text-xs">
@@ -544,7 +551,7 @@ function ShippingProgress({ subtotal, remaining, progress, freeReason = null }) 
   );
 }
 
-function CouponField({ draft, setDraft, applied, error, eligible, onApply, onClear }) {
+function CouponField({ draft, setDraft, applied, discount = 0, error, eligible, onApply, onClear }) {
   if (applied) {
     return (
       <div className="mb-3 flex items-center justify-between gap-3 border border-dashed border-gold/40 bg-gold/5 px-3 py-2.5 text-sm">
@@ -553,7 +560,11 @@ function CouponField({ draft, setDraft, applied, error, eligible, onApply, onCle
           <span className="font-semibold tracking-wide text-gold-soft" dir="ltr">
             {applied}
           </span>
-          <span className="text-gold-soft"> · −{formatPrice(FIRST_ORDER_COUPON.amount)}</span>
+          {discount > 0 ? (
+            <span className="text-gold-soft"> · −{formatPrice(discount)}</span>
+          ) : (
+            <span className="text-muted"> · לא חל על מוצר במבצע</span>
+          )}
         </p>
         <button type="button" className="text-xs text-muted underline-offset-2 hover:text-ivory hover:underline" onClick={onClear}>
           הסרה
