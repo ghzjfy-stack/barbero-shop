@@ -6,6 +6,7 @@ import { useStore } from "../store";
 import BitPayPanel from "./BitPayPanel";
 import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
+import { BitMark, PayBoxMark, PayPalMark } from "./PaymentMarks";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
 import PurchaseTrust from "./PurchaseTrust";
@@ -50,7 +51,7 @@ export default function CartDrawer() {
     const postal = details.postal.trim();
     if (postal && !/^\d{5}(\d{2})?$/.test(postal)) next.postal = "מיקוד לא תקין";
     if (!details.agree) next.agree = "יש לאשר את התקנון כדי להמשיך";
-    if (details.payment !== "bit" && details.payment !== "paypal") next.payment = "בחרו אמצעי תשלום";
+    if (!["bit", "paypal", "paybox"].includes(details.payment)) next.payment = "בחרו אמצעי תשלום";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -89,7 +90,9 @@ export default function CartDrawer() {
     if (store.order.payment === "paypal") openPayPalPayment(store.order);
   };
 
-  const isPaypal = store.order?.payment === "paypal";
+  const orderPayment = store.order?.payment;
+  const isPaypal = orderPayment === "paypal";
+  const isPayBox = orderPayment === "paybox";
 
   return (
     <Drawer open={store.cartOpen} onClose={store.closeCart} label="עגלת קניות">
@@ -148,7 +151,7 @@ export default function CartDrawer() {
                   </button>
                 </div>
               ) : (
-                <BitPayPanel order={store.order} />
+                <BitPayPanel order={store.order} provider={isPayBox ? "paybox" : "bit"} />
               )}
             </div>
 
@@ -194,7 +197,7 @@ export default function CartDrawer() {
                   <p className="text-sm text-muted">אימייל לאישור: {store.order.details.email}</p>
                 ) : null}
                 {store.order.details.notes ? <p className="text-sm leading-6 text-muted">{store.order.details.notes}</p> : null}
-                {!isPaypal ? (
+                {orderPayment === "bit" ? (
                   <div className="border border-white/10 bg-black/30 px-4 py-4 text-center">
                     <p className="text-xs text-muted">אפשר גם לסרוק מתוך ביט</p>
                     <img
@@ -260,7 +263,7 @@ export default function CartDrawer() {
 
             <fieldset className="mb-3">
               <legend className="mb-2 text-sm text-muted">אמצעי תשלום</legend>
-              <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="אמצעי תשלום">
+              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="אמצעי תשלום">
                 <PaymentOption
                   selected={details.payment === "bit"}
                   onSelect={() => setField("payment", "bit")}
@@ -268,6 +271,14 @@ export default function CartDrawer() {
                   subtitle="העברה מהירה"
                   mark={<BitMark />}
                   accent="gold"
+                />
+                <PaymentOption
+                  selected={details.payment === "paybox"}
+                  onSelect={() => setField("payment", "paybox")}
+                  title="PayBox"
+                  subtitle="העברה ישירה"
+                  mark={<PayBoxMark />}
+                  accent="paybox"
                 />
                 <PaymentOption
                   selected={details.payment === "paypal"}
@@ -298,7 +309,13 @@ export default function CartDrawer() {
             </label>
             {errors.agree && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.agree}</p>}
             <p className="mt-4 text-xs leading-6 text-muted">
-              אחרי אישור ההזמנה תועברו לתשלום ב{details.payment === "paypal" ? "-PayPal" : "ביט"}. התשלום מתבצע ישירות באפליקציה / באתר של ספק התשלום.
+              אחרי אישור ההזמנה תועברו לתשלום ב
+              {details.payment === "paypal"
+                ? "-PayPal"
+                : details.payment === "paybox"
+                  ? "-PayBox"
+                  : "ביט"}
+              . התשלום מתבצע ישירות באפליקציה / באתר של ספק התשלום.
             </p>
             <div className="mt-auto pt-6">
               <ShippingProgress
@@ -453,7 +470,7 @@ export default function CartDrawer() {
                     ? "מבצע חיסול — משלוח חינם עד הבית"
                     : "הסכום כולל משלוח במידת הצורך"}
                 {" · "}
-                התשלום בביט או PayPal אחרי אישור ההזמנה
+                התשלום בביט, PayBox או PayPal אחרי אישור ההזמנה
               </p>
             </footer>
           </>
@@ -467,49 +484,25 @@ function PaymentOption({ selected, onSelect, title, subtitle, mark, accent = "go
   const selectedClass =
     accent === "paypal"
       ? "border-[#0070ba]/80 bg-[#0070ba]/15 text-ivory shadow-[inset_0_0_0_1px_rgba(0,112,186,0.35)]"
-      : "border-gold/70 bg-gold/10 text-ivory";
+      : accent === "paybox"
+        ? "border-[#7B2CBF]/80 bg-[#7B2CBF]/15 text-ivory shadow-[inset_0_0_0_1px_rgba(123,44,191,0.35)]"
+        : "border-gold/70 bg-gold/10 text-ivory";
   return (
     <button
       type="button"
       role="radio"
       aria-checked={selected}
       onClick={onSelect}
-      className={`flex flex-col items-start gap-2 border px-3 py-3 text-start transition ${
+      className={`flex flex-col items-start gap-2 border px-2.5 py-3 text-start transition sm:px-3 ${
         selected ? selectedClass : "border-white/12 bg-black/20 text-muted hover:border-white/25 hover:text-ivory"
       }`}
     >
-      <span className="flex w-full items-center justify-between gap-2">
+      <span className="flex w-full items-center justify-between gap-1.5">
         <span className="text-sm font-semibold text-ivory">{title}</span>
         {mark}
       </span>
       <span className="text-[11px] leading-4">{subtitle}</span>
     </button>
-  );
-}
-
-function BitMark() {
-  return (
-    <span className="grid h-5 min-w-8 place-items-center rounded-full bg-white px-1.5 text-[10px] font-semibold text-black" dir="ltr">
-      bit
-    </span>
-  );
-}
-
-function PayPalMark({ className = "h-4 w-auto" }) {
-  return (
-    <svg viewBox="0 0 80 24" className={className} aria-hidden="true">
-      <text
-        x="0"
-        y="17"
-        fill="currentColor"
-        fontFamily="Helvetica, Arial, sans-serif"
-        fontWeight="700"
-        fontSize="16"
-        letterSpacing="-0.4"
-      >
-        PayPal
-      </text>
-    </svg>
   );
 }
 

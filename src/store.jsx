@@ -353,7 +353,12 @@ export function StoreProvider({ children }) {
   };
 
   const placeOrder = (details) => {
-    const payment = details?.payment === "paypal" ? "paypal" : "bit";
+    const payment =
+      details?.payment === "paypal"
+        ? "paypal"
+        : details?.payment === "paybox"
+          ? "paybox"
+          : "bit";
     const couponNote =
       discount > 0 && appliedCoupon
         ? `קופון ${appliedCoupon}: −₪${discount} (הזמנה ראשונה)`

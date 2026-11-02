@@ -141,7 +141,8 @@ function buildOrderEmailHtml({
 }) {
   const safeOrder = escapeHtml(orderNumber);
   const safeName = escapeHtml(customerName || "לקוח/ה יקר/ה");
-  const paymentLabel = payment === "paypal" ? "PayPal" : "ביט";
+  const paymentLabel =
+    payment === "paypal" ? "PayPal" : payment === "paybox" ? "PayBox" : "ביט";
   const itemsHtml = buildItemsHtml(lines);
   const totalsHtml = buildTotalsHtml({ subtotal, shipping, discount, coupon, total });
   const payCtaHtml = buildPayCtaHtml(payUrl);
@@ -270,7 +271,8 @@ export default async function handler(req, res) {
   const shipping = body?.shipping;
   const discount = body?.discount;
   const coupon = String(body?.coupon || "").trim();
-  const payment = body?.payment === "paypal" ? "paypal" : "bit";
+  const payment =
+    body?.payment === "paypal" ? "paypal" : body?.payment === "paybox" ? "paybox" : "bit";
   const lines = Array.isArray(body?.lines) ? body.lines : [];
   const from = String(process.env.RESEND_FROM || "BARBERO <onboarding@resend.dev>").trim();
   const payUrl = buildPayPageUrl({ orderNumber, total, payment });
