@@ -8,9 +8,13 @@
  *
  * Buttons (approve/cancel/refresh) need webhook:
  *   POST /api/telegram-webhook  + setWebhook (see .env.example)
+ *
+ * On each new order also sends a short «cash in» voice chime
+ * (public/sounds/order-cash.ogg) so the phone notification stands out.
  */
 
-import { buildOrderCard, buildOrderKeyboard } from "../lib/telegramOrderCard.js";
+import { ORDER_CASH_SOUND_OGG_BASE64 } from "../lib/orderCashSoundData.js";
+import { buildOrderCard, buildOrderKeyboard, formatIls } from "../lib/telegramOrderCard.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -72,6 +76,71 @@ export async function telegramApi(method, payload) {
   return { ok: true, status: 200, data };
 }
 
+async function telegramApiForm(method, formData) {
+  const { token } = telegramConfig();
+  if (!token) {
+    return { ok: false, status: 503, data: { ok: false, error: "telegram_not_configured" } };
+  }
+  let res;
+  try {
+    res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      method: "POST",
+      body: formData,
+    });
+  } catch {
+    return { ok: false, status: 502, data: { ok: false, error: "telegram_unreachable" } };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) {
+    return {
+      ok: false,
+      status: 502,
+      data: {
+        ok: false,
+        error: "telegram_rejected",
+        detail: data.description || res.statusText,
+      },
+    };
+  }
+  return { ok: true, status: 200, data };
+}
+
+function readCashSound() {
+  try {
+    if (!ORDER_CASH_SOUND_OGG_BASE64) return null;
+    return Buffer.from(ORDER_CASH_SOUND_OGG_BASE64, "base64");
+  } catch {
+    return null;
+  }
+}
+
+/** Short cha-ching voice so the phone alert feels like money coming in. */
+export async function sendOrderCashSound(order = {}) {
+  const { chatId, threadId } = telegramConfig();
+  if (!chatId) return { ok: false, skipped: true, reason: "no_chat" };
+  const buf = readCashSound();
+  if (!buf?.length) return { ok: false, skipped: true, reason: "no_sound_file" };
+
+  const number = String(order.number || order.orderNumber || "").trim();
+  const total = order.total;
+  const caption = [
+    "💰 נכנס כסף!",
+    number ? `#${number}` : null,
+    Number.isFinite(Number(total)) ? formatIls(total) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const form = new FormData();
+  form.append("chat_id", chatId);
+  form.append("voice", new Blob([buf], { type: "audio/ogg" }), "order-cash.ogg");
+  form.append("caption", caption);
+  form.append("disable_notification", "false");
+  if (threadId) form.append("message_thread_id", String(threadId));
+
+  return telegramApiForm("sendVoice", form);
+}
+
 export async function sendOrderCard(order, opts = {}) {
   const { chatId, threadId } = telegramConfig();
   if (!chatId) {
@@ -105,10 +174,18 @@ export async function sendOrderCard(order, opts = {}) {
   if (!result.ok) {
     return { ok: false, status: result.status, body: result.data };
   }
+
+  // Fire-and-forget cash chime — never fail the order card if sound fails.
+  const sound = await sendOrderCashSound(order).catch(() => ({ ok: false }));
+
   return {
     ok: true,
     status: 200,
-    body: { ok: true, message_id: result.data.result?.message_id },
+    body: {
+      ok: true,
+      message_id: result.data.result?.message_id,
+      cash_sound: Boolean(sound?.ok),
+    },
   };
 }
 
