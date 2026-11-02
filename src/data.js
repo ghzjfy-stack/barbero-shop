@@ -155,6 +155,41 @@ export const pages = {
 
 export const products = [
   {
+    id: "oster-fast-feed",
+    kind: "מכונת תספורת",
+    model: "Fast Feed Adjustable Blade (#76023-510)",
+    brand: "Oster",
+    category: "מכונות תספורת",
+    rating: 4.9,
+    reviews: 28,
+    sku: "76023-510",
+    voltage: "120V AC (ארה״ב) — לשימוש בישראל נדרש שנאי 220↔110",
+    origin: "ארה״ב",
+    badge: "נדיר בישראל",
+    stock: 10,
+    price: 600,
+    frame: "studio",
+    image: "/products/oster-fast-feed.jpg",
+    hoverImage: "/products/oster-fast-feed-kit.jpg",
+    images: [
+      "/products/oster-fast-feed.jpg",
+      "/products/oster-fast-feed-kit.jpg",
+      "/products/oster-fast-feed-guards.jpg",
+    ],
+    blurb:
+      "מכונת תספורת מקצועית אייקונית של Oster — כמעט לא מוצאים בחנויות בישראל. מנוע Pivot Whisper Quiet™ חזק ושקט, להב מתכוונן #000–#1, וחיתוך מהיר בשיער רטוב או יבש. יבוא מקורי מארה״ב.",
+    features: [
+      "מותג Oster Professional — דגם קלאסי למספרים, כמעט לא זמין בחנויות בארץ.",
+      "מנוע Pivot Whisper Quiet™: כפליים מכוח מנוע מגנטי סטנדרטי, עם רעש נמוך לעבודה נוחה.",
+      "להב מתכוונן (Adjustable Blade) מ־#000 (~0.5 מ״מ) עד #1 (~2.4 מ״מ) בידית צד — בלי החלפת להבים.",
+      "חיתוך מהיר ומדויק בשיער רטוב או יבש; להב תחתון בעיצוב שמזין שיער לתוך החיתוך (Fast Feed).",
+      "גוף ארגונומי קל יחסית עם כבל חשמל ארוך (~2.4 מ׳ / 8 ft) וטבעת תלייה.",
+      "בערכה: המכונה, סט מסרקי הגבהה, נרתיק אחסון, שמן להב ומברשת ניקוי (לפי אריזת הספק).",
+      "מתח 120V אמריקאי — לחיבור בישראל נדרש שנאי מתח 220↔110 (לא כלול).",
+      "יבוא מקורי מארה״ב עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
     id: "wahl-vapor-switch",
     kind: "מכונת תספורת",
     model: "5-Star Series Vapor Switch",
