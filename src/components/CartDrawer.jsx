@@ -517,7 +517,7 @@ function ShippingProgress({ subtotal, remaining, progress, freeReason = null }) 
   const qualified = remaining === 0 && subtotal > 0;
   const label =
     freeReason === "coupon"
-      ? "משלוח חינם עם קופון הפתיחה"
+      ? "משלוח חינם בהזמנה ראשונה"
       : freeReason === "flash"
         ? "משלוח חינם במבצע חיסול"
         : `משלוח חינם מעל ${formatPrice(FREE_SHIPPING)}`;
