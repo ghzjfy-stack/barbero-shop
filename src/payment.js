@@ -3,8 +3,15 @@
 export const BIT_PERSONAL_URL =
   "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
 
-/** Personal PayBox receive link (same idea as Bit — customer enters amount). */
-export const PAYBOX_PERSONAL_URL = "https://links.payboxapp.com/1lE4bzXBQ2b";
+/**
+ * Personal PayBox receive link for BARBERO only (same idea as Bit).
+ * Left empty until the correct Barbero link is provided — never reuse Minox.
+ */
+export const PAYBOX_PERSONAL_URL = "";
+
+export function isPayBoxEnabled() {
+  return /^https:\/\/links\.payboxapp\.com\/[A-Za-z0-9_-]+/.test(PAYBOX_PERSONAL_URL);
+}
 
 export const SUPPORT_WHATSAPP = "972543554888";
 
@@ -70,6 +77,10 @@ export async function openBitPayment(order, { onCopied } = {}) {
 
 /** Same UX as Bit: copy amount, then open personal PayBox link. */
 export async function openPayBoxPayment(order, { onCopied } = {}) {
+  if (!isPayBoxEnabled()) {
+    if (typeof onCopied === "function") onCopied(false);
+    return false;
+  }
   const ok = await copyBitAmount(order);
   if (typeof onCopied === "function") onCopied(ok);
   await new Promise((r) => setTimeout(r, ok ? 180 : 0));
