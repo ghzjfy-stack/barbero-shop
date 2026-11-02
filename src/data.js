@@ -11,7 +11,7 @@ export const FIRST_ORDER_COUPON = {
   code: "BARBERO100",
   aliases: ["BARBERO50"],
   amount: 100,
-  label: "הטבת פתיחה · ₪100 הנחה + משלוח חינם להזמנה ראשונה",
+  label: "הזמנה ראשונה · ₪100 הנחה + משלוח חינם",
 };
 
 export function normalizeCouponCode(value) {
@@ -32,7 +32,7 @@ export function isFirstOrderCouponCode(value) {
 export const purchaseTrustLines = [
   "יבוא מקורי מארה״ב · אחריות יבואן 12 חודשים",
   "תשלום מאובטח בביט, PayBox או PayPal",
-  "החזרה 14 יום באריזה מקורית סגורה · עם קופון פתיחה — משלוח חינם",
+  "החזרה תוך 14 יום באריזה מקורית סגורה · משלוח חינם בהזמנה ראשונה",
 ];
 
 export const FREE_SHIPPING = 499;

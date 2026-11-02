@@ -472,7 +472,7 @@ export default function CartDrawer() {
               {store.lines.length > 0 && <PurchaseTrust className="mt-3" />}
               <p className="mt-3 text-center text-[11px] text-muted">
                 {store.freeShippingReason === "coupon"
-                  ? "עם קופון הפתיחה — משלוח חינם עד הבית"
+                  ? "בהזמנה ראשונה — משלוח חינם עד הבית"
                   : store.freeShippingReason === "flash"
                     ? "מבצע חיסול — משלוח חינם עד הבית"
                     : "הסכום כולל משלוח במידת הצורך"}
