@@ -135,6 +135,9 @@ export default function Footer() {
             <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-3 text-sm font-semibold text-black" dir="ltr">
               bit
             </span>
+            <span className="grid h-8 place-items-center rounded-full bg-[#7B2CBF] px-3 text-sm font-semibold text-white" dir="ltr">
+              PayBox
+            </span>
             <span className="grid h-8 place-items-center rounded-full bg-[#0070ba] px-3 text-sm font-semibold text-white" dir="ltr">
               PayPal
             </span>
