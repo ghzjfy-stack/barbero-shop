@@ -3,11 +3,8 @@
 export const BIT_PERSONAL_URL =
   "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
 
-/**
- * Personal PayBox receive link for BARBERO only (same idea as Bit).
- * Left empty until the correct Barbero link is provided — never reuse Minox.
- */
-export const PAYBOX_PERSONAL_URL = "";
+/** Barbero PayBox group: "Barbero הזמנות" (not Minox). */
+export const PAYBOX_PERSONAL_URL = "https://links.payboxapp.com/Cn0IS3NqK7b";
 
 export function isPayBoxEnabled() {
   return /^https:\/\/links\.payboxapp\.com\/[A-Za-z0-9_-]+/.test(PAYBOX_PERSONAL_URL);

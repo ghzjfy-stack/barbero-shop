@@ -1,7 +1,7 @@
 export const announcements = [
   "100% יבוא מקורי מארה״ב",
   "משלוחים לכל הארץ (7–14 ימי עסקים)",
-  "תשלום מאובטח ב-Bit או PayPal",
+  "תשלום מאובטח ב-Bit, PayBox או PayPal",
   "החזרה/החלפה תוך 14 ימים באריזה מקורית וסגורה בלבד",
   "אחריות יבואן 12 חודשים",
 ];
@@ -31,7 +31,7 @@ export function isFirstOrderCouponCode(value) {
 /** Short trust lines near buy / checkout — not a redesign, just reassurance. */
 export const purchaseTrustLines = [
   "יבוא מקורי מארה״ב · אחריות יבואן 12 חודשים",
-  "תשלום מאובטח בביט או PayPal",
+  "תשלום מאובטח בביט, PayBox או PayPal",
   "החזרה 14 יום באריזה מקורית סגורה · עם קופון פתיחה — משלוח חינם",
 ];
 
