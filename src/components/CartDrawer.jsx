@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FIRST_ORDER_COUPON, FREE_SHIPPING, formatPrice } from "../data";
 import { trackMetaAddPaymentInfo } from "../metaPixel";
-import { openPayPalPayment } from "../payment";
+import { isPayBoxEnabled, openPayPalPayment } from "../payment";
 import { useStore } from "../store";
 import BitPayPanel from "./BitPayPanel";
 import Drawer from "./Drawer";
@@ -51,7 +51,8 @@ export default function CartDrawer() {
     const postal = details.postal.trim();
     if (postal && !/^\d{5}(\d{2})?$/.test(postal)) next.postal = "מיקוד לא תקין";
     if (!details.agree) next.agree = "יש לאשר את התקנון כדי להמשיך";
-    if (!["bit", "paypal", "paybox"].includes(details.payment)) next.payment = "בחרו אמצעי תשלום";
+    const allowedPay = isPayBoxEnabled() ? ["bit", "paypal", "paybox"] : ["bit", "paypal"];
+    if (!allowedPay.includes(details.payment)) next.payment = "בחרו אמצעי תשלום";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -263,7 +264,11 @@ export default function CartDrawer() {
 
             <fieldset className="mb-3">
               <legend className="mb-2 text-sm text-muted">אמצעי תשלום</legend>
-              <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="אמצעי תשלום">
+              <div
+                className={`grid gap-2 ${isPayBoxEnabled() ? "grid-cols-3" : "grid-cols-2"}`}
+                role="radiogroup"
+                aria-label="אמצעי תשלום"
+              >
                 <PaymentOption
                   selected={details.payment === "bit"}
                   onSelect={() => setField("payment", "bit")}
@@ -272,14 +277,16 @@ export default function CartDrawer() {
                   mark={<BitMark />}
                   accent="gold"
                 />
-                <PaymentOption
-                  selected={details.payment === "paybox"}
-                  onSelect={() => setField("payment", "paybox")}
-                  title="PayBox"
-                  subtitle="העברה ישירה"
-                  mark={<PayBoxMark />}
-                  accent="paybox"
-                />
+                {isPayBoxEnabled() ? (
+                  <PaymentOption
+                    selected={details.payment === "paybox"}
+                    onSelect={() => setField("payment", "paybox")}
+                    title="PayBox"
+                    subtitle="העברה ישירה"
+                    mark={<PayBoxMark />}
+                    accent="paybox"
+                  />
+                ) : null}
                 <PaymentOption
                   selected={details.payment === "paypal"}
                   onSelect={() => setField("payment", "paypal")}
