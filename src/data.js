@@ -236,7 +236,7 @@ export const products = [
     origin: "ארה״ב",
     // Flash clearance — ad price ₪289 door-to-door (no BARBERO100 stack).
     badge: "מבצע חיסול",
-    stock: 21,
+    stock: 9,
     price: 289,
     compareAt: 450,
     freeShipping: true,
