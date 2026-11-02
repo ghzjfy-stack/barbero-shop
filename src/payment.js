@@ -1,17 +1,29 @@
-/** Shared Bit / PayPal checkout helpers (cart done screen + /pay page). */
+/** Shared Bit / PayBox / PayPal checkout helpers (cart done screen + /pay page). */
 
 export const BIT_PERSONAL_URL =
   "https://www.bitpay.co.il/app/me/E4F7DC01-399F-3467-8DB6-0EC0B9DF1ACDF11F";
+
+/** Personal PayBox receive link (same idea as Bit — customer enters amount). */
+export const PAYBOX_PERSONAL_URL = "https://links.payboxapp.com/1lE4bzXBQ2b";
 
 export const SUPPORT_WHATSAPP = "972543554888";
 
 const PAYPAL_EMAIL = "ghzjfyy@gmail.com";
 
-/** Plain number for Bit amount field (e.g. "350" or "350.5"). */
+/** Plain number for Bit/PayBox amount field (e.g. "350" or "350.5"). */
 export function bitAmountString(order) {
   const n = Number(order?.total);
   if (!Number.isFinite(n) || n < 0) return "0";
   return Number.isInteger(n) ? String(n) : n.toFixed(2);
+}
+
+export function normalizeCheckoutPayment(value) {
+  const v = String(value || "")
+    .trim()
+    .toLowerCase();
+  if (v === "paypal") return "paypal";
+  if (v === "paybox") return "paybox";
+  return "bit";
 }
 
 export async function copyText(value) {
@@ -53,6 +65,15 @@ export async function openBitPayment(order, { onCopied } = {}) {
   // Small delay so mobile browsers finish clipboard write before leaving the tab.
   await new Promise((r) => setTimeout(r, ok ? 180 : 0));
   window.open(BIT_PERSONAL_URL, "_blank", "noopener,noreferrer");
+  return ok;
+}
+
+/** Same UX as Bit: copy amount, then open personal PayBox link. */
+export async function openPayBoxPayment(order, { onCopied } = {}) {
+  const ok = await copyBitAmount(order);
+  if (typeof onCopied === "function") onCopied(ok);
+  await new Promise((r) => setTimeout(r, ok ? 180 : 0));
+  window.open(PAYBOX_PERSONAL_URL, "_blank", "noopener,noreferrer");
   return ok;
 }
 

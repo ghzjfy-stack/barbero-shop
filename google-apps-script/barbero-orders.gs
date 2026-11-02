@@ -56,6 +56,7 @@ var HEADERS = [
 var STATUS_OPTIONS = [
   "ממתין לביט",
   "ממתין ל-PayPal",
+  "ממתין ל-PayBox",
   "שולם",
   "בהכנה",
   "משלוח מארה״ב",
@@ -202,9 +203,14 @@ function doPost(e) {
 
     var payment = row.payment || "ביט";
     if (payment === "Bit") payment = "ביט";
+    if (payment === "paybox" || payment === "Paybox") payment = "PayBox";
     var status =
       row.status ||
-      (payment === "PayPal" ? "ממתין ל-PayPal" : "ממתין לביט");
+      (payment === "PayPal"
+        ? "ממתין ל-PayPal"
+        : payment === "PayBox"
+          ? "ממתין ל-PayBox"
+          : "ממתין לביט");
     var paid = row.paid || "No";
     var allData = row.allData || buildAllData_(row);
 
@@ -419,7 +425,7 @@ function listOrders_(body) {
   if (limit > 20) limit = 20;
 
   var groups = {
-    wait: { "ממתין לביט": true, "ממתין ל-PayPal": true },
+    wait: { "ממתין לביט": true, "ממתין ל-PayPal": true, "ממתין ל-PayBox": true },
     paid: { שולם: true },
     prep: { בהכנה: true },
     ship: { "משלוח מארה״ב": true },
@@ -461,6 +467,7 @@ function updateOrderStatus_(body) {
   var allowed = {
     "ממתין לביט": true,
     "ממתין ל-PayPal": true,
+    "ממתין ל-PayBox": true,
     שולם: true,
     בהכנה: true,
     "משלוח מארה״ב": true,
@@ -749,7 +756,7 @@ function setupSummarySheet_() {
   sheet.getRange("A14").setValue("סטטוסים");
   sheet.getRange("A14").setFontWeight("bold").setFontColor(COLOR.headerBg);
   sheet.getRange("A15").setValue("ממתינים לתשלום");
-  sheet.getRange("B15").setFormula('=COUNTIF(\'הזמנות\'!A:A,"ממתין לביט")+COUNTIF(\'הזמנות\'!A:A,"ממתין ל-PayPal")');
+  sheet.getRange("B15").setFormula('=COUNTIF(\'הזמנות\'!A:A,"ממתין לביט")+COUNTIF(\'הזמנות\'!A:A,"ממתין ל-PayPal")+COUNTIF(\'הזמנות\'!A:A,"ממתין ל-PayBox")');
   sheet.getRange("A16").setValue("שולם / בהכנה");
   sheet.getRange("B16").setFormula('=COUNTIF(\'הזמנות\'!A:A,"שולם")+COUNTIF(\'הזמנות\'!A:A,"בהכנה")');
   sheet.getRange("A17").setValue("במשלוח מארה״ב");
@@ -946,6 +953,7 @@ function applyConditionalFormat_(sheet) {
 
   rules.push(statusRule("ממתין לביט", COLOR.waitBit));
   rules.push(statusRule("ממתין ל-PayPal", COLOR.waitPaypal));
+  rules.push(statusRule("ממתין ל-PayBox", COLOR.paybox));
   rules.push(statusRule("שולם", COLOR.paid));
   rules.push(statusRule("בהכנה", COLOR.prep));
   rules.push(statusRule("משלוח מארה״ב", COLOR.ship, COLOR.shipFg));

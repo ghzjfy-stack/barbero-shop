@@ -67,8 +67,10 @@ function buildItemsText(lines = []) {
 /** Flat row the Apps Script appends into the Minox-style sheet. */
 export function buildSheetRow(order) {
   const details = order?.details || {};
-  const payment = order?.payment === "paypal" ? "PayPal" : "ביט";
-  const status = payment === "PayPal" ? "ממתין ל-PayPal" : "ממתין לביט";
+  const payment =
+    order?.payment === "paypal" ? "PayPal" : order?.payment === "paybox" ? "PayBox" : "ביט";
+  const status =
+    payment === "PayPal" ? "ממתין ל-PayPal" : payment === "PayBox" ? "ממתין ל-PayBox" : "ממתין לביט";
   return {
     status,
     paid: "No",

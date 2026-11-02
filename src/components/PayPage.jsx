@@ -4,17 +4,7 @@ import { trackMetaAddPaymentInfo } from "../metaPixel";
 import { openPayPalPayment } from "../payment";
 import BitPayPanel from "./BitPayPanel";
 import { Logo } from "./Header";
-
-function PayPalMark({ className = "h-4 w-auto" }) {
-  return (
-    <svg className={className} viewBox="0 0 100 32" aria-hidden="true">
-      <path
-        fill="currentColor"
-        d="M12 3h18.2c5.7 0 9.7 3 9.7 8.1 0 6.6-4.5 11.3-11.1 11.3H22l-1.7 9.1H12.4L16.3 3zm7.4 6.2l-1.5 8h5.2c3.1 0 5.1-1.7 5.1-4.3 0-2.1-1.4-3.7-4.2-3.7H19.4zM58.6 3h7.8l-4.7 25.5h-7.8L58.6 3zm-14.2 0h7.5l-1.2 6.6h7c5.4 0 9 3.1 7.8 8.7C63.8 25 59.2 28.5 53 28.5h-9.8L48.4 3h-4zm1.7 6.2l-1.9 10.4h4.6c2.9 0 5.1-1.5 5.7-4.5.6-2.8-.9-4.5-3.8-4.5h-4.6zM84.4 9.2h-7.1L75.8 16c-.2 1.1.3 1.7 1.4 1.7h2.1l-.8 4.5c-3.7 1.7-7.2 2.4-10.1 2.4-5.7 0-9.6-3.5-8.4-9.4C61.4 8.3 67.3 3 75.2 3c2.6 0 5.2.5 7.8 1.4l-1.5 7.8c-1.7-.8-3.3-1.2-4.7-1.2-3.3 0-5.6 1.9-6.2 4.8-.5 2.6.8 4.2 3.4 4.2 1.4 0 2.9-.4 4.5-1.1l.4-2.3h-4.1l.7-3.8h11.2l-1.3 7.4z"
-      />
-    </svg>
-  );
-}
+import { PayPalMark } from "./PaymentMarks";
 
 export default function PayPage() {
   const [state, setState] = useState({ status: "loading", order: null, error: "" });
@@ -50,6 +40,7 @@ export default function PayPage() {
 
   const order = state.order;
   const isPaypal = order?.payment === "paypal";
+  const isPayBox = order?.payment === "paybox";
 
   return (
     <section className="relative min-h-[100svh] overflow-hidden px-4 pb-16 pt-28 sm:px-6 lg:px-8">
@@ -102,7 +93,7 @@ export default function PayPage() {
                     </button>
                   </div>
                 ) : (
-                  <BitPayPanel order={order} />
+                  <BitPayPanel order={order} provider={isPayBox ? "paybox" : "bit"} />
                 )}
               </div>
             </>
