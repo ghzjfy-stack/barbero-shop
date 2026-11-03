@@ -6,6 +6,7 @@ import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
+import { feedbackWhatsAppHref } from "./FeedbackInvite";
 import PurchaseTrust from "./PurchaseTrust";
 import StockUrgency from "./StockUrgency";
 
@@ -288,6 +289,18 @@ export default function QuickView() {
                 ))}
               </ul>
             )}
+
+            <p className="mt-5 text-sm leading-7 text-muted">
+              יש לכם את המוצר?{" "}
+              <a
+                className="text-gold-soft underline-offset-2 hover:text-gold hover:underline"
+                href={feedbackWhatsAppHref(quickView.name)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                כתבו לנו חוויה בוואטסאפ
+              </a>
+            </p>
 
             <dl className="mt-6 grid grid-cols-1 gap-px bg-white/10 text-sm min-[480px]:grid-cols-2">
               {specs.map(([label, value]) => (

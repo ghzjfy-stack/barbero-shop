@@ -2,6 +2,7 @@ import { useState } from "react";
 import { navLinks, serviceLinks } from "../data";
 import { onNavClick } from "../navigate";
 import { useStore } from "../store";
+import { feedbackWhatsAppHref } from "./FeedbackInvite";
 import { Logo } from "./Header";
 
 export default function Footer() {
@@ -121,6 +122,16 @@ export default function Footer() {
             <li>
               <a className="hover:text-ivory" href="mailto:support@barbero.co.il">
                 support@barbero.co.il
+              </a>
+            </li>
+            <li>
+              <a
+                className="text-gold-soft hover:text-gold"
+                href={feedbackWhatsAppHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                קניתם? כתבו לנו חוויה
               </a>
             </li>
           </ul>
