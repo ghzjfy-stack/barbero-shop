@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { discountPercent, FIRST_ORDER_COUPON, resolveOffer } from "../data";
 import { useStore } from "../store";
-import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus } from "./Icons";
+import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, IconWhatsApp } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
-import { feedbackWhatsAppHref } from "./FeedbackInvite";
+import { askWhatsAppHref, feedbackWhatsAppHref } from "./FeedbackInvite";
 import PayMethodsCue from "./PayMethodsCue";
+import ProductFaq from "./ProductFaq";
 import PurchaseTrust from "./PurchaseTrust";
 import StockUrgency from "./StockUrgency";
 
@@ -296,6 +297,15 @@ export default function QuickView() {
             </button>
             {!soldOut ? <PayMethodsCue className="mt-2.5" /> : null}
             <PurchaseTrust className="mt-2.5" />
+            <a
+              href={askWhatsAppHref(quickView.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 border border-[#25D366]/45 bg-[#25D366]/10 text-sm font-medium text-[#7dffb2] transition hover:border-[#25D366]/70 hover:bg-[#25D366]/15"
+            >
+              <IconWhatsApp className="h-4 w-4" />
+              יש שאלה? דברו איתנו בוואטסאפ
+            </a>
 
             <p className="mt-5 text-sm leading-7 text-ivory/75 sm:mt-4">{quickView.blurb}</p>
             {quickView.features?.length > 0 && (
@@ -305,6 +315,8 @@ export default function QuickView() {
                 ))}
               </ul>
             )}
+
+            <ProductFaq className="mt-6" />
 
             <p className="mt-5 text-sm leading-7 text-muted">
               יש לכם את המוצר?{" "}
