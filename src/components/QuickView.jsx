@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { discountPercent, FIRST_ORDER_COUPON, resolveOffer } from "../data";
 import { useStore } from "../store";
-import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus, Stars } from "./Icons";
+import { IconChevron, IconClose, IconHeart, IconMinus, IconPlus } from "./Icons";
 import Price from "./Price";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
@@ -172,11 +172,6 @@ export default function QuickView() {
               <ProductTitle product={quickView} />
             </h2>
             <p className="mt-2 text-xs tracking-[0.16em] text-muted sm:mt-3">{quickView.brand}</p>
-            {typeof quickView.rating === "number" && (
-              <div className="mt-2 sm:mt-4">
-                <Stars value={quickView.rating} reviews={quickView.reviews} />
-              </div>
-            )}
 
             {/* Price + buy first — visible on ad landings without scrolling past the image */}
             <div className="mt-3 sm:mt-5">

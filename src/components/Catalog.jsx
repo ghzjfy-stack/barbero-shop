@@ -2,18 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { categories, discountPercent, fromPrice, products, resolveOffer } from "../data";
 import StockUrgency from "./StockUrgency";
 import { useStore } from "../store";
-import { IconHeart, Stars } from "./Icons";
+import { IconHeart } from "./Icons";
 import Price from "./Price";
 import ProductImage from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 
-
 const sortOptions = [
   { value: "featured", label: "מיון: מומלצים" },
   { value: "priceAsc", label: "מחיר: מהנמוך" },
   { value: "priceDesc", label: "מחיר: מהגבוה" },
-  { value: "rating", label: "דירוג" },
 ];
 
 function SortSelect({ value, onChange }) {
@@ -247,9 +245,9 @@ function ProductCard({ product }) {
             </button>
           </h3>
           <p className="mt-1 h-4 truncate text-start text-xs leading-4 tracking-[0.14em] text-muted">{product.brand}</p>
-          <div className="mt-3 h-5">
-            {typeof product.rating === "number" && <Stars value={product.rating} reviews={product.reviews} />}
-          </div>
+          <p className="mt-3 h-5 truncate text-start text-[11px] leading-5 text-ivory/60">
+            יבוא מקורי · אחריות יבואן 12 חודשים
+          </p>
           {product.variants && (
             <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
               {product.variants.map((variant) => (
@@ -312,7 +310,6 @@ export default function Catalog() {
     .sort((a, b) => {
       if (sort === "priceAsc") return fromPrice(a) - fromPrice(b);
       if (sort === "priceDesc") return fromPrice(b) - fromPrice(a);
-      if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
       return 0;
     });
 
