@@ -9,6 +9,7 @@ import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
 import { BitMark, PayBoxMark, PayPalMark } from "./PaymentMarks";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
+import PayMethodsCue from "./PayMethodsCue";
 import PurchaseTrust from "./PurchaseTrust";
 
 const emptyDetails = {
@@ -470,14 +471,17 @@ export default function CartDrawer() {
                 </button>
               )}
               {store.lines.length > 0 && <PurchaseTrust className="mt-3" />}
-              <p className="mt-3 text-center text-[11px] text-muted">
+              {store.lines.length > 0 ? (
+                <PayMethodsCue className="mt-3 justify-center" />
+              ) : null}
+              <p className="mt-2 text-center text-[11px] text-muted">
                 {store.freeShippingReason === "coupon"
                   ? "בהזמנה ראשונה — משלוח חינם עד הבית"
                   : store.freeShippingReason === "flash"
                     ? "מבצע חיסול — משלוח חינם עד הבית"
                     : "הסכום כולל משלוח במידת הצורך"}
                 {" · "}
-                התשלום בביט, PayBox או PayPal אחרי אישור ההזמנה
+                אחרי אישור ההזמנה
               </p>
             </footer>
           </>
