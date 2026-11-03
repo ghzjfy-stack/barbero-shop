@@ -688,11 +688,7 @@ export const products = [
     compareAt: 850,
     frame: "studio",
     image: "/products/wahl-power-station.jpg",
-    hoverImage: "/products/wahl-power-station-features.jpg",
-    images: [
-      "/products/wahl-power-station.jpg",
-      "/products/wahl-power-station-features.jpg",
-    ],
+    images: ["/products/wahl-power-station.jpg"],
     blurb:
       "תחנת טעינה מקצועית של Wahl לשלושה כלים אלחוטיים במקביל — באותה מהירות כמו טעינת כלי אחד. מתאימה למכונות, טרימרים ומכונות גילוח של Wahl על 5V, עם פורט USB-C לטלפון או מסוף תשלום.",
     features: [
