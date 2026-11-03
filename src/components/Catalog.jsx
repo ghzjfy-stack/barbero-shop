@@ -245,8 +245,10 @@ function ProductCard({ product }) {
             </button>
           </h3>
           <p className="mt-1 h-4 truncate text-start text-xs leading-4 tracking-[0.14em] text-muted">{product.brand}</p>
-          <p className="mt-3 h-5 truncate text-start text-[11px] leading-5 text-ivory/60">
-            יבוא מקורי · אחריות יבואן 12 חודשים
+          <p className="mt-3 min-h-8 text-start text-[11px] leading-4 text-ivory/60">
+            יבוא מקורי
+            <br />
+            אחריות יבואן 12 חודשים
           </p>
           {product.variants && (
             <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="בחירת דגם">
