@@ -73,7 +73,12 @@ export default function QuickView() {
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-6">
       <button type="button" className="absolute inset-0 bg-black/75 backdrop-blur-sm" aria-label="סגירה" onClick={closeQuickView} />
-      <div role="dialog" aria-modal="true" aria-labelledby="quick-view-title" className="relative z-10 w-full max-w-4xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-view-title"
+        className="relative z-10 flex max-h-[min(92dvh,100%)] w-full max-w-4xl flex-col overflow-hidden border border-line bg-slate sm:max-h-[92svh]"
+      >
         <div className="pointer-events-none absolute inset-0 z-20" dir="ltr">
           <button
             type="button"
@@ -84,10 +89,10 @@ export default function QuickView() {
             <IconClose />
           </button>
         </div>
-        <div className="grid max-h-[92svh] overflow-y-auto border border-line bg-slate pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] sm:grid-cols-2 sm:pb-0">
+        <div className="grid min-h-0 flex-1 overflow-y-auto overscroll-contain sm:grid-cols-2">
           <div className={`relative flex flex-col ${frame.box}`}>
             <div
-              className="relative mx-auto aspect-square w-full max-h-[min(38svh,18rem)] sm:max-h-none"
+              className="relative mx-auto aspect-square w-full max-h-[min(32svh,15rem)] sm:max-h-none"
               onTouchStart={(event) => {
                 touchX.current = event.changedTouches[0]?.clientX ?? null;
               }}
@@ -206,10 +211,9 @@ export default function QuickView() {
             {(quickView.excludeFirstOrderCoupon || quickView.freeShipping) && !soldOut ? (
               <StockUrgency stock={quickView.stock} className="mt-3" />
             ) : null}
-            <PurchaseTrust className="mt-2.5" />
 
             {quickView.variants && (
-              <div className="mt-4" role="group" aria-label="בחירת דגם">
+              <div className="mt-3 sm:mt-4" role="group" aria-label="בחירת דגם">
                 <p className="mb-2 text-xs text-muted">דגם</p>
                 <div className="flex flex-wrap gap-2">
                   {quickView.variants.map((variant) => (
@@ -238,23 +242,24 @@ export default function QuickView() {
               <p className="mt-3 text-sm text-gold-soft">נותרו {quickView.stock} יחידות</p>
             )}
 
-            <div className="mt-4 flex items-center gap-3">
+            {/* Qty + CTA early so mobile ad landings see Add to cart without scrolling */}
+            <div className="mt-3 flex items-center gap-3 sm:mt-4">
               <div className="flex border border-white/15">
                 <button
                   type="button"
-                  className="grid h-12 w-12 place-items-center"
+                  className="grid h-11 w-11 place-items-center sm:h-12 sm:w-12"
                   aria-label="הפחתת כמות"
                   onClick={() => setQty((value) => Math.max(1, value - 1))}
                   disabled={soldOut}
                 >
                   <IconMinus className="h-4 w-4" />
                 </button>
-                <span className="grid h-12 w-10 place-items-center tabular-nums" aria-live="polite">
+                <span className="grid h-11 w-10 place-items-center tabular-nums sm:h-12" aria-live="polite">
                   {qty}
                 </span>
                 <button
                   type="button"
-                  className="grid h-12 w-12 place-items-center"
+                  className="grid h-11 w-11 place-items-center sm:h-12 sm:w-12"
                   aria-label="הגדלת כמות"
                   onClick={() => setQty((value) => Math.min(maxQty, value + 1))}
                   disabled={soldOut || qty >= quickView.stock}
@@ -264,24 +269,33 @@ export default function QuickView() {
               </div>
               <button
                 type="button"
-                className={`grid h-12 w-12 place-items-center border border-white/15 ${wished ? "text-gold" : ""}`}
+                className={`grid h-11 w-11 place-items-center border border-white/15 sm:h-12 sm:w-12 ${wished ? "text-gold" : ""}`}
                 aria-pressed={wished}
                 aria-label={wished ? "הסרה מהמועדפים שלי" : "הוספה למועדפים שלי"}
                 onClick={() => toggleWish(quickView.id)}
               >
                 <IconHeart filled={wished} />
               </button>
+              <button
+                type="button"
+                className="btn-gold h-11 min-w-0 flex-1 px-3 text-sm sm:!hidden"
+                disabled={soldOut}
+                onClick={addToCartNow}
+              >
+                {soldOut ? "אזל" : "הוסף לעגלה"}
+              </button>
             </div>
 
             <button
               type="button"
-              className="btn-gold mt-3 hidden h-12 w-full sm:inline-flex"
+              className="btn-gold mt-3 !hidden h-12 w-full sm:!inline-flex"
               disabled={soldOut}
               onClick={addToCartNow}
             >
               {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
             </button>
-            {!soldOut ? <PayMethodsCue className="mt-2.5 hidden sm:flex" /> : null}
+            {!soldOut ? <PayMethodsCue className="mt-2.5" /> : null}
+            <PurchaseTrust className="mt-2.5" />
 
             <p className="mt-5 text-sm leading-7 text-ivory/75 sm:mt-4">{quickView.blurb}</p>
             {quickView.features?.length > 0 && (
@@ -315,22 +329,21 @@ export default function QuickView() {
           </div>
         </div>
 
-        {/* Sticky buy bar — mobile ad landings always see price + CTA */}
-        <div className="absolute inset-x-0 bottom-0 z-30 border-t border-white/10 bg-slate/95 px-4 py-3 backdrop-blur-md sm:hidden pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
+        {/* Pinned buy bar — outside scroll, always in the first mobile viewport */}
+        <div className="z-30 shrink-0 border-t border-white/10 bg-slate px-4 py-2.5 sm:hidden pb-[max(0.625rem,env(safe-area-inset-bottom,0px))]">
           <div className="flex items-center gap-3">
             <div className="min-w-0 flex-1">
               <Price price={offer.price} compareAt={offer.compareAt} />
             </div>
             <button
               type="button"
-              className="btn-gold h-12 shrink-0 px-5 text-sm"
+              className="btn-gold h-11 shrink-0 px-5 text-sm"
               disabled={soldOut}
               onClick={addToCartNow}
             >
               {soldOut ? "אזל" : "הוסף לעגלה"}
             </button>
           </div>
-          {!soldOut ? <PayMethodsCue compact className="mt-2" /> : null}
         </div>
       </div>
     </div>
