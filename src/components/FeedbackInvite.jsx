@@ -26,7 +26,7 @@ export default function FeedbackInvite() {
           <p className="mb-3 text-xs tracking-wide text-gold">חוות דעת אמיתיות</p>
           <h2 className="font-display text-3xl leading-tight sm:text-4xl">קניתם אצלנו? כתבו לנו איך היה</h2>
           <p className="mt-4 text-sm leading-7 text-muted">
-            נשמח לשמוע — לטובה או לשיפור. ההודעה מגיעה אלינו בוואטסאפ. רק חוויות שנאשר יופיעו באתר.
+            נשמח לשמוע — לטובה או לשיפור. ההודעה מגיעה אלינו ישירות בוואטסאפ.
           </p>
         </div>
         <a
