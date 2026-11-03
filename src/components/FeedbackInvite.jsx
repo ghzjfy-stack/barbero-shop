@@ -14,6 +14,18 @@ export function feedbackWhatsAppHref(productName = "") {
   return `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(lines.join("\n"))}`;
 }
 
+/** Pre-purchase question from a product card. */
+export function askWhatsAppHref(productName = "") {
+  const product = String(productName || "").trim();
+  const lines = [
+    "שלום BARBERO,",
+    "יש לי שאלה לפני רכישה:",
+    product ? `מוצר: ${product}` : null,
+    "השאלה שלי:",
+  ].filter(Boolean);
+  return `https://wa.me/${SUPPORT_WHATSAPP}?text=${encodeURIComponent(lines.join("\n"))}`;
+}
+
 /**
  * Quiet trust invite: customers write to you on WhatsApp.
  * You choose later what (if anything) becomes a public review.
