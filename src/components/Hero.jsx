@@ -60,6 +60,9 @@ export default function Hero() {
               למה BARBERO
             </a>
           </div>
+          <p className="mt-4 text-sm leading-6 text-gold-soft">
+            הזמנה ראשונה · ₪100 הנחה + משלוח חינם
+          </p>
         </div>
 
         <aside className="rise border border-line bg-ink/80 p-4 backdrop-blur-md md:col-span-5">

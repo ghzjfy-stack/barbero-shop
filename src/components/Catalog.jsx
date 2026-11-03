@@ -5,6 +5,7 @@ import { useStore } from "../store";
 import { IconHeart } from "./Icons";
 import Price from "./Price";
 import ProductImage from "./ProductImage";
+import PayMethodsCue from "./PayMethodsCue";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 
@@ -289,6 +290,7 @@ function ProductCard({ product }) {
           >
             {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
           </button>
+          {!soldOut ? <PayMethodsCue compact className="pt-1" /> : null}
           <button
             type="button"
             className="btn-text h-9 text-sm"

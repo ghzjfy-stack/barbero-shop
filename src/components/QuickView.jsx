@@ -7,6 +7,7 @@ import ProductImage, { imageFrame } from "./ProductImage";
 import ProductShareButton from "./ProductShareButton";
 import ProductTitle from "./ProductTitle";
 import { feedbackWhatsAppHref } from "./FeedbackInvite";
+import PayMethodsCue from "./PayMethodsCue";
 import PurchaseTrust from "./PurchaseTrust";
 import StockUrgency from "./StockUrgency";
 
@@ -280,6 +281,7 @@ export default function QuickView() {
             >
               {soldOut ? "אזל מהמלאי" : "הוסף לעגלה"}
             </button>
+            {!soldOut ? <PayMethodsCue className="mt-2.5 hidden sm:flex" /> : null}
 
             <p className="mt-5 text-sm leading-7 text-ivory/75 sm:mt-4">{quickView.blurb}</p>
             {quickView.features?.length > 0 && (
@@ -328,6 +330,7 @@ export default function QuickView() {
               {soldOut ? "אזל" : "הוסף לעגלה"}
             </button>
           </div>
+          {!soldOut ? <PayMethodsCue compact className="mt-2" /> : null}
         </div>
       </div>
     </div>
