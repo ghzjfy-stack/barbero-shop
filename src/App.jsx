@@ -18,6 +18,7 @@ import SearchModal from "./components/SearchModal";
 import QuickView from "./components/QuickView";
 import InfoDialog from "./components/InfoDialog";
 import Toast from "./components/Toast";
+import FacebookButton from "./components/FacebookButton";
 import WhatsAppButton from "./components/WhatsAppButton";
 import PayPage from "./components/PayPage";
 import SiteAnalytics from "./components/SiteAnalytics";
@@ -90,6 +91,7 @@ function Shell() {
       <InfoDialog />
       <Toast />
       <WhatsAppButton />
+      <FacebookButton />
     </>
   );
 }
