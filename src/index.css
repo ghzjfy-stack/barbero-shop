@@ -114,6 +114,36 @@ footer[id] {
   animation: rise 0.7s ease both;
 }
 
+@keyframes hero-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+.hero-glow {
+  animation: hero-glow-pulse 4.8s ease-in-out infinite;
+}
+
+@keyframes hero-badge-shine {
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(198, 161, 91, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(198, 161, 91, 0.42);
+  }
+}
+
+.hero-launch-badge {
+  animation: hero-badge-shine 3.6s ease-in-out infinite;
+}
+
 @keyframes pop {
   0% {
     transform: scale(0.6);
@@ -262,7 +292,9 @@ footer[id] {
 
   .marquee-track,
   .rise,
-  .badge-pop {
+  .badge-pop,
+  .hero-glow,
+  .hero-launch-badge {
     animation: none !important;
   }
 
