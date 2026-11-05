@@ -140,7 +140,7 @@ footer[id] {
   }
 }
 
-.hero-launch-badge {
+.hero-deal-badge {
   animation: hero-badge-shine 3.6s ease-in-out infinite;
 }
 
@@ -294,7 +294,7 @@ footer[id] {
   .rise,
   .badge-pop,
   .hero-glow,
-  .hero-launch-badge {
+  .hero-deal-badge {
     animation: none !important;
   }
 

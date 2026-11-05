@@ -69,8 +69,8 @@ export default function Hero() {
         </div>
 
         <aside className="rise border border-line bg-ink/80 p-4 backdrop-blur-md md:col-span-5">
-          <p className="hero-launch-badge inline-block border border-gold/50 bg-gradient-to-l from-gold/20 via-gold/10 to-transparent px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-gold">
-            מבצע השקה · ₪289
+          <p className="hero-deal-badge inline-block border border-gold/50 bg-gradient-to-l from-gold/20 via-gold/10 to-transparent px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-gold">
+            {featured.badge || "מבצע"} · ₪{fromPrice(featured).toLocaleString("he-IL")}
           </p>
           <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
             <div className="relative mx-auto h-72 w-full overflow-hidden sm:h-80 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
