@@ -38,6 +38,9 @@ export const purchaseTrustLines = [
 export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;
 
+/** Official Facebook page — footer social link. */
+export const FACEBOOK_PAGE_URL = "https://www.facebook.com/people/Barbero/61595980587030/";
+
 /**
  * Shipping fee. Waive for first-order coupon or carts with a freeShipping SKU
  * (e.g. Lithium AIO flash at ₪289 door-to-door).

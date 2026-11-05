@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { navLinks, serviceLinks } from "../data";
+import { FACEBOOK_PAGE_URL, navLinks, serviceLinks } from "../data";
 import { onNavClick } from "../navigate";
 import { useStore } from "../store";
 import { feedbackWhatsAppHref } from "./FeedbackInvite";
 import { Logo } from "./Header";
+import { IconFacebook } from "./Icons";
 
 export default function Footer() {
   const { openInfo, goToCategory } = useStore();
@@ -45,6 +46,18 @@ export default function Footer() {
           <p className="mt-5 max-w-xs text-sm leading-7 text-muted">
             BARBERO מביאה אליכם מכונות תספורת, גילוח וטיפוח מקוריות – ביבוא ישיר מארה״ב, למספרות ולשימוש ביתי מקצועי.
           </p>
+          <a
+            href={FACEBOOK_PAGE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2.5 border border-white/12 bg-white/[0.03] px-3 py-2 text-sm text-ivory/85 transition hover:border-gold/45 hover:text-gold-soft"
+            aria-label="עמוד הפייסבוק של BARBERO"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#1877F2] text-white">
+              <IconFacebook className="h-4 w-4" />
+            </span>
+            <span>עקבו אחרינו בפייסבוק</span>
+          </a>
           <div className="mt-6">
             <p className="text-sm">עדכונים על הקולקציה</p>
             {status === "done" ? (
