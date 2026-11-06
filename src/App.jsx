@@ -23,6 +23,19 @@ import WhatsAppButton from "./components/WhatsAppButton";
 import PayPage from "./components/PayPage";
 import SiteAnalytics from "./components/SiteAnalytics";
 
+const HOME_TITLE = "BARBERO | עיצוב שיער וגרומינג פרימיום ביבוא ישיר מארה״ב";
+const HOME_DESCRIPTION =
+  "ציוד פרימיום לעיצוב שיער, גילוח וגרומינג ביבוא ישיר מארה״ב. דגמים נבחרים שלא תמצאו בכל חנות, אחריות יבואן 12 חודשים ומשלוח חינם מ־₪499 לכל הארץ.";
+const ABOUT_DESCRIPTION =
+  "BARBERO — יבוא ישיר מארה״ב של ציוד פרימיום לעיצוב שיער, גילוח וגרומינג. למספרות, למעצבות ולבית, עם אחריות יבואן ושירות ישירות מולנו.";
+
+function setMetaDescription(content) {
+  const node = document.querySelector('meta[name="description"]');
+  if (node) node.setAttribute("content", content);
+  const og = document.querySelector('meta[property="og:description"]');
+  if (og) og.setAttribute("content", content);
+}
+
 function Shell() {
   const path = usePathname();
   const about = path === "/about";
@@ -31,13 +44,19 @@ function Shell() {
 
   useEffect(() => {
     const landedProduct = productLanding ? findProduct(parseProductFromLocation()) : null;
-    document.title = pay
-      ? "תשלום הזמנה | BARBERO"
-      : about
-        ? "אודות | BARBERO"
-        : landedProduct
-          ? `${landedProduct.name} | BARBERO`
-          : "BARBERO | עיצוב שיער וגרומינג פרימיום ביבוא ישיר מארה״ב";
+    if (pay) {
+      document.title = "תשלום הזמנה | BARBERO";
+      setMetaDescription(HOME_DESCRIPTION);
+    } else if (about) {
+      document.title = "BARBERO | אודות";
+      setMetaDescription(ABOUT_DESCRIPTION);
+    } else if (landedProduct) {
+      document.title = `${landedProduct.name} | BARBERO`;
+      setMetaDescription(landedProduct.blurb || HOME_DESCRIPTION);
+    } else {
+      document.title = HOME_TITLE;
+      setMetaDescription(HOME_DESCRIPTION);
+    }
     if (pay) {
       window.scrollTo(0, 0);
       return;
