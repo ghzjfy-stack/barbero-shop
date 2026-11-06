@@ -44,7 +44,7 @@ export default function Footer() {
         <div>
           <Logo />
           <p className="mt-5 max-w-xs text-sm leading-7 text-muted">
-            BARBERO מביאה אליכם מכונות תספורת, גילוח וטיפוח מקוריות – ביבוא ישיר מארה״ב, למספרות ולשימוש ביתי מקצועי.
+            BARBERO מביאה אליכם ציוד מקורי לעיצוב שיער, גילוח וגרומינג — יבוא ישיר מארה״ב, למספרות, למעצבות ולבית.
           </p>
           <a
             href={FACEBOOK_PAGE_URL}
