@@ -45,14 +45,14 @@ export default function Hero() {
             BARBERO · DIRECT IMPORT
           </p>
           <h1 className="max-w-3xl font-display text-[2.05rem] leading-[1.2] font-bold text-ivory sm:text-4xl md:text-[2.6rem] lg:text-5xl xl:text-[4.4rem]">
-            מכונות התספורת והגילוח המובילות בעולם
+            עיצוב שיער וגרומינג פרימיום מהמותגים המובילים
             <span className="mt-3 block text-[1.3rem] leading-snug font-medium text-gold-soft sm:text-2xl lg:text-3xl xl:text-[2.35rem]">
               – יבוא ישיר מארה״ב
             </span>
           </h1>
           <p className="mt-6 max-w-xl text-base leading-8 text-ivory/75 sm:text-lg">
-            יבוא ישיר מארה״ב של ציוד מקורי למספרות ולבית. קולקציה ייחודית — דגמים נבחרים שזמינים אצלנו, עם אחריות יבואן ל־12
-            חודשים ושירות ישירות מולנו.
+            יבוא ישיר מארה״ב של ציוד מקורי למספרות, למעצבות ולבית. קולקציית פרימיום לעיצוב שיער וגרומינג — דגמים נבחרים,
+            אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.
           </p>
           <div className="mt-8 flex flex-col gap-3 min-[420px]:flex-row min-[420px]:flex-wrap min-[420px]:items-center">
             <a href="#collection" className="btn-gold h-12 w-full px-7 text-[15px] min-[420px]:w-auto">
