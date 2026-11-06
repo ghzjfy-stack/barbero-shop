@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { categories, discountPercent, fromPrice, products, resolveOffer } from "../data";
 import StockUrgency from "./StockUrgency";
 import { useStore } from "../store";
@@ -302,9 +302,57 @@ function ProductCard({ product }) {
   );
 }
 
+const HAIR_STYLING_CATEGORY = "עיצוב והחלקת שיער";
+const HAIR_STYLING_HASH = "#hair-styling";
+
+function scrollToHairStyling() {
+  const node = document.getElementById("hair-styling");
+  if (!node) return false;
+  node.scrollIntoView({ behavior: "smooth", block: "start" });
+  return true;
+}
+
+function isHairStylingHash() {
+  return window.location.hash === HAIR_STYLING_HASH;
+}
+
 export default function Catalog() {
   const { category, setCategory } = useStore();
   const [sort, setSort] = useState("featured");
+
+  // Deep-link /#hair-styling → filter BaByliss category before paint, then land on the grid.
+  useLayoutEffect(() => {
+    if (!isHairStylingHash()) return undefined;
+    setCategory(HAIR_STYLING_CATEGORY);
+    const onHash = () => {
+      if (!isHairStylingHash()) return;
+      setCategory(HAIR_STYLING_CATEGORY);
+      window.requestAnimationFrame(scrollToHairStyling);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [setCategory]);
+
+  useEffect(() => {
+    if (!isHairStylingHash()) return undefined;
+    if (category !== HAIR_STYLING_CATEGORY) return undefined;
+    let tries = 0;
+    const tick = () => {
+      if (scrollToHairStyling() || tries >= 8) return;
+      tries += 1;
+      window.setTimeout(tick, 50);
+    };
+    const id = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(id);
+  }, [category]);
+
+  const openHairStyling = () => {
+    setCategory(HAIR_STYLING_CATEGORY);
+    const url = new URL(window.location.href);
+    url.hash = "hair-styling";
+    window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    window.requestAnimationFrame(scrollToHairStyling);
+  };
 
   const visible = products
     .filter((product) => category === "הכל" || product.category === category)
@@ -326,7 +374,7 @@ export default function Catalog() {
             </h2>
             <button
               type="button"
-              onClick={() => setCategory("עיצוב והחלקת שיער")}
+              onClick={openHairStyling}
               className="mt-3 text-start text-sm leading-6 text-gold-soft transition hover:text-gold"
             >
               חדש · מחליקים ומסלסל BaBylissPRO מקוריים — לעיצוב והחלקת שיער
@@ -338,31 +386,33 @@ export default function Catalog() {
           </div>
         </div>
 
-        <div className="mb-8 flex flex-wrap gap-2">
-          {categories.map((item) => (
-            <button
-              key={item}
-              type="button"
-              className="chip"
-              aria-pressed={category === item}
-              onClick={() => setCategory(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        {visible.length === 0 ? (
-          <p className="border border-dashed border-white/15 px-6 py-16 text-center text-muted">
-            אין דגמים בקטגוריה הזו כרגע.
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
-            {visible.map((product) => (
-              <ProductCard key={product.id} product={product} />
+        <div id="hair-styling">
+          <div className="mb-8 flex flex-wrap gap-2">
+            {categories.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className="chip"
+                aria-pressed={category === item}
+                onClick={() => setCategory(item)}
+              >
+                {item}
+              </button>
             ))}
           </div>
-        )}
+
+          {visible.length === 0 ? (
+            <p className="border border-dashed border-white/15 px-6 py-16 text-center text-muted">
+              אין דגמים בקטגוריה הזו כרגע.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-4 lg:grid-cols-4">
+              {visible.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
