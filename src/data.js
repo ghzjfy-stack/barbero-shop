@@ -67,7 +67,7 @@ export const categories = [
   "הכל",
   "מכונות תספורת",
   "טרימרים ומכונות גילוח",
-  "עיצוב שיער",
+  "עיצוב והחלקת שיער",
   "אביזרים ונלווים",
 ];
 
@@ -75,7 +75,7 @@ export const navLinks = [
   { label: "קולקציה", href: "/#collection" },
   { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
   { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
-  { label: "עיצוב שיער", href: "/#collection", category: "עיצוב שיער" },
+  { label: "עיצוב והחלקת שיער", href: "/#collection", category: "עיצוב והחלקת שיער" },
   { label: "אביזרים ונלווים", href: "/#collection", category: "אביזרים ונלווים" },
   { label: "אודות", href: "/about" },
 ];
@@ -155,7 +155,7 @@ export const pages = {
   terms: {
     title: "תקנון",
     paragraphs: [
-      "ברוכים הבאים ל-BARBERO. האתר מציע ציוד תספורת וגילוח מקורי ביבוא ישיר מארה״ב.",
+      "ברוכים הבאים ל-BARBERO. האתר מציע ציוד מקורי לעיצוב שיער, גילוח וגרומינג — ביבוא ישיר מארה״ב.",
       "• כל ההזמנות מטופלות ונשלחות ישירות לבית הלקוח תוך 7–14 ימי עסקים.",
       "• ניתן להחזיר או להחליף מוצר תוך 14 ימים באריזתו המקורית ושלא נעשה בו שימוש.",
       "• המוצרים באתר מקוריים. המכונות מלוות באחריות יבואן ובשירות לקוחות ישירות מולנו — פירוט מלא בעמוד האחריות.",
@@ -189,7 +189,7 @@ export const products = [
     kind: "מחליק שיער",
     model: 'Nano Titanium 1" Digital Flat Iron (BNT4095TUC)',
     brand: "BaBylissPRO",
-    category: "עיצוב שיער",
+    category: "עיצוב והחלקת שיער",
     rating: 4.8,
     reviews: 64,
     sku: "BNT4095TUC",
@@ -228,7 +228,7 @@ export const products = [
     kind: "מחליק שיער",
     model: 'Nano Titanium 2" Ultra-Sleek Straightening Iron (BNT134T)',
     brand: "BaBylissPRO",
-    category: "עיצוב שיער",
+    category: "עיצוב והחלקת שיער",
     rating: 4.5,
     reviews: 96,
     sku: "BNT134T",
