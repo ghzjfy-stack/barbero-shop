@@ -324,6 +324,13 @@ export default function Catalog() {
             <h2 className="font-display text-4xl leading-tight sm:text-5xl">
               קולקציית פרימיום לעיצוב שיער וגרומינג
             </h2>
+            <button
+              type="button"
+              onClick={() => setCategory("עיצוב והחלקת שיער")}
+              className="mt-3 text-start text-sm leading-6 text-gold-soft transition hover:text-gold"
+            >
+              חדש · מחליקים ומסלסל BaBylissPRO מקוריים — לעיצוב והחלקת שיער
+            </button>
           </div>
           <div className="text-sm text-muted">
             <span className="sr-only">מיון</span>
