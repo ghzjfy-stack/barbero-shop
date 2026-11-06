@@ -75,7 +75,7 @@ export const navLinks = [
   { label: "קולקציה", href: "/#collection" },
   { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
   { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
-  { label: "עיצוב והחלקת שיער", href: "/#collection", category: "עיצוב והחלקת שיער" },
+  { label: "עיצוב והחלקת שיער", href: "/#hair-styling", category: "עיצוב והחלקת שיער" },
   { label: "אביזרים ונלווים", href: "/#collection", category: "אביזרים ונלווים" },
   { label: "אודות", href: "/about" },
 ];

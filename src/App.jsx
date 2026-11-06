@@ -70,7 +70,8 @@ function Shell() {
       window.scrollTo(0, 0);
       return;
     }
-    document.querySelector(window.location.hash)?.scrollIntoView();
+    const target = document.querySelector(window.location.hash);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [about, pay, productLanding, path]);
 
   if (pay) {

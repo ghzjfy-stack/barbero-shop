@@ -18,7 +18,7 @@ function scrollToTarget(hash) {
     return;
   }
   const target = document.querySelector(hash);
-  if (target) target.scrollIntoView();
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export function navigate(href) {
@@ -56,7 +56,11 @@ export function usePathname() {
 
 export function onNavClick(event, link, { goToCategory, closeMenu } = {}) {
   event.preventDefault();
-  if (link?.category || link?.href?.includes("#collection")) {
+  if (
+    link?.category ||
+    link?.href?.includes("#collection") ||
+    link?.href?.includes("#hair-styling")
+  ) {
     goToCategory?.(link.category || "הכל");
   }
   closeMenu?.();

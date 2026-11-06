@@ -65,7 +65,8 @@ button:disabled {
 }
 
 section[id],
-footer[id] {
+footer[id],
+#hair-styling {
   scroll-margin-top: 7.75rem;
 }
 
