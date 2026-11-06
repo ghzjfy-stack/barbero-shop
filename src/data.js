@@ -63,12 +63,19 @@ export function cartHasFreeShippingSku(lines = []) {
   return lines.some((line) => line?.product?.freeShipping);
 }
 
-export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח", "אביזרים ונלווים"];
+export const categories = [
+  "הכל",
+  "מכונות תספורת",
+  "טרימרים ומכונות גילוח",
+  "עיצוב שיער",
+  "אביזרים ונלווים",
+];
 
 export const navLinks = [
   { label: "קולקציה", href: "/#collection" },
   { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
   { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
+  { label: "עיצוב שיער", href: "/#collection", category: "עיצוב שיער" },
   { label: "אביזרים ונלווים", href: "/#collection", category: "אביזרים ונלווים" },
   { label: "אודות", href: "/about" },
 ];
@@ -177,6 +184,45 @@ export const productFaqItems = [
 ];
 
 export const products = [
+  {
+    id: "babyliss-nano-titanium",
+    kind: "מחליק שיער",
+    model: 'Nano Titanium 1" Digital Flat Iron (BNT4095TUC)',
+    brand: "BaBylissPRO",
+    category: "עיצוב שיער",
+    rating: 4.8,
+    reviews: 64,
+    sku: "BNT4095TUC",
+    voltage: "120V / 240V Dual Voltage — מתאים לחשמל בישראל",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 52,
+    price: 499,
+    compareAt: 650,
+    frame: "studio",
+    image: "/products/babyliss-nano-titanium.jpg",
+    hoverImage: "/products/babyliss-nano-titanium-open.jpg",
+    images: [
+      "/products/babyliss-nano-titanium.jpg",
+      "/products/babyliss-nano-titanium-open.jpg",
+      "/products/babyliss-nano-titanium-features.jpg",
+      "/products/babyliss-nano-titanium-use.jpg",
+      "/products/babyliss-nano-titanium-box.jpg",
+    ],
+    blurb:
+      "מחליק מקצועי של BaBylissPRO מסדרת Nano Titanium — לוחות טיטניום חלקים ברוחב 1״ (25 מ״מ), חום דיגיטלי עד 232°C, ומגע מלא עם השיער במעבר אחד. תוצאה חלקה ומבריקה בבית או במספרה. יבוא מקורי מארה״ב.",
+    features: [
+      "BaBylissPRO® Nano Titanium™ — מחליק דיגיטלי מקצועי (דגם BNT4095TUC) באריזה מקורית וסגורה מהיצרן.",
+      "לוחות Nano Titanium חלקים במיוחד: מוליכים חום מהר, עמידים בפני קורוזיה ומחליקים על השיער בלי למשוך.",
+      "לוחות צפים לכל הכיוונים (All-Directional Floating Plates) — מגע מלא עם השיער, פחות מעברים ותוצאה חלקה יותר.",
+      "חום דיגיטלי מדויק עד 450°F / 232°C, עם תצוגה ברורה וכפתורי +/− נוחים.",
+      "חימום קרמי מהיר עם התאוששות חום מיידית — מוכן לעבודה תוך שניות.",
+      "פונקציית Memory שומרת את הטמפרטורה האחרונה — מדליקות ומתחילות מאיפה שעצרתן.",
+      "גוף עמיד לחום גבוה, כבל מסתובב (Swivel) נוח לעיצוב, ורוחב לוחות 1״ / 25 מ״מ ליישור וגלים.",
+      "Dual Voltage 120V / 240V — מתח כפול, מתאים לחשמל בישראל בלי שנאי.",
+      "מתאים לספרים, מעצבות ולשימוש ביתי ברמה גבוהה — יבוא מקורי מארה״ב עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
   {
     id: "oster-fast-feed",
     kind: "מכונת תספורת",
