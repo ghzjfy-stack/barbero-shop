@@ -196,7 +196,7 @@ function buildOrderEmailHtml({
             <tr>
               <td style="padding:16px 28px 24px;border-top:1px solid #2a2a2a;text-align:right;direction:rtl;">
                 <div style="font-size:12px;line-height:1.6;color:#7d766b;">
-                  © BARBERO — ציוד תספורת וגילוח ביבוא ישיר מארה״ב
+                  © BARBERO — עיצוב שיער וגרומינג פרימיום ביבוא ישיר מארה״ב
                 </div>
               </td>
             </tr>

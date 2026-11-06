@@ -320,9 +320,9 @@ export default function Catalog() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
           <div>
-            <p className="mb-3 text-xs text-gold">הקולקציה</p>
+            <p className="mb-3 text-xs text-gold">פרימיום · יבוא ישיר</p>
             <h2 className="font-display text-4xl leading-tight sm:text-5xl">
-              קולקציית פרימיום לתספורת וגילוח
+              קולקציית פרימיום לעיצוב שיער וגרומינג
             </h2>
           </div>
           <div className="text-sm text-muted">
