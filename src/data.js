@@ -1,25 +1,82 @@
 export const announcements = [
   "100% יבוא מקורי מארה״ב",
   "משלוחים לכל הארץ (7–14 ימי עסקים)",
-  "תשלום מאובטח ב-Bit",
+  "תשלום מאובטח ב-Bit, PayBox או PayPal",
   "החזרה/החלפה תוך 14 ימים באריזה מקורית וסגורה בלבד",
-  "אחריות ושירות לקוחות בעברית",
+  "אחריות יבואן 12 חודשים",
+];
+
+/** Opening promo — top bar (ASOS-style) + cart redeem. Aliases keep old ads working. */
+export const FIRST_ORDER_COUPON = {
+  code: "BARBERO100",
+  aliases: ["BARBERO50"],
+  amount: 100,
+  label: "הזמנה ראשונה · ₪100 הנחה + משלוח חינם",
+};
+
+export function normalizeCouponCode(value) {
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+}
+
+export function isFirstOrderCouponCode(value) {
+  const code = normalizeCouponCode(value);
+  if (!code) return false;
+  if (code === FIRST_ORDER_COUPON.code) return true;
+  return (FIRST_ORDER_COUPON.aliases || []).includes(code);
+}
+
+/** Short trust lines near buy / checkout — not a redesign, just reassurance. */
+export const purchaseTrustLines = [
+  "יבוא מקורי מארה״ב · אחריות יבואן 12 חודשים",
+  "תשלום מאובטח בביט, PayBox או PayPal",
+  "החזרה תוך 14 יום באריזה מקורית סגורה · משלוח חינם בהזמנה ראשונה",
 ];
 
 export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;
 
-export function shippingFeeFor(subtotal) {
+/** Official Facebook page — footer social link. */
+export const FACEBOOK_PAGE_URL = "https://www.facebook.com/people/Barbero/61595980587030/";
+
+/**
+ * Shipping fee. Waive for first-order coupon or carts with a freeShipping SKU
+ * (e.g. Lithium AIO flash at ₪289 door-to-door).
+ */
+export function shippingFeeFor(subtotal, { waive = false } = {}) {
+  if (waive) return 0;
   if (subtotal > 0 && subtotal < FREE_SHIPPING) return SHIPPING_FEE;
   return 0;
 }
 
-export const categories = ["הכל", "מכונות תספורת", "טרימרים ומכונות גילוח"];
+/** Subtotal that BARBERO100 may discount (flash SKUs are excluded). */
+export function couponableSubtotal(lines = []) {
+  return lines.reduce((sum, line) => {
+    if (line?.product?.excludeFirstOrderCoupon) return sum;
+    return sum + (Number(line.lineTotal) || 0);
+  }, 0);
+}
+
+export function cartHasFreeShippingSku(lines = []) {
+  return lines.some((line) => line?.product?.freeShipping);
+}
+
+export const categories = [
+  "הכל",
+  "מכונות תספורת",
+  "טרימרים ומכונות גילוח",
+  "עיצוב והחלקת שיער",
+  "אביזרים ונלווים",
+];
 
 export const navLinks = [
   { label: "קולקציה", href: "/#collection" },
   { label: "מכונות תספורת", href: "/#collection", category: "מכונות תספורת" },
   { label: "טרימרים ומכונות גילוח", href: "/#collection", category: "טרימרים ומכונות גילוח" },
+  { label: "עיצוב והחלקת שיער", href: "/#hair-styling", category: "עיצוב והחלקת שיער" },
+  { label: "אביזרים ונלווים", href: "/#collection", category: "אביזרים ונלווים" },
   { label: "אודות", href: "/about" },
 ];
 
@@ -27,7 +84,7 @@ export const trustItems = [
   {
     icon: "truck",
     title: "משלוח בינלאומי",
-    text: "משלוח ישיר מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב.",
+    text: "משלוח ישיר מארה״ב עד הבית תוך 7–14 ימי עסקים.",
   },
   {
     icon: "box",
@@ -37,12 +94,12 @@ export const trustItems = [
   {
     icon: "globe",
     title: "יבוא ישיר מארה״ב",
-    text: "ציוד מקורי בלבד, המיובא ישירות מהמותג בארה״ב. 100% מוצרים מקוריים, חדשים ובאריזה סגורה.",
+    text: "ציוד מקורי של המותגים המובילים — יבוא ושילוח ישירות מארה״ב עד הבית.",
   },
   {
     icon: "shield",
     title: "אחריות ושירות",
-    text: "אחריות מלאה ושירות לקוחות בעברית לכל פנייה.",
+    text: "אחריות יבואן ל-12 חודשים על מנוע ורכיבים חשמליים — שירות ישירות מולנו.",
   },
 ];
 
@@ -59,14 +116,14 @@ export const pages = {
   tracking: {
     title: "מעקב הזמנה",
     paragraphs: [
-      "הזינו את מספר ההזמנה ממסך האישור. המעקב בדמו הזה נשמר בדפדפן בלבד.",
+      "הזינו מספר הזמנה (BRB-…) או את מספר הטלפון שמילאתם בקופה — ונציג את סטטוס ההזמנה והיכן המשלוח. לעזרה נוספת: וואטסאפ או support@barbero.co.il.",
     ],
   },
   shipping: {
     title: "משלוחים והחזרות",
     paragraphs: [
       "משלוח לכל הארץ תוך 7–14 ימי עסקים.",
-      "משלוח חינם בקנייה מעל 499 ₪! בהזמנות מתחת לסכום זה, עלות המשלוח הינה 39 ₪.",
+      "משלוח חינם בקנייה מעל ₪499 ובהזמנה ראשונה. בהזמנות אחרות מתחת לסכום זה, עלות המשלוח ₪39.",
       "החזרה או החלפה ניתן לבצע תוך 14 ימים מיום קבלת המוצר, כשהפריט באריזתו המקורית והסגורה בלבד ולא נעשה בו כל שימוש. מטעמי היגיינה, מוצרים שנפתחו אינם ניתנים להחזרה.",
       "האתר מספק שירות במשלוחים לכל הארץ (ללא איסוף עצמי).",
     ],
@@ -75,37 +132,498 @@ export const pages = {
     title: "אחריות ושירות BARBERO",
     paragraphs: [
       "כל מכונות התספורת, הפיניש ומכונות הגילוח מגיעות עם אחריות יבואן ל-12 חודשים על המנוע והרכיבים החשמליים (בלאי טבעי של להבים, סכינים ורשתות אינו כלול).",
-      "האחריות תקפה בהצגת חשבונית קנייה של BARBERO. השירות, המענה והטיפול מתבצעים ישירות מול צוות השירות שלנו בעברית, במהירות וללא צורך בפנייה לגורמים בחו״ל.",
+      "האחריות תקפה בהצגת חשבונית קנייה של BARBERO. השירות, המענה והטיפול מתבצעים ישירות מולנו — במהירות וללא צורך בפנייה לגורמים בחו״ל.",
     ],
   },
   faq: {
     title: "שאלות נפוצות",
     paragraphs: [
-      "האם המכונה עובדת בישראל? כן. הדגמים בקטלוג הם 100V–240V ומתחברים לשקע ישראלי בלי ממיר.",
-      "האם זה יבוא מקורי? כן. הסחורה מגיעה 100% מקורית מארה״ב, עם אחריות מלאה שלנו ושירות לקוחות בעברית.",
-      "תוך כמה זמן זה מגיע? המשלוח מגיע ישירות מארה״ב עד הבית, בדרך כלל תוך 7–14 ימי עסקים כולל מספר מעקב צמוד.",
-      "אפשר להחליף דגם? כן, תוך 14 יום, כל עוד המוצר לא היה בשימוש והאריזה שמורה.",
-      "איך משלמים? כרגע מקבלים תשלום בביט בלבד.",
+      "האם המכונה עובדת בישראל? בדקו את פירוט המתח בדף המוצר. דגמי מתח אוניברסלי 100V–240V מתחברים לשקע ישראלי בלי ממיר; דגמי סוללה או USB אינם דורשים מתאם לקיר.",
+      "האם זה יבוא מקורי? כן. הסחורה מגיעה 100% מקורית מארה״ב, עם אחריות יבואן ל-12 חודשים ושירות ישירות מולנו.",
+      "תוך כמה זמן זה מגיע? המשלוח מגיע ישירות מארה״ב עד הבית תוך 7–14 ימי עסקים.",
+      "אפשר להחליף דגם? כן, תוך 14 ימים, כל עוד המוצר לא היה בשימוש והאריזה שמורה.",
+      "איך משלמים? מקבלים תשלום בביט, PayBox או PayPal, אחרי אישור ההזמנה באתר.",
     ],
   },
   privacy: {
     title: "מדיניות פרטיות",
     paragraphs: [
-      "אנו ב-BARBERO מחויבים לשמירה מלאה על פרטיותכם. הפרטים האישיים משמשים אך ורק לצורך עיבוד המשלוח. כל פעולות התשלום מבוצעות בסליקה מוצפנת ומאובטחת (SSL) ואינן נשמרות בשרת. איננו מעבירים מידע לגורם שלישי.",
+      "אנו ב-BARBERO מחויבים לשמירה על פרטיותכם. הפרטים האישיים משמשים לטיפול בהזמנה, למשלוח ולתקשורת מולכם. התשלום מתבצע בביט, PayBox או PayPal מחוץ לאתר ואינו נשמר אצלנו. לצורך תפעול ההזמנה אנו משתמשים בשירותי ענן מאובטחים (למשל שליחת אימייל ושמירת פרטי הזמנה). איננו מוכרים פרטים לצדדים שלישיים לצורכי פרסום.",
+      "באתר פועל Meta Pixel למדידת פרסום ולשיפור הקמפיינים. מטא עשויה לקבל נתוני שימוש בעמוד, בהתאם להגדרות הפרטיות שלכם.",
     ],
   },
   terms: {
     title: "תקנון",
     paragraphs: [
-      "ברוכים הבאים ל-BARBERO. האתר מציע ציוד תספורת וגילוח מקורי ביבוא ישיר מארה״ב.",
+      "ברוכים הבאים ל-BARBERO. האתר מציע ציוד מקורי לעיצוב שיער, גילוח וגרומינג — ביבוא ישיר מארה״ב.",
       "• כל ההזמנות מטופלות ונשלחות ישירות לבית הלקוח תוך 7–14 ימי עסקים.",
-      "• ניתן להחזיר או להחליף מוצר תוך 14 יום באריזתו המקורית ושלא נעשה בו שימוש.",
-      "• כל המוצרים באתר מקוריים ומלווים באחריות מלאה ובשירות לקוחות בעברית.",
+      "• ניתן להחזיר או להחליף מוצר תוך 14 ימים באריזתו המקורית ושלא נעשה בו שימוש.",
+      "• המוצרים באתר מקוריים. המכונות מלוות באחריות יבואן ובשירות לקוחות ישירות מולנו — פירוט מלא בעמוד האחריות.",
     ],
   },
 };
 
+/** Compact FAQ under product buy actions — removes last-mile purchase blockers. */
+export const productFaqItems = [
+  {
+    q: "האם המוצר מקורי?",
+    a: "כן. יבוא ישיר מארה״ב באריזה מקורית וסגורה, עם אחריות יבואן ושירות ישירות מולנו.",
+  },
+  {
+    q: "תוך כמה זמן מגיע המשלוח?",
+    a: "משלוח עד הבית בכל הארץ תוך 7–14 ימי עסקים. משלוח חינם מעל ₪499 ובהזמנה ראשונה עם קופון.",
+  },
+  {
+    q: "מה כוללת האחריות?",
+    a: "אחריות יבואן ל־12 חודשים על מנוע ורכיבים חשמליים. בלאי טבעי של להבים, סכינים ורשתות אינו כלול.",
+  },
+  {
+    q: "איך משלמים?",
+    a: "אחרי אישור ההזמנה — תשלום מהיר ומאובטח בביט, PayBox או PayPal.",
+  },
+];
+
 export const products = [
+  {
+    id: "babyliss-nano-titanium",
+    kind: "מחליק שיער",
+    model: 'Nano Titanium 1" Digital Flat Iron (BNT4095TUC)',
+    brand: "BaBylissPRO",
+    category: "עיצוב והחלקת שיער",
+    rating: 4.8,
+    reviews: 64,
+    sku: "BNT4095TUC",
+    voltage: "120V / 240V Dual Voltage — מתאים לחשמל בישראל",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 52,
+    price: 499,
+    compareAt: 650,
+    frame: "studio",
+    image: "/products/babyliss-nano-titanium.jpg",
+    hoverImage: "/products/babyliss-nano-titanium-open.jpg",
+    images: [
+      "/products/babyliss-nano-titanium.jpg",
+      "/products/babyliss-nano-titanium-open.jpg",
+      "/products/babyliss-nano-titanium-features.jpg",
+      "/products/babyliss-nano-titanium-use.jpg",
+      "/products/babyliss-nano-titanium-box.jpg",
+    ],
+    blurb:
+      "מחליק מקצועי של BaBylissPRO מסדרת Nano Titanium — לוחות טיטניום חלקים ברוחב 1״ (25 מ״מ), חום דיגיטלי עד 232°C, ומגע מלא עם השיער במעבר אחד. תוצאה חלקה ומבריקה בבית או במספרה. יבוא מקורי מארה״ב.",
+    features: [
+      "BaBylissPRO® Nano Titanium™ — מחליק דיגיטלי מקצועי (דגם BNT4095TUC) באריזה מקורית וסגורה מהיצרן.",
+      "לוחות Nano Titanium חלקים במיוחד: מוליכים חום מהר, עמידים בפני קורוזיה ומחליקים על השיער בלי למשוך.",
+      "לוחות צפים לכל הכיוונים (All-Directional Floating Plates) — מגע מלא עם השיער, פחות מעברים ותוצאה חלקה יותר.",
+      "חום דיגיטלי מדויק עד 450°F / 232°C, עם תצוגה ברורה וכפתורי +/− נוחים.",
+      "חימום קרמי מהיר עם התאוששות חום מיידית — מוכן לעבודה תוך שניות.",
+      "פונקציית Memory שומרת את הטמפרטורה האחרונה — מדליקות ומתחילות מאיפה שעצרתן.",
+      "גוף עמיד לחום גבוה, כבל מסתובב (Swivel) נוח לעיצוב, ורוחב לוחות 1״ / 25 מ״מ ליישור וגלים.",
+      "Dual Voltage 120V / 240V — מתח כפול, מתאים לחשמל בישראל בלי שנאי.",
+      "מתאים לספרים, מעצבות ולשימוש ביתי ברמה גבוהה — יבוא מקורי מארה״ב עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "babyliss-ultra-sleek",
+    kind: "מחליק שיער",
+    model: 'Nano Titanium 2" Ultra-Sleek Straightening Iron (BNT134T)',
+    brand: "BaBylissPRO",
+    category: "עיצוב והחלקת שיער",
+    rating: 4.5,
+    reviews: 96,
+    sku: "BNT134T",
+    voltage: "120V (ארה״ב) — לשימוש בישראל צריך שנאי 220↔110",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 20,
+    price: 600,
+    compareAt: 799,
+    frame: "studio",
+    image: "/products/babyliss-ultra-sleek.jpg",
+    hoverImage: "/products/babyliss-ultra-sleek-open.jpg",
+    images: [
+      "/products/babyliss-ultra-sleek.jpg",
+      "/products/babyliss-ultra-sleek-open.jpg",
+      "/products/babyliss-ultra-sleek-features.jpg",
+      "/products/babyliss-ultra-sleek-side.jpg",
+      "/products/babyliss-ultra-sleek-brand.jpg",
+    ],
+    blurb:
+      "מחליק BaBylissPRO Ultra-Sleek עם לוחות Nano Titanium רחבים ב־2״ — ליישור מהיר של שיער ארוך, עבה או גלי. 5 דרגות חום עד 232°C, תצוגת LED, וכבל ארוך ומסתובב לעבודה נוחה בבית או במספרה. יבוא מקורי מארה״ב.",
+    features: [
+      "BaBylissPRO® Nano Titanium™ Ultra-Sleek — מחליק מקצועי ברוחב 2״ (דגם BNT134T) באריזה מקורית וסגורה מהיצרן.",
+      "לוחות טיטניום רחבים וארוכים (Extended Full-Floating) — מגע מלא עם השיער, פחות מעברים ותוצאה חלקה יותר בשיער עבה או ארוך.",
+      "Nano Titanium חלק במיוחד: מחליק בלי למשוך, מפחית פריז ומשאיר ברק טבעי.",
+      "5 דרגות חום (265°F–450°F / עד כ־232°C) עם נורות LED ברורות — בוחרים לפי סוג השיער.",
+      "חימום קרמי מהיר עם התאוששות חום מיידית בין מעבר למעבר.",
+      "עיצוב דק וקל לאחיזה נוחה לאורך זמן — מתאים גם לספרים וגם לשימוש ביתי.",
+      "כבל מקצועי באורך 9 רגל (כ־2.7 מ׳) עם סיבוב 360° — בלי הסתבכויות בזמן העיצוב.",
+      "מתח 120V אמריקאי — לשימוש בישראל צריך שנאי 220↔110 (לא כלול).",
+      "יבוא מקורי מארה״ב, עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "babyliss-iridescent-curler",
+    kind: "מסלסל שיער",
+    model: 'Nano Titanium 1" Extended Barrel Curling Iron — Iridescent (BNTWRB100XLUC)',
+    brand: "BaBylissPRO",
+    category: "עיצוב והחלקת שיער",
+    rating: 4.5,
+    reviews: 72,
+    sku: "BNTWRB100XLUC",
+    voltage: "120V / 240V Dual Voltage — מתאים לחשמל בישראל",
+    origin: "ארה״ב",
+    badge: "מהדורה מוגבלת",
+    stock: 22,
+    price: 600,
+    compareAt: 799,
+    frame: "studio",
+    image: "/products/babyliss-iridescent-curler.jpg",
+    hoverImage: "/products/babyliss-iridescent-curler-open.jpg",
+    images: [
+      "/products/babyliss-iridescent-curler.jpg",
+      "/products/babyliss-iridescent-curler-open.jpg",
+      "/products/babyliss-iridescent-curler-features.jpg",
+      "/products/babyliss-iridescent-curler-use.jpg",
+      "/products/babyliss-iridescent-curler-box.jpg",
+    ],
+    blurb:
+      "מסלסל BaBylissPRO במהדורה מוגבלת Iridescent — חבית Nano Titanium ברוחב 1״, ארוכה ב־5 ס״מ מחבית רגילה, מושלמת לשיער בינוני עד ארוך. תלתלים וגלים מוגדרים, 5 דרגות חום עד 220°C, ומתח כפול שמתאים לישראל. יבוא מקורי מארה״ב.",
+    features: [
+      "BaBylissPRO® Nano Titanium™ — מסלסל מקצועי במהדורה מוגבלת Iridescent (דגם BNTWRB100XLUC) באריזה מקורית וסגורה.",
+      "חבית מורחבת (Extended Barrel): ארוכה בכ־5 ס״מ (2״) מחבית רגילה — נוח יותר לשיער ארוך, מתחילות מהשורש עד הקצה.",
+      "ציפוי Nano Titanium חלק: מחליק על השיער בלי למשוך, מחלק חום אחיד ומשאיר ברק.",
+      "רוחב 1״ / 25 מ״מ — מתאים לתלתלים קלאסיים ולגלים מוגדרים (beach waves).",
+      "5 דרגות חום דיגיטליות עד 430°F / כ־220°C (285°F–430°F) — בוחרות לפי סוג השיער, מדק עד עבה.",
+      "קלה במיוחד עם Cool Tip שחור לאחיזה בטוחה, וכן מעמד מתכת מובנה להנחה על השולחן.",
+      "כבל מסתובב באורך 8 רגל (כ־2.4 מ׳) — נוח לעיצוב בלי הסתבכויות.",
+      "Dual Voltage 120V / 240V — מתח כפול לשימוש בכל העולם, כולל חשמל בישראל (בלי שנאי; ייתכן מתאם תקע).",
+      "מיועד למעצבות, מספרות ולשימוש ביתי — יבוא מקורי מארה״ב עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "oster-fast-feed",
+    kind: "מכונת תספורת",
+    model: "Fast Feed Adjustable Blade (#76023-510)",
+    brand: "Oster",
+    category: "מכונות תספורת",
+    rating: 4.9,
+    reviews: 28,
+    sku: "76023-510",
+    voltage: "120V (ארה״ב) — לשימוש בישראל צריך שנאי 220↔110",
+    origin: "ארה״ב",
+    badge: "נדיר בישראל",
+    stock: 10,
+    price: 600,
+    frame: "studio",
+    image: "/products/oster-fast-feed.jpg",
+    hoverImage: "/products/oster-fast-feed-kit.jpg",
+    images: [
+      "/products/oster-fast-feed.jpg",
+      "/products/oster-fast-feed-kit.jpg",
+      "/products/oster-fast-feed-guards.jpg",
+    ],
+    blurb:
+      "מכונת תספורת מקצועית קלאסית של Oster — כמעט ולא מוצאים אותה בחנויות בארץ. מנוע Pivot Whisper Quiet™ חזק ושקט, להב מתכוונן מ־#000 עד #1, וחיתוך מהיר בשיער רטוב או יבש. יבוא מקורי מארה״ב.",
+    features: [
+      "Oster Professional — דגם קלאסי לספרים, שכמעט לא זמין בחנויות בישראל.",
+      "מנוע Pivot Whisper Quiet™: פי שניים מכוח של מנוע מגנטי רגיל, עם רעש נמוך לעבודה נוחה.",
+      "להב מתכוונן מ־#000 (כ־0.5 מ״מ) עד #1 (כ־2.4 מ״מ) בידית צד — בלי להחליף להבים.",
+      "חיתוך מהיר ומדויק בשיער רטוב או יבש; להב תחתון שמזין את השיער לחיתוך (Fast Feed).",
+      "גוף נוח לאחיזה, כבל חשמל ארוך (כ־2.4 מ׳) וטבעת תלייה.",
+      "בערכה: המכונה, סט מסרקי הגבהה, נרתיק אחסון, שמן להב ומברשת ניקוי (לפי אריזת הספק).",
+      "מתח 120V אמריקאי — לשימוש בישראל צריך שנאי 220↔110 (לא כלול).",
+      "יבוא מקורי מארה״ב, עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "oster-o-baby",
+    kind: "טרימר",
+    model: "Petite O'Baby T-Blade (#76988-310)",
+    brand: "Oster",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.8,
+    reviews: 22,
+    sku: "76988-310",
+    voltage: "120V (ארה״ב) — לשימוש בישראל צריך שנאי 220↔110",
+    origin: "ארה״ב",
+    badge: "מבצע",
+    stock: 8,
+    price: 400,
+    compareAt: 600,
+    frame: "studio",
+    image: "/products/oster-o-baby.jpg",
+    hoverImage: "/products/oster-o-baby-kit.jpg",
+    images: [
+      "/products/oster-o-baby.jpg",
+      "/products/oster-o-baby-kit.jpg",
+      "/products/oster-o-baby-box.jpg",
+    ],
+    blurb:
+      "טרימר מקצועי קומפקטי של Oster — כמעט ולא מוצאים בחנויות בארץ. בגודל כף יד ובמשקל מתחת ל־4 אונקיות, עם להב T בציפוי טיטניום לקווים נקיים סביב אוזניים, זקן ושפם. יבוא מקורי מארה״ב.",
+    features: [
+      "Oster Professional O'Baby — טרימר קטן וחזק לספרים, שכמעט לא זמין בחנויות בישראל.",
+      "גודל כף יד (Palm-Size) ומשקל מתחת ל־4 אונקיות (כ־113 גרם) — נוח לאחיזה ממושכת.",
+      "להב T בציפוי טיטניום (Titanium-coated T-Blade) — עמיד, ומתאים לקווים מדויקים סביב אוזניים, זקן, שפם, פאות וקו צוואר.",
+      "מנוע Rotary קומפקטי — קטן בגודל וחזק בביצועים לעבודת פיניש ופרטים.",
+      "להב נשלף (Snap-on) — החלפה וניקוי נוחים; תואם גם להבים אופציונליים של Oster (לא כלולים).",
+      "בערכה: 5 מסרקי הגבהה (#0–#4 / כ־1.5–13 מ״מ), מגן להב, שמן סיכה ומברשת ניקוי.",
+      "כבל חשמל מקצועי באורך כ־2.4 מ׳ (8 ft) עם טבעת תלייה.",
+      "מתח 120V אמריקאי — לשימוש בישראל צריך שנאי 220↔110 (לא כלול).",
+      "יבוא מקורי מארה״ב, עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "wahl-vapor-switch",
+    kind: "מכונת תספורת",
+    model: "5-Star Series Vapor Switch",
+    brand: "Wahl",
+    category: "מכונות תספורת",
+    rating: 5.0,
+    reviews: 12,
+    sku: "3027001",
+    voltage: "USB-C / סוללת Lithium Ion (אלחוטי)",
+    origin: "ארה״ב",
+    badge: "השקה מיוחדת",
+    stock: 6,
+    price: 1500,
+    frame: "studio",
+    image: "/products/wahl-vapor-switch.jpg",
+    hoverImage: "/products/wahl-vapor-switch-brand.jpg",
+    images: [
+      "/products/wahl-vapor-switch.jpg",
+      "/products/wahl-vapor-switch-brand.jpg",
+      "/products/wahl-vapor-switch-blade.jpg",
+      "/products/wahl-vapor-switch-features.jpg",
+      "/products/wahl-vapor-switch-use.jpg",
+    ],
+    blurb:
+      "דגם השקה מיוחדת מסדרת 5-Star: מנוע HYPERSHIFT™ Brushless ב־2 מהירויות עד 9,000 RPM, ידית טייפר מתחלפת ללא כלים, להב F32 DRIFT™ וטעינת USB-C.",
+    features: [
+      "מנוע HYPERSHIFT™ Brushless ב־2 מהירויות: 7,000 RPM (LED כחול) ו־9,000 RPM (LED סגול) עם Adaptive Speed Control.",
+      "ידית טייפר מתחלפת ללא כלים (Tool-less Interchangeable Taper Lever) — מעבר מהיר בין סגנונות עבודה.",
+      "להב F32 DRIFT™ עם ציפוי Black PVD Chrome + DLC — חדות ממושכת ו־Zero-Gap Adjustable.",
+      "טעינת USB-C נוחה; סוללת Lithium Ion עם אינדיקטור סוללה ב־4 נורות LED.",
+      "גוף מחוזק (Reinforced Housing) עם תאורת V LED דינמית ואחיזה ארגונומית Non-Slip.",
+      "מיועד למספרות מקצועיות ולשימוש ביתי ברמה גבוהה — יבוא מקורי מארה״ב עם אחריות יבואן.",
+    ],
+  },
+  {
+    id: "wahl-lithium-ss",
+    kind: "טרימר",
+    model: "Lithium Ion+ Stainless Steel All-in-One",
+    brand: "Wahl",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.8,
+    reviews: 38,
+    sku: "BRB-W-LI-SS",
+    voltage: "100V-240V (מתח אוניברסלי)",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 10,
+    price: 500,
+    frame: "studio",
+    image: "/products/wahl-lithium.jpg",
+    hoverImage: "/products/wahl-lithium-kit.jpg",
+    images: [
+      "/products/wahl-lithium.jpg",
+      "/products/wahl-lithium-kit.jpg",
+      "/products/wahl-lithium-box.jpg",
+      "/products/wahl-lithium-use.jpg",
+    ],
+    blurb:
+      "טרימר All-in-One מנירוסטה לטיפוח ועיצוב זקן, עם סוללת Lithium Ion+ לעד 6 שעות עבודה. שימוש רטוב/יבש, להבים מדויקים ו־19 אורכי חיתוך לפרטים.",
+    features: [
+      "גוף Stainless Steel פרימיום עם מראה מקצועי ועמידות גבוהה.",
+      "סוללת Lithium Ion+: עד כ־6 שעות עבודה רצופות מטעינה אחת.",
+      "Wet/Dry Easy Cleanup: שימוש במקלחת או בכיור וניקוי קל במים.",
+      "Precision Blades + 19 Cutting Lengths לעיצוב מדויק של זקן ופרטים.",
+      "ערכת אביזרים מלאה: מסרקי Pro-Guard ממתכת, ראש Detail וראש אף/אוזן.",
+      "מתח אוניברסלי 100V–240V — מתאים לחשמל בישראל.",
+    ],
+  },
+  {
+    id: "wahl-lithium-aio",
+    kind: "טרימר",
+    model: "Lithium Ion All-in-One (#9854L)",
+    brand: "Wahl",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.7,
+    reviews: 86,
+    sku: "9854L",
+    voltage: "USB / סוללת Lithium Ion (אלחוטי)",
+    origin: "ארה״ב",
+    // Flash clearance — ad price ₪289 door-to-door (no BARBERO100 stack).
+    badge: "מבצע חיסול",
+    stock: 9,
+    price: 289,
+    compareAt: 450,
+    freeShipping: true,
+    excludeFirstOrderCoupon: true,
+    frame: "studio",
+    image: "/products/wahl-lithium-aio.jpg",
+    hoverImage: "/products/wahl-lithium-aio-kit.jpg",
+    images: [
+      "/products/wahl-lithium-aio.jpg",
+      "/products/wahl-lithium-aio-kit.jpg",
+      "/products/wahl-lithium-aio-features.jpg",
+      "/products/wahl-lithium-aio-box.jpg",
+    ],
+    blurb:
+      "ערכת טיפוח All-in-One של Wahl עם סוללת Lithium Ion — עד כ־3.5 שעות עבודה, טעינה מהירה של דקה, ו־4 ראשים מתחלפים לזקן, פרטים, אף/אוזן וגילוח צמוד. כולל 17 אורכי חיתוך ומסרק מתכוונן ב־10 מצבים.",
+    features: [
+      "סוללת Lithium Ion: עד כ־3.5 שעות עבודה מטעינה מלאה; טעינה מהירה של דקה ≈ 3 דקות שימוש.",
+      "4 ראשים מתחלפים: להב Trimmer, Precision Detailer, אף/אוזן ו־Dual Foil Shaver לגילוח צמוד.",
+      "17 אורכי חיתוך: 6 מסרקי הנחיה + מסרק מתכוונן 10 מצבים (כ־2–11 מ״מ).",
+      "להבים מדויקים Self-Sharpening לחיתוך חלק ועקבי בזקן, קווי מתאר ופרטים.",
+      "גוף ארגונומי עם אחיזת גומי — נוח לשליטה מלאה בטיפוח יומיומי ובנסיעות.",
+      "בערכה: הטרימר, 4 ראשים, מסרקים, מסרק מתכוונן, כבל טעינה USB, שמן, מברשת ניקוי, מגן להב והוראות הפעלה.",
+      "מיוצר בארה״ב (חלקים מקומיים ומיובאים) — אחריות יבואן מלאה דרך BARBERO.",
+    ],
+  },
+  {
+    id: "wahl-extreme-visibility",
+    kind: "טרימר",
+    model: "Pro Series Extreme Visibility (#3026018)",
+    brand: "Wahl",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.9,
+    reviews: 24,
+    sku: "3026018",
+    voltage: "USB-A / סוללת Lithium Ion (אלחוטי)",
+    origin: "ארה״ב",
+    badge: "חדש",
+    stock: 6,
+    price: 1200,
+    frame: "studio",
+    image: "/products/wahl-extreme-visibility.jpg",
+    hoverImage: "/products/wahl-extreme-visibility-kit.jpg",
+    images: [
+      "/products/wahl-extreme-visibility.jpg",
+      "/products/wahl-extreme-visibility-heads.jpg",
+      "/products/wahl-extreme-visibility-kit.jpg",
+      "/products/wahl-extreme-visibility-box.jpg",
+      "/products/wahl-extreme-visibility-waterproof.jpg",
+      "/products/wahl-extreme-visibility-brand.jpg",
+    ],
+    blurb:
+      "טרימר זקן Pro Series בעיצוב Skeleton לנראות מלאה של קו החיתוך. Forever Blade™ בציפוי יהלום שחור, שלושה ראשים מתחלפים, עמיד במים לשימוש רטוב או יבש, וסוללת Lithium Ion לעד כשעתיים עבודה.",
+    features: [
+      "עיצוב Extreme Visibility (Skeleton): ראש פתוח לנראות של כ־360° — שליטה מדויקת בקווי זקן, פיניש ופרטים.",
+      "Forever Blade™ בציפוי יהלום שחור (DLC): חיתוך קרוב יותר עד פי 4 מלהב טרימר סטנדרטי של Wahl; מרווח כ־0.2 מ״מ לחיתוך חלק וקריר יותר.",
+      "שלושה ראשים מתחלפים: להב T מדויק, ראש Dual Foil לגילוח צמוד, וראש סיבובי לאף ולאוזן — החלפה מהירה בבורג אגודל.",
+      "עמיד במים במלואו (Wet/Dry): שימוש במקלחת או ליד הכיור, וניקוי קל תחת מים זורמים.",
+      "סוללת Lithium Ion: עד כ־120 דקות עבודה מטעינה מלאה (כשעתיים טעינה); טעינה מהירה של כ־3 דקות לשימוש קצר. כבל טעינה USB-A (ללא מתאם בקיר).",
+      "גוף סגסוגת אבץ (Zinc Alloy) עם אחיזת גומי נגד החלקה — תחושת משקל מקצועית ושליטה יציבה.",
+      "8 מסרקי הנחיה (כ־1.5–13 מ״מ / 1/16″–1/2″), מנעול נסיעות (לחיצה של כ־5 שניות), ונורת LED לטעינה.",
+      "בערכה: הטרימר, 3 ראשים, 8 מסרקים, מסרק שפם, שמן להבים, מברשת ניקוי, מגן להב, נרתיק קשיח, כבל USB והוראות הפעלה.",
+      "מורכב בארה״ב (חלקים מקומיים ומיובאים) — אחריות יבואן מלאה דרך BARBERO.",
+    ],
+  },
+  {
+    id: "wahl-vacuum-trimmer",
+    kind: "טרימר",
+    model: "2-in-1 Vacuum Stubble & Beard (#9870-800)",
+    brand: "Wahl",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.6,
+    reviews: 54,
+    sku: "9870-800",
+    voltage: "מטען ייעודי / סוללת Lithium Ion (Cord/Cordless)",
+    origin: "ארה״ב",
+    stock: 0,
+    price: 400,
+    frame: "studio",
+    image: "/products/wahl-vacuum-trimmer.jpg",
+    hoverImage: "/products/wahl-vacuum-trimmer-kit.jpg",
+    images: [
+      "/products/wahl-vacuum-trimmer.jpg",
+      "/products/wahl-vacuum-trimmer-kit.jpg",
+      "/products/wahl-vacuum-trimmer-box.jpg",
+    ],
+    blurb:
+      "טרימר זקן וסטובל עם מערכת ואקום מובנית שקולטת עד כ־96% מהשיער בזמן הגילוח. Dual Motor לחיתוך וואקום בנפרד, סוללת Lithium Ion לעד 90 דקות, וערכת אביזרים מלאה.",
+    features: [
+      "מערכת ואקום מובנית: קולטת עד כ־96% מהשיער* לניקוי קל וללא בלגן (*תוצאות משתנות לפי סוג הזקן וטכניקת הגילוח).",
+      "Dual Motor Technology: מנוע נפרד לחיתוך ומנוע נפרד לוואקום — עוצמת שאיבה בלי לאבד כוח חיתוך.",
+      "כניסת ואקום מתכווננת + תא איסוף נשלף לפינוי מהיר של השיער.",
+      "ראש ואקום נוסף לניקוי שיער שנשאר על משטחים (כיור / דלפק).",
+      "להבי Precision Ground מנירוסטה — מתנתקים וניתנים לשטיפה.",
+      "סוללת Lithium Ion: עד כ־90 דקות עבודה אלחוטית מטעינה של כ־90 דקות; טעינה מהירה של דקה ≈ 4 דקות שימוש. אפשרות עבודה עם כבל (Cord/Cordless).",
+      "אורכי חיתוך כ־0.5–25 מ״מ; כולל מסרק הנחיה רב־מצבי ומסרקי הגבהה.",
+      "בערכה: הטרימר, ראש ואקום למשטחים, מסרקים, מסרק שפם, שמן, מברשת ניקוי, נרתיק ומטען.",
+    ],
+  },
+  {
+    id: "wahl-g-whiz",
+    kind: "טרימר",
+    model: "5-Star G-Whiz (#8986)",
+    brand: "Wahl",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.8,
+    reviews: 51,
+    sku: "8986",
+    voltage: "סוללת AA (אלחוטי)",
+    origin: "ארה״ב",
+    stock: 12,
+    price: 400,
+    frame: "studio",
+    image: "/products/wahl-g-whiz.jpg",
+    hoverImage: "/products/wahl-g-whiz-pack.jpg",
+    images: [
+      "/products/wahl-g-whiz.jpg",
+      "/products/wahl-g-whiz-features.jpg",
+      "/products/wahl-g-whiz-use.jpg",
+      "/products/wahl-g-whiz-pack.jpg",
+    ],
+    blurb:
+      "טרימר מקצועי קומפקטי מסדרת 5-Star של Wahl — לעיצוב קווים, תיקונים מהירים והגעה לאזורים צרים בדיוק גבוה. עובד על סוללת AA, קל במיוחד ונוח לקחת לכל מקום.",
+    features: [
+      "מיועד ל־Precision Lining, Touch-ups והגעה לאזורים צרים בדיוק גבוה.",
+      "להב T מתכוונן (1062-600 Adjustable T-Blade) עם אפשרות Zero Overlap לחיתוך צמוד במיוחד.",
+      "גוף קומפקטי: אורך כ־13.3 ס״מ (5.25״) ומשקל כ־85 גרם (3 oz) — נוח בכף היד ובתנועה.",
+      "הפעלה אלחוטית על סוללת AA אחת — אידיאלי לנסיעות ולעבודה ניידת במספרה.",
+      "עיצוב 5-Star בהשראת הספר G-Whiz — מראה פרימיום עם לוגו וכוכבים מוזהבים.",
+      "בערכה: הטרימר, 3 מסרקי T (1/16״ / 1.5 מ״מ, 1/8״ / 3 מ״מ, 3/16״ / 4.5 מ״מ), סוללת AA, שמן, מברשת ניקוי, מגן להב אדום והוראות הפעלה.",
+      "מיועד לשימוש מקצועי — תיקונים מהירים, עיצוב זקן וקווי מתאר.",
+    ],
+  },
+  {
+    id: "wahl-vapor",
+    kind: "מכונת תספורת",
+    model: "5-Star Series Vapor Cord/Cordless",
+    brand: "Wahl",
+    category: "מכונות תספורת",
+    rating: 4.9,
+    reviews: 64,
+    sku: "3026480",
+    voltage: "100V-240V (מתח אוניברסלי)",
+    origin: "ארה״ב",
+    stock: 7,
+    price: 650,
+    compareAt: 800,
+    frame: "studio",
+    image: "/products/wahl-vapor.jpg",
+    hoverImage: "/products/wahl-vapor-kit.jpg",
+    images: [
+      "/products/wahl-vapor.jpg",
+      "/products/wahl-vapor-kit.jpg",
+      "/products/wahl-vapor-box.jpg",
+    ],
+    blurb:
+      "מכונת תספורת מקצועית מסדרת 5-Star עם להב F32 FADEOUT™ לדירוגים חלקים מ־Bald עד Fade. מנוע Brushless ב־8,000 RPM, משקל קל 280g ועבודה אלחוטית עד כ־150 דקות.",
+    features: [
+      "להב F32 FADEOUT™: 32 שיניים עגולות (Ball-Point) לגלישה חלקה על העור ולצמצום חתכים.",
+      "עיצוב פטנטי עם כ־50% יותר שיניים מלהב סטנדרטי — הזנה אחידה וחיתוך עקבי; קל בכ־6 גרם מלהב רגיל.",
+      "Zero-Gap Adjustable: מעבר חלק מ־Balding ל־Fading באורך חיתוך כ־0.5–1.2 מ״מ.",
+      "פלדת פחמן גבוהה עם ציפוי PVD Chrome ו־Black DLC לעמידות וחדות ממושכת.",
+      "מנוע Brushless עם Adaptive Speed Control™: כ־8,000 RPM עקביים בכל סוגי השיער.",
+      "סוללת ליתיום: עד כ־150 דקות עבודה אלחוטית; טעינה מלאה כ־60 דקות. אפשרות עבודה עם כבל (Cord/Cordless).",
+      "משקל כ־280g — קלה יותר מ־Magic Clip®, עם אחיזה ארגונומית Non-Slip Grip.",
+      "בערכה: 7 מסרקי הגבהה פרימיום (#½–#5), מסרק עיצוב לבן, שמן, מברשת ניקוי, מגן להב ומטען 5V.",
+      "מתח אוניברסלי 100–240V / 50–60Hz — מתאים לחשמל בישראל.",
+    ],
+  },
   {
     id: "wahl-senior",
     kind: "מכונת תספורת",
@@ -117,7 +635,6 @@ export const products = [
     sku: "BRB-W-SN",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
-    badge: "חדש",
     stock: 8,
     price: 550,
     frame: "studio",
@@ -130,6 +647,88 @@ export const products = [
     ],
     blurb:
       "מכונת תספורת אלחוטית מקצועית מסדרת 5-Star. גוף מתכת מחוזק, מנוע עוצמתי ולהב מבוקש לדירוגים מדויקים (Fade). אחיזה נוחה וארגונומית לעבודה ממושכת.",
+    features: [
+      "להב Senior הקלאסי — דירוגים מדויקים ו־Fade חלק למספרות ולשימוש ביתי מקצועי.",
+      "מנוע אלחוטי עוצמתי עם גוף מתכת מחוזק לאחיזה יציבה בעבודה ממושכת.",
+      "סוללת ליתיום לטעינה מהירה ולשעות עבודה רצופות בין טעינות.",
+      "עיצוב 5-Star ארגונומי — קלה ביד, מאוזנת ומדויקת בפרטים.",
+      "מתח אוניברסלי 100V–240V — מתאים לחשמל בישראל.",
+      "אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "wahl-cordless-designer",
+    kind: "מכונת תספורת",
+    model: "Cordless Designer (#8591)",
+    brand: "Wahl",
+    category: "מכונות תספורת",
+    rating: 4.8,
+    reviews: 47,
+    sku: "8591",
+    voltage: "100V-240V (מתח אוניברסלי)",
+    origin: "ארה״ב",
+    stock: 9,
+    price: 590,
+    frame: "studio",
+    image: "/products/wahl-cordless-designer.jpg",
+    hoverImage: "/products/wahl-cordless-designer-kit.jpg",
+    images: [
+      "/products/wahl-cordless-designer.jpg",
+      "/products/wahl-cordless-designer-features.jpg",
+      "/products/wahl-cordless-designer-box.jpg",
+      "/products/wahl-cordless-designer-kit.jpg",
+    ],
+    blurb:
+      "מכונת תספורת נטענת מקצועית מסדרת הפרימיום האמריקאית של Wahl. בעלת מנוע עוצמתי ושקט, סוללת ליתיום עד 90 דקות עבודה, משקל קל במיוחד וסכין מתכווננת לדיוק מרבי. יבוא בלעדי מארה״ב.",
+    features: [
+      "מנוע מקצועי מהיר — עד פי 2 ממהירות מנועי Pivot סטנדרטיים, לעבודה חלקה גם בשיער עבה.",
+      "להבי פלדת פחמן גבוהה (High-Carbon Steel) עמידים וחדים לאורך זמן.",
+      "ידית Taper מתכווננת (Adjustable Taper Lever) לדירוג וערבוב מדויק (Fade & Blend).",
+      "גוף קל ומאוזן — נוח לאחיזה ממושכת במספרה או בבית.",
+      "סוללת ליתיום־יון לעבודה אלחוטית; זמן ריצה ממושך (לפי Wahl: עד כ־100 דקות).",
+      "8 מסרקי הגבהה (כ־1/8״–1״) לטווח אורכים רחב.",
+      "בערכה: המכונה, 8 מסרקים, מסרק עיצוב, ספק כוח/מטען, שמן, מברשת ניקוי, מגן להב אדום והוראות הפעלה.",
+      "מתח אוניברסלי 100–240V — מתאים לחשמל בישראל.",
+    ],
+  },
+  {
+    id: "wahl-head-shaver",
+    kind: "מכונת גילוח",
+    model: "Head Shaver Kit",
+    brand: "Wahl",
+    category: "טרימרים ומכונות גילוח",
+    rating: 4.7,
+    reviews: 29,
+    sku: "3032089",
+    voltage: "USB (ללא מתאם בקיר)",
+    origin: "Wahl",
+    badge: "עמיד למים",
+    stock: 10,
+    price: 500,
+    frame: "studio",
+    image: "/products/wahl-head-shaver.jpg",
+    hoverImage: "/products/wahl-head-shaver-features.jpg",
+    images: [
+      "/products/wahl-head-shaver.jpg",
+      "/products/wahl-head-shaver-features.jpg",
+      "/products/wahl-head-shaver-use.jpg",
+      "/products/wahl-head-shaver-waterproof.jpg",
+      "/products/wahl-head-shaver-box.jpg",
+    ],
+    blurb:
+      "מכונת גילוח לראש ולגוף עם ארבעה להבי נירוסטה צפים לגילוח צמוד עד 0.1 מ״מ. עמידה למים בתקן IPX7 לשימוש רטוב או יבש, כולל במקלחת.",
+    features: [
+      "עמידות מלאה למים IPX7 — מתאימה לשימוש במקלחת ולשטיפה תחת הברז.",
+      "ארבעה להבי Floating Flex מנירוסטה שמתאימים את עצמם לקווי הראש והגוף.",
+      "אורך חיתוך כ־0.1 מ״מ לגילוח חלק וצמוד (Ultra-Close).",
+      "סוללת ליתיום: עד כ־90 דקות עבודה אלחוטית מטעינה אחת.",
+      "טעינת USB Quick Charge; זמן טעינה מלא כ־150 דקות (מתאם בקיר לא כלול).",
+      "מד סוללה LED עם שלושה פסים כחולים בחזית.",
+      "אחיזה ארגונומית Multi-Precision — בכף היד או באצבעות, לנוחות ושליטה.",
+      "ראש גילוח נשלף לניקוי מהיר אחרי השימוש.",
+      "בערכה: מכונת הגילוח, כבל USB, שמן להבים ומברשת ניקוי.",
+      "מתאימה לגילוח קרקפת, חזה, כתפיים ואזורים נוספים בגוף.",
+    ],
   },
   {
     id: "wahl-vanish",
@@ -189,6 +788,114 @@ export const products = [
       "אחיזת סיליקון ארגונומית (Non-Slip Grip): מארז סיליקון נגד החלקה לאחיזה יציבה ובטוחה בסביבה רטובה.",
       "ערכת טיפוח מקיפה: כוללת מסרקי הגבהה מגוונים לעיצוב הזקן והגוף בדרגות שונות.",
       "מתח אוניברסלי (100V-240V): תומך בחשמל בישראל לטעינה בטוחה ומהירה.",
+    ],
+  },
+  {
+    id: "wahl-micro-groomsman",
+    kind: "טרימר עיצוב",
+    model: "Micro GroomsMan (#5640-600)",
+    brand: "Wahl",
+    category: "אביזרים ונלווים",
+    rating: 4.6,
+    reviews: 124,
+    sku: "5640-600",
+    voltage: "סוללת AAA (לא כלולה)",
+    origin: "ארה״ב",
+    stock: 18,
+    price: 250,
+    frame: "studio",
+    image: "/products/wahl-micro-groomsman.jpg",
+    hoverImage: "/products/wahl-micro-groomsman-features.jpg",
+    images: [
+      "/products/wahl-micro-groomsman.jpg",
+      "/products/wahl-micro-groomsman-features.jpg",
+      "/products/wahl-micro-groomsman-ear.jpg",
+      "/products/wahl-micro-groomsman-brow.jpg",
+      "/products/wahl-micro-groomsman-travel.jpg",
+      "/products/wahl-micro-groomsman-use.jpg",
+    ],
+    blurb:
+      "טרימר עט קומפקטי מסדרת Micro GroomsMan של Wahl — לעיצוב גבות, אף, אוזניים ופרטי פנים בדיוק גבוה. גוף אלומיניום אנודייזד, שני ראשים מתחלפים ומסרק גבות ב־2 מצבים. מושלם לנסיעות ולתיקונים מהירים.",
+    features: [
+      "2 ראשים מתחלפים: ראש Detail לעיצוב גבות/קווי מתאר, וראש Rotary לאף ולאוזניים — בלי משיכות או חתכים.",
+      "גוף Brushed Anodized Aluminum עמיד (High Impact Casing) — מראה פרימיום ומשקל קל בכף היד.",
+      "מסרק גבות 2 מצבים (Slot 1 / Slot 2) לאורכי עיצוב מדויקים ועקביים.",
+      "להבי נירוסטה הניתנים לשטיפה במים — תחזוקה היגיינית וקלה בין ראש לראש.",
+      "הפעלה על סוללת AAA אחת (לא כלולה) — אלחוטי, קומפקטי ומוכן לנסיעות.",
+      "בערכה: הטרימר, ראש Detail, ראש Rotary, מסרק גבות, מכסה הגנה והוראות הפעלה.",
+      "מיועד לתיקונים מהירים: גבות, אף, אוזניים, פאות, קו צוואר ונגיעות זקן.",
+    ],
+  },
+  {
+    id: "wahl-power-station",
+    kind: "תחנת טעינה",
+    model: "Professional Power Station (MPCS)",
+    brand: "Wahl",
+    category: "אביזרים ונלווים",
+    rating: 4.8,
+    reviews: 18,
+    sku: "3023997",
+    voltage: "100V-240V (מתח אוניברסלי)",
+    origin: "ארה״ב",
+    badge: "מבצע",
+    stock: 6,
+    price: 600,
+    compareAt: 850,
+    frame: "studio",
+    image: "/products/wahl-power-station.jpg",
+    hoverImage: "/products/wahl-power-station-use.jpg",
+    images: [
+      "/products/wahl-power-station.jpg",
+      "/products/wahl-power-station-use.jpg",
+      "/products/wahl-power-station-kit.jpg",
+    ],
+    blurb:
+      "תחנת טעינה מקצועית של Wahl לשלושה כלים אלחוטיים במקביל — באותה מהירות כמו טעינת כלי אחד. מתאימה למכונות, טרימרים ומכונות גילוח של Wahl על 5V, עם פורט USB-C לטלפון או מסוף תשלום.",
+    features: [
+      "טוענת עד 3 כלי Wahl אלחוטיים במקביל — באותה מהירות כמו טעינת כלי אחד.",
+      "מיועדת לכלים מקצועיים של Wahl במתח 5V (מכונות תספורת, טרימרים ומכונות גילוח תואמות).",
+      "6 מתאמים מתחלפים בערכה: 3 למכונות תספורת, 2 לטרימרים ו־1 למכונת גילוח — בוחרים שילוב לפי הכלים שלכם.",
+      "פורט USB-C בצד התחנה — לטעינת טלפון, טאבלט או מסוף תשלום בלי כבל נוסף לשקע.",
+      "כבל אחד ותעלת כבל (V-cord) — פחות בלגן על השולחן, אפשר להצמיד לקיר.",
+      "לוגו Wahl נדלק בכחול כשהתחנה מוכנה לטעינה.",
+      "בערכה: התחנה, 6 מתאמים, ספק כוח וכבל, והוראות הפעלה.",
+      "מתח אוניברסלי 100–240V — מתאים לחשמל בישראל.",
+      "יבוא מקורי עם אחריות יבואן ל־12 חודשים ושירות ישירות מולנו.",
+    ],
+  },
+  {
+    id: "wahl-blade-oil",
+    kind: "שמן להבים",
+    model: "Hair Clipper Blade Oil 4 fl oz (120 ml)",
+    brand: "Wahl",
+    category: "אביזרים ונלווים",
+    rating: 4.8,
+    reviews: 210,
+    sku: "03310-300A",
+    voltage: "—",
+    origin: "Wahl Clipper Corporation",
+    badge: "משלים",
+    stock: 24,
+    price: 115,
+    frame: "studio",
+    image: "/products/wahl-blade-oil.jpg",
+    hoverImage: "/products/wahl-blade-oil-howto.jpg",
+    images: [
+      "/products/wahl-blade-oil.jpg",
+      "/products/wahl-blade-oil-howto.jpg",
+      "/products/wahl-blade-oil-use.jpg",
+    ],
+    blurb:
+      "שמן סיכה מקורי של Wahl להבי מכונות תספורת וטרימרים. כמה טיפות באופן קבוע משפרות ביצועים, מפחיתות חיכוך ומאריכות את חיי הלהבים.",
+    features: [
+      "נפח: 4 fl oz / 120 ml — בקבוק עם פיית מוליך מדויקת.",
+      "Lubricating oil specifically prepared for clipper blades — מותאם במיוחד ללהבי Wahl.",
+      "Improves Performance: מסייע לפעולה שקטה וחלקה יותר של המכונה.",
+      "Extends Lifetime of Blades: מפחית חיכוך ושומר על חדות לאורך זמן.",
+      "שכבת הגנה דקה נגד קורוזיה על משטחי הלהב.",
+      "אופן שימוש מומלץ: 3 טיפות בחזית כל להב + טיפה בכל צד, להפעיל את המכונה ולנגב עודפים.",
+      "מומלץ לשמן לפני/אחרי שימוש ולאחר ניקוי — לא להחליף ב־WD-40 או שמנים ביתיים.",
+      "מתאים גם כשמן השחזה/הכנה איכותי (honing oil) לפי הנחיות היצרן.",
     ],
   },
 ].map((product) => ({

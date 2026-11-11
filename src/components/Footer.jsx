@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { navLinks, serviceLinks } from "../data";
+import { FACEBOOK_PAGE_URL, navLinks, serviceLinks } from "../data";
 import { onNavClick } from "../navigate";
 import { useStore } from "../store";
+import { feedbackWhatsAppHref } from "./FeedbackInvite";
 import { Logo } from "./Header";
+import { IconFacebook } from "./Icons";
 
 export default function Footer() {
   const { openInfo, goToCategory } = useStore();
@@ -10,13 +12,30 @@ export default function Footer() {
   const [status, setStatus] = useState("idle");
   const year = new Date().getFullYear();
 
-  const subscribe = (event) => {
+  const subscribe = async (event) => {
     event.preventDefault();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    const value = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       setStatus("invalid");
       return;
     }
-    setStatus("done");
+    setStatus("saving");
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: value }),
+        keepalive: true,
+      });
+      if (!res.ok) {
+        setStatus("error");
+        return;
+      }
+      setStatus("done");
+      setEmail("");
+    } catch {
+      setStatus("error");
+    }
   };
 
   return (
@@ -25,13 +44,25 @@ export default function Footer() {
         <div>
           <Logo />
           <p className="mt-5 max-w-xs text-sm leading-7 text-muted">
-            BARBERO מביאה אליכם מכונות תספורת, גילוח וטיפוח מקוריות – ביבוא ישיר מארה״ב, למספרות ולשימוש ביתי מקצועי.
+            BARBERO מביאה אליכם ציוד מקורי לעיצוב שיער, גילוח וגרומינג — יבוא ישיר מארה״ב, למספרות, למעצבות ולבית.
           </p>
+          <a
+            href={FACEBOOK_PAGE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 inline-flex items-center gap-2.5 border border-white/12 bg-white/[0.03] px-3 py-2 text-sm text-ivory/85 transition hover:border-gold/45 hover:text-gold-soft"
+            aria-label="עמוד הפייסבוק של BARBERO"
+          >
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-[#1877F2] text-white">
+              <IconFacebook className="h-4 w-4" />
+            </span>
+            <span>עקבו אחרינו בפייסבוק</span>
+          </a>
           <div className="mt-6">
             <p className="text-sm">עדכונים על הקולקציה</p>
             {status === "done" ? (
               <p className="mt-3 text-sm leading-7 text-gold-soft" role="status">
-                תודה שנרשמת! נעדכן אותך ראשון על דגמים חדשים ומבצעים בלעדיים.
+                תודה שנרשמת! נעדכן אותך על דגמים חדשים ומבצעים.
               </p>
             ) : (
               <form className="mt-3 flex" onSubmit={subscribe} noValidate>
@@ -44,19 +75,23 @@ export default function Footer() {
                   autoComplete="email"
                   placeholder="כתובת אימייל"
                   value={email}
+                  disabled={status === "saving"}
                   onChange={(event) => {
                     setEmail(event.target.value);
                     setStatus("idle");
                   }}
                   className="field min-w-0 flex-1"
                 />
-                <button type="submit" className="btn-gold h-auto px-4 text-sm">
-                  הרשמה
+                <button type="submit" className="btn-gold h-auto px-4 text-sm" disabled={status === "saving"}>
+                  {status === "saving" ? "שולח…" : "הרשמה"}
                 </button>
               </form>
             )}
             {status === "invalid" && (
               <p className="mt-2 text-xs text-[#e7b2a4]">הזינו כתובת אימייל תקינה.</p>
+            )}
+            {status === "error" && (
+              <p className="mt-2 text-xs text-[#e7b2a4]">ההרשמה לא הצליחה — נסו שוב בעוד רגע.</p>
             )}
           </div>
         </div>
@@ -94,11 +129,22 @@ export default function Footer() {
         <div>
           <h2 className="font-display text-2xl">יצירת קשר</h2>
           <ul className="mt-4 space-y-2 text-sm leading-7 text-muted">
-            <li>שעות מענה: א׳–ה׳, 09:00–18:00</li>
-            <li>מענה בוואטסאפ/טלפון</li>
+            <li>האתר פתוח להזמנות 24/7</li>
+            <li>מענה אנושי (וואטסאפ / מייל): א׳–ה׳, 09:00–18:00</li>
+            <li>שישי: 09:00–13:00 · שבת: סגור</li>
             <li>
               <a className="hover:text-ivory" href="mailto:support@barbero.co.il">
                 support@barbero.co.il
+              </a>
+            </li>
+            <li>
+              <a
+                className="text-gold-soft hover:text-gold"
+                href={feedbackWhatsAppHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                קניתם? כתבו לנו חוויה
               </a>
             </li>
           </ul>
@@ -109,9 +155,15 @@ export default function Footer() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 pt-5 pb-[max(5.75rem,calc(5rem+env(safe-area-inset-bottom,0px)))] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="text-xs text-muted">© {year} BARBERO. כל הזכויות שמורות.</p>
           <div className="flex flex-wrap items-center gap-3" aria-label="אמצעי תשלום">
-            <span className="text-xs text-muted">תשלום בביט בלבד</span>
+            <span className="text-xs text-muted">תשלום בביט, PayBox או PayPal</span>
             <span className="grid h-8 min-w-12 place-items-center rounded-full bg-white px-3 text-sm font-semibold text-black" dir="ltr">
               bit
+            </span>
+            <span className="grid h-8 place-items-center rounded-full bg-[#7B2CBF] px-3 text-sm font-semibold text-white" dir="ltr">
+              PayBox
+            </span>
+            <span className="grid h-8 place-items-center rounded-full bg-[#0070ba] px-3 text-sm font-semibold text-white" dir="ltr">
+              PayPal
             </span>
           </div>
         </div>
