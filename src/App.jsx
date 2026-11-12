@@ -21,7 +21,6 @@ import Toast from "./components/Toast";
 import FacebookButton from "./components/FacebookButton";
 import WhatsAppButton from "./components/WhatsAppButton";
 import PayPage from "./components/PayPage";
-import MinoxReelShowcase from "./components/MinoxReelShowcase";
 import SiteAnalytics from "./components/SiteAnalytics";
 
 const HOME_TITLE = "BARBERO | עיצוב שיער וגרומינג פרימיום ביבוא ישיר מארה״ב";
@@ -41,7 +40,6 @@ function Shell() {
   const path = usePathname();
   const about = path === "/about";
   const pay = path === "/pay";
-  const reel = path === "/reel";
   const productLanding = /^\/p\//.test(path);
 
   useEffect(() => {
@@ -49,9 +47,6 @@ function Shell() {
     if (pay) {
       document.title = "תשלום הזמנה | BARBERO";
       setMetaDescription(HOME_DESCRIPTION);
-    } else if (reel) {
-      document.title = "MinoxShop | ריל מוצרים";
-      setMetaDescription("רוגיין מקורי מארה״ב — קצף לגברים, משלוח חינם עד הבית ונקודות בונוס. צפו בריל והמשיכו לחנות.");
     } else if (about) {
       document.title = "BARBERO | אודות";
       setMetaDescription(ABOUT_DESCRIPTION);
@@ -62,7 +57,7 @@ function Shell() {
       document.title = HOME_TITLE;
       setMetaDescription(HOME_DESCRIPTION);
     }
-    if (pay || reel) {
+    if (pay) {
       window.scrollTo(0, 0);
       return;
     }
@@ -77,14 +72,10 @@ function Shell() {
     }
     const target = document.querySelector(window.location.hash);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [about, pay, reel, productLanding, path]);
+  }, [about, pay, productLanding, path]);
 
   if (pay) {
     return <PayPage />;
-  }
-
-  if (reel) {
-    return <MinoxReelShowcase />;
   }
 
   return (
