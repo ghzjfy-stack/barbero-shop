@@ -18,7 +18,7 @@ function scrollToTarget(hash) {
     return;
   }
   const target = document.querySelector(hash);
-  if (target) target.scrollIntoView();
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 export function navigate(href) {
@@ -26,6 +26,13 @@ export function navigate(href) {
   window.history.pushState({}, "", `${url.pathname}${url.search}${url.hash}`);
   notify();
   window.requestAnimationFrame(() => scrollToTarget(url.hash));
+}
+
+/** Same as navigate but replaceState (product deep-links / share sync). */
+export function replaceUrl(href) {
+  const url = new URL(href, window.location.origin);
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+  notify();
 }
 
 export function usePathname() {
@@ -49,7 +56,11 @@ export function usePathname() {
 
 export function onNavClick(event, link, { goToCategory, closeMenu } = {}) {
   event.preventDefault();
-  if (link?.category || link?.href?.includes("#collection")) {
+  if (
+    link?.category ||
+    link?.href?.includes("#collection") ||
+    link?.href?.includes("#hair-styling")
+  ) {
     goToCategory?.(link.category || "הכל");
   }
   closeMenu?.();

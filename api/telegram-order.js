@@ -1,84 +1,16 @@
 /**
- * Vercel serverless: notify Telegram on new Barbero orders.
+ * Vercel serverless: Minox-style order card → Telegram orders group.
  *
- * Set in Vercel → Project → Settings → Environment Variables:
- *   TELEGRAM_BOT_TOKEN  — from @BotFather
- *   TELEGRAM_CHAT_ID    — your chat / group / channel id
+ * Env (Production + Preview):
+ *   TELEGRAM_BOT_TOKEN
+ *   TELEGRAM_CHAT_ID
+ *   TELEGRAM_MESSAGE_THREAD_ID  (optional forum topic)
+ *
+ * Buttons (approve/cancel/refresh) need webhook:
+ *   POST /api/telegram-webhook  + setWebhook (see .env.example)
  */
 
-const MAX_TEXT = 3500;
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function formatIls(amount) {
-  const n = Number(amount);
-  if (!Number.isFinite(n)) return "—";
-  return `₪${n.toLocaleString("he-IL")}`;
-}
-
-function formatWhen(iso) {
-  try {
-    return new Intl.DateTimeFormat("he-IL", {
-      timeZone: "Asia/Jerusalem",
-      dateStyle: "short",
-      timeStyle: "short",
-    }).format(new Date(iso || Date.now()));
-  } catch {
-    return new Date(iso || Date.now()).toISOString();
-  }
-}
-
-function buildAddress(details = {}) {
-  return [details.address, details.unit, details.city, details.postal]
-    .map((part) => String(part || "").trim())
-    .filter(Boolean)
-    .join(", ");
-}
-
-function buildItems(lines = []) {
-  if (!Array.isArray(lines) || lines.length === 0) return "—";
-  return lines
-    .map((line) => {
-      const title = [line.name, line.model, line.label].filter(Boolean).join(" · ");
-      const qty = Number(line.qty) || 1;
-      const total = formatIls(line.lineTotal);
-      return `• ${escapeHtml(title)} × ${qty} — ${escapeHtml(total)}`;
-    })
-    .join("\n");
-}
-
-function buildMessage(order) {
-  const details = order.details || {};
-  const when = formatWhen(order.createdAt);
-  const address = buildAddress(details);
-  const notes = String(details.notes || "").trim() || "—";
-  const items = buildItems(order.lines);
-
-  return [
-    "🛒 <b>הזמנה חדשה — BARBERO</b>",
-    "",
-    `<b>מספר:</b> ${escapeHtml(order.number || "—")}`,
-    `<b>תאריך/שעה:</b> ${escapeHtml(when)}`,
-    "",
-    `<b>שם:</b> ${escapeHtml(details.name || "—")}`,
-    `<b>טלפון:</b> ${escapeHtml(details.phone || "—")}`,
-    `<b>כתובת:</b> ${escapeHtml(address || "—")}`,
-    `<b>הערות:</b> ${escapeHtml(notes)}`,
-    "",
-    "<b>פריטים / שירות:</b>",
-    items,
-    "",
-    `<b>ביניים:</b> ${escapeHtml(formatIls(order.subtotal))}`,
-    `<b>משלוח:</b> ${escapeHtml(formatIls(order.shipping))}`,
-    `<b>סה״כ לתשלום:</b> ${escapeHtml(formatIls(order.total))}`,
-  ].join("\n");
-}
+import { buildOrderCard, buildOrderKeyboard } from "../lib/telegramOrderCard.js";
 
 function readJson(req) {
   return new Promise((resolve, reject) => {
@@ -102,6 +34,101 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+export function telegramConfig() {
+  const token = String(process.env.TELEGRAM_BOT_TOKEN || "").trim();
+  const chatId = String(process.env.TELEGRAM_CHAT_ID || "").trim();
+  const threadRaw = String(process.env.TELEGRAM_MESSAGE_THREAD_ID || "").trim();
+  const threadId = threadRaw && /^\d+$/.test(threadRaw) ? Number(threadRaw) : undefined;
+  return { token, chatId, threadId };
+}
+
+export async function telegramApi(method, payload) {
+  const { token } = telegramConfig();
+  if (!token) {
+    return { ok: false, status: 503, data: { ok: false, error: "telegram_not_configured" } };
+  }
+  let res;
+  try {
+    res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    return { ok: false, status: 502, data: { ok: false, error: "telegram_unreachable" } };
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) {
+    return {
+      ok: false,
+      status: 502,
+      data: {
+        ok: false,
+        error: "telegram_rejected",
+        detail: data.description || res.statusText,
+      },
+    };
+  }
+  return { ok: true, status: 200, data };
+}
+
+export async function sendOrderCard(order, opts = {}) {
+  const { chatId, threadId } = telegramConfig();
+  if (!chatId) {
+    return {
+      ok: false,
+      status: 503,
+      body: {
+        ok: false,
+        error: "telegram_not_configured",
+        missing: {
+          TELEGRAM_BOT_TOKEN: !telegramConfig().token,
+          TELEGRAM_CHAT_ID: true,
+        },
+      },
+    };
+  }
+
+  const card = buildOrderCard(order, opts);
+  const reply_markup = buildOrderKeyboard(order, { status: card.status });
+  const payload = {
+    chat_id: chatId,
+    text: card.text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    disable_notification: false,
+  };
+  if (reply_markup) payload.reply_markup = reply_markup;
+  if (threadId) payload.message_thread_id = threadId;
+
+  const result = await telegramApi("sendMessage", payload);
+  if (!result.ok) {
+    return { ok: false, status: result.status, body: result.data };
+  }
+  return {
+    ok: true,
+    status: 200,
+    body: { ok: true, message_id: result.data.result?.message_id },
+  };
+}
+
+export async function editOrderCard(chatId, messageId, order, opts = {}) {
+  const card = buildOrderCard(order, opts);
+  const reply_markup = buildOrderKeyboard(order, { status: card.status });
+  const payload = {
+    chat_id: chatId,
+    message_id: messageId,
+    text: card.text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+  };
+  if (reply_markup) payload.reply_markup = reply_markup;
+  else payload.reply_markup = { inline_keyboard: [] };
+
+  const result = await telegramApi("editMessageText", payload);
+  return result;
+}
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -111,20 +138,36 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (req.method !== "POST") {
-    sendJson(res, 405, { ok: false, error: "method_not_allowed" });
+  if (req.method === "GET") {
+    const url = new URL(req.url || "/", "http://localhost");
+    if (url.searchParams.get("test") !== "1") {
+      sendJson(res, 405, { ok: false, error: "method_not_allowed" });
+      return;
+    }
+    const sample = {
+      number: "BRB-TEST",
+      createdAt: new Date().toISOString(),
+      payment: "bit",
+      details: {
+        name: "בדיקת מערכת",
+        phone: "0540000000",
+        email: "test@barbero.co.il",
+        address: "רחוב לדוגמה 1",
+        unit: "דירה 2",
+        city: "תל אביב",
+        postal: "6100000",
+        notes: "הודעת בדיקה — כרטיס בסגנון מינוקס",
+      },
+      lines: [{ name: "טרימר בדיקה", qty: 1, unitPrice: 500, lineTotal: 500 }],
+      total: 500,
+    };
+    const result = await sendOrderCard(sample);
+    sendJson(res, result.status, result.body);
     return;
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
-    sendJson(res, 503, {
-      ok: false,
-      error: "telegram_not_configured",
-      hint: "Set TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in Vercel env",
-    });
+  if (req.method !== "POST") {
+    sendJson(res, 405, { ok: false, error: "method_not_allowed" });
     return;
   }
 
@@ -141,35 +184,6 @@ export default async function handler(req, res) {
     return;
   }
 
-  const text = buildMessage(order).slice(0, MAX_TEXT);
-  const telegramUrl = `https://api.telegram.org/bot${token}/sendMessage`;
-
-  let telegramRes;
-  try {
-    telegramRes = await fetch(telegramUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-    });
-  } catch {
-    sendJson(res, 502, { ok: false, error: "telegram_unreachable" });
-    return;
-  }
-
-  const payload = await telegramRes.json().catch(() => ({}));
-  if (!telegramRes.ok || !payload.ok) {
-    sendJson(res, 502, {
-      ok: false,
-      error: "telegram_rejected",
-      detail: payload.description || telegramRes.statusText,
-    });
-    return;
-  }
-
-  sendJson(res, 200, { ok: true });
+  const result = await sendOrderCard(order);
+  sendJson(res, result.status, result.body);
 }

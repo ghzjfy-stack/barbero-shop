@@ -1,42 +1,40 @@
 import { useState } from "react";
-import { FREE_SHIPPING, formatPrice } from "../data";
+import { FIRST_ORDER_COUPON, FREE_SHIPPING, formatPrice } from "../data";
+import { trackMetaAddPaymentInfo } from "../metaPixel";
+import { isPayBoxEnabled, openPayPalPayment } from "../payment";
 import { useStore } from "../store";
+import BitPayPanel from "./BitPayPanel";
 import Drawer from "./Drawer";
 import { IconClose, IconMinus, IconPlus, IconTrash } from "./Icons";
+import { BitMark, PayBoxMark, PayPalMark } from "./PaymentMarks";
 import ProductImage, { imageFrame } from "./ProductImage";
 import ProductTitle from "./ProductTitle";
-
-const BIT_PHONE = "0543554888";
-
-function bitTransferUrl(amount) {
-  const total = Number(amount);
-  const value = Number.isFinite(total) && total > 0 ? total : 0;
-  return `https://www.bitpay.co.il/app/transfer?phone=${BIT_PHONE}&amount=${value}`;
-}
-
-function prefersBitApp() {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent.toLowerCase();
-  if (/iphone|ipad|ipod|android/.test(ua)) return true;
-  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-}
+import PayMethodsCue from "./PayMethodsCue";
+import PurchaseTrust from "./PurchaseTrust";
 
 const emptyDetails = {
   name: "",
   phone: "",
+  email: "",
   city: "",
   address: "",
   unit: "",
   postal: "",
   notes: "",
   agree: false,
+  payment: "bit",
 };
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
+}
 
 export default function CartDrawer() {
   const store = useStore();
   const [details, setDetails] = useState(emptyDetails);
   const [errors, setErrors] = useState({});
   const [copied, setCopied] = useState(false);
+  const [couponDraft, setCouponDraft] = useState("");
 
   const setField = (key, value) => {
     setDetails((current) => ({ ...current, [key]: value }));
@@ -48,11 +46,14 @@ export default function CartDrawer() {
     if (details.name.trim().length < 2) next.name = "נשמח לשם מלא";
     const phone = details.phone.replace(/[^\d]/g, "");
     if (phone.length < 9 || phone.length > 13) next.phone = "מספר טלפון לא תקין";
+    if (!isValidEmail(details.email)) next.email = "כתובת אימייל לא תקינה";
     if (details.city.trim().length < 2) next.city = "חסרה עיר";
     if (details.address.trim().length < 4) next.address = "חסרה כתובת למשלוח";
     const postal = details.postal.trim();
     if (postal && !/^\d{5}(\d{2})?$/.test(postal)) next.postal = "מיקוד לא תקין";
     if (!details.agree) next.agree = "יש לאשר את התקנון כדי להמשיך";
+    const allowedPay = isPayBoxEnabled() ? ["bit", "paypal", "paybox"] : ["bit", "paypal"];
+    if (!allowedPay.includes(details.payment)) next.payment = "בחרו אמצעי תשלום";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -63,11 +64,13 @@ export default function CartDrawer() {
     store.placeOrder({
       name: details.name.trim(),
       phone: details.phone.trim(),
+      email: details.email.trim().toLowerCase(),
       city: details.city.trim(),
       address: details.address.trim(),
       unit: details.unit.trim(),
       postal: details.postal.trim(),
       notes: details.notes.trim(),
+      payment: details.payment,
     });
     setDetails(emptyDetails);
     setCopied(false);
@@ -83,11 +86,15 @@ export default function CartDrawer() {
     }
   };
 
-  const whatsappHref = store.order
-    ? `https://wa.me/972543554888?text=${encodeURIComponent(`שלום, אישור תשלום עבור הזמנה ${store.order.number}`)}`
-    : "https://wa.me/972543554888";
-  const mobileBit = prefersBitApp();
-  const bitLinkProps = mobileBit ? {} : { target: "_blank", rel: "noopener noreferrer" };
+  const startPayment = () => {
+    if (!store.order) return;
+    trackMetaAddPaymentInfo(store.order);
+    if (store.order.payment === "paypal") openPayPalPayment(store.order);
+  };
+
+  const orderPayment = store.order?.payment;
+  const isPaypal = orderPayment === "paypal";
+  const isPayBox = orderPayment === "paybox";
 
   return (
     <Drawer open={store.cartOpen} onClose={store.closeCart} label="עגלת קניות">
@@ -96,7 +103,7 @@ export default function CartDrawer() {
           <div>
             <p className="text-[11px] text-gold">BARBERO</p>
             <h2 className="font-display text-3xl leading-none">
-              {store.checkoutStep === "done" ? "ההזמנה התקבלה" : "העגלה"}
+              {store.checkoutStep === "done" ? "תשלום" : "העגלה"}
             </h2>
           </div>
           <button type="button" className="icon-btn" aria-label="סגירת העגלה" onClick={store.closeCart}>
@@ -123,68 +130,91 @@ export default function CartDrawer() {
         )}
 
         {store.checkoutStep === "done" && store.order ? (
-          <div className="flex flex-1 flex-col overflow-y-auto px-5 py-8">
-            <p className="text-sm leading-7 text-ivory/75">תודה, {store.order.details.name}.</p>
-            <p className="mt-5 border border-gold/50 bg-gold/10 px-4 py-4 text-base font-semibold leading-8 text-ivory">
-              להשלמת ההזמנה, אנא העבר{" "}
-              <span className="tabular-nums" dir="ltr">
-                {formatPrice(store.order.total)}
-              </span>{" "}
-              ב-Bit למספר <span dir="ltr">054-3554888</span>
-            </p>
-            <p className="mt-6 text-xs text-muted">מספר הזמנה</p>
-            <p className="mt-1 font-display text-4xl text-gold-soft" dir="ltr">
-              {store.order.number}
-            </p>
-            <button type="button" className="btn-ghost mt-4 h-11" onClick={copyNumber}>
-              {copied ? "המספר הועתק" : "העתקת מספר"}
-            </button>
-            <a
-              className="mt-3 inline-flex h-12 w-full items-center justify-center bg-[#25D366] text-base font-semibold text-[#06281a] transition hover:bg-[#3ee07a]"
-              href={whatsappHref}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              שלח אישור תשלום בוואטסאפ
-            </a>
-            <p className="mt-5 text-center text-xs leading-6 text-muted">
-              סרוק את קוד ה-QR לתשלום מהיר ב-Bit, או לחץ על הכפתור למטה
-            </p>
-            <img
-              className="mx-auto mt-3 block max-w-[200px] rounded-lg"
-              src="/bit-qr.jpg"
-              alt="קוד QR לתשלום ב-Bit"
-              width="200"
-            />
-            <a
-              className="btn-ghost mt-4 h-12 w-full"
-              href={bitTransferUrl(store.order.total)}
-              {...bitLinkProps}
-            >
-              תשלום בביט
-            </a>
-            <ul className="mt-8 space-y-3 border-t border-white/10 pt-5 text-sm">
-              {store.order.lines.map((line) => (
-                <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
-                  <span>
-                    {line.kind && line.model ? <ProductTitle product={line} /> : line.name}
-                    {line.label ? ` · ${line.label}` : ""} × {line.qty}
-                  </span>
-                  <span className="tabular-nums">{formatPrice(line.lineTotal)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-4">
-              <Totals subtotal={store.order.subtotal} shipping={store.order.shipping} total={store.order.total} />
+          <div className="flex flex-1 flex-col overflow-y-auto px-5 py-6">
+            <p className="text-sm text-muted">תודה, {store.order.details.name}</p>
+            <p className="mt-1 text-sm leading-6 text-ivory/80">צעד אחרון — תשלום קצר וסיימנו</p>
+
+            <div className="mt-5">
+              {isPaypal ? (
+                <div>
+                  <div className="text-center">
+                    <p className="text-xs tracking-wide text-muted">לתשלום ב-PayPal</p>
+                    <p className="mt-2 font-display text-5xl leading-none text-gold-soft tabular-nums" dir="ltr">
+                      {formatPrice(store.order.total)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-6 inline-flex h-14 w-full items-center justify-center gap-2 bg-[#0070ba] text-base font-semibold text-white transition hover:bg-[#005ea6]"
+                    onClick={startPayment}
+                  >
+                    <PayPalMark className="h-4 w-auto brightness-0 invert" />
+                    שלם עכשיו ב-PayPal
+                  </button>
+                </div>
+              ) : (
+                <BitPayPanel order={store.order} provider={isPayBox ? "paybox" : "bit"} />
+              )}
             </div>
-            <p className="mt-2 text-sm text-muted">
-              {[store.order.details.address, store.order.details.unit, store.order.details.city, store.order.details.postal]
-                .filter(Boolean)
-                .join(", ")}
-            </p>
-            {store.order.details.notes && <p className="mt-2 text-sm leading-7 text-muted">{store.order.details.notes}</p>}
-            <button type="button" className="btn-gold mt-auto h-12" onClick={store.finishCheckout}>
-              המשך בקניות
+
+            <details className="group mt-8 border-t border-white/10 pt-4">
+              <summary className="cursor-pointer list-none text-sm text-muted transition hover:text-ivory [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex w-full items-center justify-between gap-3">
+                  פרטי הזמנה
+                  <span className="text-xs text-gold-soft group-open:hidden">הצג</span>
+                  <span className="hidden text-xs text-gold-soft group-open:inline">הסתר</span>
+                </span>
+              </summary>
+              <div className="mt-4 space-y-4">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-muted">מספר הזמנה</span>
+                  <button type="button" className="text-gold-soft underline-offset-2 hover:underline" dir="ltr" onClick={copyNumber}>
+                    {copied ? "הועתק" : store.order.number}
+                  </button>
+                </div>
+                <Totals
+                  subtotal={store.order.subtotal}
+                  shipping={store.order.shipping}
+                  discount={store.order.discount || 0}
+                  coupon={store.order.coupon || ""}
+                  total={store.order.total}
+                />
+                <ul className="space-y-2 text-sm">
+                  {store.order.lines.map((line) => (
+                    <li key={`${line.name}-${line.label || ""}`} className="flex justify-between gap-4">
+                      <span>
+                        {line.kind && line.model ? <ProductTitle product={line} /> : line.name}
+                        {line.label ? ` · ${line.label}` : ""} × {line.qty}
+                      </span>
+                      <span className="tabular-nums">{formatPrice(line.lineTotal)}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm text-muted">
+                  {[store.order.details.address, store.order.details.unit, store.order.details.city, store.order.details.postal]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
+                {store.order.details.email ? (
+                  <p className="text-sm text-muted">אימייל לאישור: {store.order.details.email}</p>
+                ) : null}
+                {store.order.details.notes ? <p className="text-sm leading-6 text-muted">{store.order.details.notes}</p> : null}
+                {orderPayment === "bit" ? (
+                  <div className="border border-white/10 bg-black/30 px-4 py-4 text-center">
+                    <p className="text-xs text-muted">אפשר גם לסרוק מתוך ביט</p>
+                    <img
+                      className="mx-auto mt-3 block max-w-[160px] rounded-md bg-white p-2"
+                      src="/bit-qr.jpg"
+                      alt="קוד QR לתשלום ב-Bit"
+                      width="160"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            </details>
+
+            <button type="button" className="btn-ghost mt-6 h-11" onClick={store.finishCheckout}>
+              סגור והמשך בקניות
             </button>
           </div>
         ) : store.checkoutStep === "details" ? (
@@ -194,6 +224,17 @@ export default function CartDrawer() {
             </Field>
             <Field label="טלפון" error={errors.phone}>
               <input className="field" inputMode="tel" autoComplete="tel" value={details.phone} onChange={(event) => setField("phone", event.target.value)} />
+            </Field>
+            <Field label="אימייל" error={errors.email}>
+              <input
+                className="field"
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                placeholder="לאישור הזמנה"
+                value={details.email}
+                onChange={(event) => setField("email", event.target.value)}
+              />
             </Field>
             <Field label="עיר" error={errors.city}>
               <input className="field" autoComplete="address-level2" value={details.city} onChange={(event) => setField("city", event.target.value)} />
@@ -221,6 +262,44 @@ export default function CartDrawer() {
                 onChange={(event) => setField("notes", event.target.value)}
               />
             </Field>
+
+            <fieldset className="mb-3">
+              <legend className="mb-2 text-sm text-muted">אמצעי תשלום</legend>
+              <div
+                className={`grid gap-2 ${isPayBoxEnabled() ? "grid-cols-3" : "grid-cols-2"}`}
+                role="radiogroup"
+                aria-label="אמצעי תשלום"
+              >
+                <PaymentOption
+                  selected={details.payment === "bit"}
+                  onSelect={() => setField("payment", "bit")}
+                  title="ביט"
+                  subtitle="העברה מהירה"
+                  mark={<BitMark />}
+                  accent="gold"
+                />
+                {isPayBoxEnabled() ? (
+                  <PaymentOption
+                    selected={details.payment === "paybox"}
+                    onSelect={() => setField("payment", "paybox")}
+                    title="PayBox"
+                    subtitle="העברה ישירה"
+                    mark={<PayBoxMark />}
+                    accent="paybox"
+                  />
+                ) : null}
+                <PaymentOption
+                  selected={details.payment === "paypal"}
+                  onSelect={() => setField("payment", "paypal")}
+                  title="PayPal"
+                  subtitle="כרטיס או יתרה"
+                  mark={<PayPalMark className="h-4 w-auto text-[#79c3fc]" />}
+                  accent="paypal"
+                />
+              </div>
+              {errors.payment && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.payment}</p>}
+            </fieldset>
+
             <label className="mt-2 flex items-start gap-3 text-sm leading-6 text-muted">
               <input
                 type="checkbox"
@@ -237,10 +316,29 @@ export default function CartDrawer() {
               </span>
             </label>
             {errors.agree && <p className="mt-2 text-xs text-[#e7b2a4]">{errors.agree}</p>}
-            <p className="mt-4 text-xs leading-6 text-muted">התשלום מתבצע בביט בלבד. התשלום מאובטח בתקן SSL מחמיר.</p>
+            <p className="mt-4 text-xs leading-6 text-muted">
+              אחרי אישור ההזמנה תועברו לתשלום ב
+              {details.payment === "paypal"
+                ? "-PayPal"
+                : details.payment === "paybox"
+                  ? "-PayBox"
+                  : "ביט"}
+              . התשלום מתבצע ישירות באפליקציה / באתר של ספק התשלום.
+            </p>
             <div className="mt-auto pt-6">
-              <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
-              <Totals subtotal={store.subtotal} shipping={store.shipping} total={store.total} />
+              <ShippingProgress
+                subtotal={store.subtotal}
+                remaining={store.remaining}
+                progress={store.progress}
+                freeReason={store.freeShippingReason}
+              />
+              <Totals
+                subtotal={store.subtotal}
+                shipping={store.shipping}
+                discount={store.discount}
+                coupon={store.appliedCoupon}
+                total={store.total}
+              />
               <div className="mt-4 grid gap-2">
                 <button type="submit" className="btn-gold h-12">
                   אישור הזמנה · {formatPrice(store.total)}
@@ -249,6 +347,7 @@ export default function CartDrawer() {
                   חזרה לעגלה
                 </button>
               </div>
+              <PurchaseTrust className="mt-3" />
             </div>
           </form>
         ) : (
@@ -327,28 +426,63 @@ export default function CartDrawer() {
             </div>
 
             <footer className="border-t border-white/10 px-5 py-4">
-              <ShippingProgress subtotal={store.subtotal} remaining={store.remaining} progress={store.progress} />
+              <ShippingProgress
+                subtotal={store.subtotal}
+                remaining={store.remaining}
+                progress={store.progress}
+                freeReason={store.freeShippingReason}
+              />
+              {store.lines.length > 0 && (
+                <CouponField
+                  draft={couponDraft}
+                  setDraft={setCouponDraft}
+                  applied={store.appliedCoupon}
+                  discount={store.discount}
+                  error={store.couponError}
+                  eligible={store.firstOrderEligible}
+                  onApply={() => {
+                    if (store.applyCoupon(couponDraft || FIRST_ORDER_COUPON.code)) setCouponDraft("");
+                  }}
+                  onClear={() => {
+                    store.clearCoupon();
+                    setCouponDraft("");
+                  }}
+                />
+              )}
               <Totals
                 subtotal={store.subtotal}
                 shipping={store.shipping}
+                discount={store.discount}
+                coupon={store.appliedCoupon}
                 total={store.total}
                 empty={store.lines.length === 0}
               />
               {store.lines.length === 0 ? (
                 <button type="button" className="btn-gold mt-4 h-12 w-full" disabled>
-                  תשלום בביט
+                  המשך לפרטי משלוח
                 </button>
               ) : (
-                <a
+                <button
+                  type="button"
                   className="btn-gold mt-4 h-12 w-full"
-                  href={bitTransferUrl(store.total)}
-                  {...bitLinkProps}
                   onClick={() => store.setCheckoutStep("details")}
                 >
-                  תשלום בביט
-                </a>
+                  המשך לפרטי משלוח · {formatPrice(store.total)}
+                </button>
               )}
-              <p className="mt-3 text-center text-[11px] text-muted">מקבלים ביט בלבד · יבוא מקורי · אחריות רשמית</p>
+              {store.lines.length > 0 && <PurchaseTrust className="mt-3" />}
+              {store.lines.length > 0 ? (
+                <PayMethodsCue className="mt-3 justify-center" />
+              ) : null}
+              <p className="mt-2 text-center text-[11px] text-muted">
+                {store.freeShippingReason === "coupon"
+                  ? "בהזמנה ראשונה — משלוח חינם עד הבית"
+                  : store.freeShippingReason === "flash"
+                    ? "מבצע חיסול — משלוח חינם עד הבית"
+                    : "הסכום כולל משלוח במידת הצורך"}
+                {" · "}
+                אחרי אישור ההזמנה
+              </p>
             </footer>
           </>
         )}
@@ -357,15 +491,55 @@ export default function CartDrawer() {
   );
 }
 
-function ShippingProgress({ subtotal, remaining, progress }) {
+function PaymentOption({ selected, onSelect, title, subtitle, mark, accent = "gold" }) {
+  const selectedClass =
+    accent === "paypal"
+      ? "border-[#0070ba]/80 bg-[#0070ba]/15 text-ivory shadow-[inset_0_0_0_1px_rgba(0,112,186,0.35)]"
+      : accent === "paybox"
+        ? "border-[#7B2CBF]/80 bg-[#7B2CBF]/15 text-ivory shadow-[inset_0_0_0_1px_rgba(123,44,191,0.35)]"
+        : "border-gold/70 bg-gold/10 text-ivory";
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={`flex flex-col items-start gap-2 border px-2.5 py-3 text-start transition sm:px-3 ${
+        selected ? selectedClass : "border-white/12 bg-black/20 text-muted hover:border-white/25 hover:text-ivory"
+      }`}
+    >
+      <span className="flex w-full items-center justify-between gap-1.5">
+        <span className="text-sm font-semibold text-ivory">{title}</span>
+        {mark}
+      </span>
+      <span className="text-[11px] leading-4">{subtitle}</span>
+    </button>
+  );
+}
+
+function ShippingProgress({ subtotal, remaining, progress, freeReason = null }) {
   const qualified = remaining === 0 && subtotal > 0;
+  const label =
+    freeReason === "coupon"
+      ? "משלוח חינם בהזמנה ראשונה"
+      : freeReason === "flash"
+        ? "משלוח חינם במבצע חיסול"
+        : `משלוח חינם מעל ${formatPrice(FREE_SHIPPING)}`;
+  const status =
+    subtotal === 0
+      ? "התחילו להוסיף"
+      : freeReason === "coupon"
+        ? "המשלוח עלינו (קופון)"
+        : freeReason === "flash"
+          ? "המשלוח עלינו"
+          : qualified
+            ? "המשלוח עלינו"
+            : `עוד ${formatPrice(remaining)}`;
   return (
     <div className="mb-4">
       <div className="mb-2 flex items-center justify-between gap-3 text-xs">
-        <span className="text-muted">משלוח חינם מעל {formatPrice(FREE_SHIPPING)}</span>
-        <span className={qualified ? "text-gold-soft" : "text-ivory"}>
-          {subtotal === 0 ? "התחילו להוסיף" : qualified ? "המשלוח עלינו" : `עוד ${formatPrice(remaining)}`}
-        </span>
+        <span className="text-muted">{label}</span>
+        <span className={qualified ? "text-gold-soft" : "text-ivory"}>{status}</span>
       </div>
       <div
         className="h-1.5 bg-white/10"
@@ -381,11 +555,74 @@ function ShippingProgress({ subtotal, remaining, progress }) {
   );
 }
 
-function Totals({ subtotal, shipping, total, empty = false }) {
+function CouponField({ draft, setDraft, applied, discount = 0, error, eligible, onApply, onClear }) {
+  if (applied) {
+    return (
+      <div className="mb-3 flex items-center justify-between gap-3 border border-dashed border-gold/40 bg-gold/5 px-3 py-2.5 text-sm">
+        <p>
+          <span className="text-muted">קופון </span>
+          <span className="font-semibold tracking-wide text-gold-soft" dir="ltr">
+            {applied}
+          </span>
+          {discount > 0 ? (
+            <span className="text-gold-soft"> · −{formatPrice(discount)}</span>
+          ) : (
+            <span className="text-muted"> · לא חל על מוצר במבצע</span>
+          )}
+        </p>
+        <button type="button" className="text-xs text-muted underline-offset-2 hover:text-ivory hover:underline" onClick={onClear}>
+          הסרה
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3">
+      <div className="flex gap-2">
+        <input
+          className="field h-10 flex-1 text-sm tracking-wide"
+          dir="ltr"
+          placeholder={eligible ? FIRST_ORDER_COUPON.code : "קוד קופון"}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              onApply();
+            }
+          }}
+          aria-label="קוד קופון"
+        />
+        <button type="button" className="btn-ghost h-10 shrink-0 px-4 text-sm" onClick={onApply}>
+          מימוש
+        </button>
+      </div>
+      {error ? (
+        <p className="mt-1.5 text-xs text-[#e7b2a4]">{error}</p>
+      ) : (
+        <p className="mt-1.5 text-[11px] text-muted">
+          {eligible
+            ? `${FIRST_ORDER_COUPON.label} · הזינו ${FIRST_ORDER_COUPON.code}`
+            : "קופון הזמנה ראשונה כבר נוצל במכשיר זה"}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Totals({ subtotal, shipping, discount = 0, coupon = "", total, empty = false }) {
   const free = !empty && shipping === 0;
   return (
     <div className="space-y-2 text-sm">
       <Row label="סיכום ביניים" value={formatPrice(subtotal)} />
+      {!empty && discount > 0 && (
+        <Row
+          label={coupon ? `הנחה (${coupon})` : "הנחה"}
+          value={`−${formatPrice(discount)}`}
+          gold
+        />
+      )}
       <Row label="משלוח" value={empty ? "—" : free ? "חינם" : formatPrice(shipping)} gold={free} />
       <Row label="לתשלום" value={formatPrice(total)} strong />
     </div>

@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api/|robots\\.txt|sitemap\\.xml|favicon\\.ico|favicon\\.svg|favicon-\\d+\\.png|apple-touch-icon\\.png|og-image\\.png|setup-sheet\\.html|barbero-orders\\.gs).*)",
+      "destination": "/index.html"
+    }
   ]
 }

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Prefer the canonical host
+Host: https://www.barbero.co.il
+
+Sitemap: https://www.barbero.co.il/sitemap.xml

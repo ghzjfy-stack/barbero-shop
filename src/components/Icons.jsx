@@ -159,6 +159,35 @@ export function IconWhatsApp({ className = "h-7 w-7" }) {
   );
 }
 
+export function IconFacebook({ className = "h-5 w-5" }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+      <path d="M14 8.2h2.1V5.1c-.4-.05-1.6-.15-3-.15-3 0-5 1.8-5 5.1V12H5.8v3.4H8.1V22h3.5v-6.6h2.7l.4-3.4h-3.1V10.3c0-1 .3-1.9 1.9-1.9Z" />
+    </svg>
+  );
+}
+
+/** Classic share mark — three nodes, matches stroke weight of IconHeart. */
+export function IconShare({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="18" cy="5" r="2.35" />
+      <circle cx="6" cy="12" r="2.35" />
+      <circle cx="18" cy="19" r="2.35" />
+      <path d="m8.2 10.85 7.5-4.2M8.2 13.15l7.5 4.2" />
+    </svg>
+  );
+}
+
 export function IconShield({ className }) {
   return (
     <Svg className={className}>

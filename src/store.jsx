@@ -1,11 +1,46 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
+  FIRST_ORDER_COUPON,
   FREE_SHIPPING,
+  cartHasFreeShippingSku,
+  couponableSubtotal,
+  isFirstOrderCouponCode,
+  normalizeCouponCode,
   shippingFeeFor,
   findProduct,
   resolveOffer,
 } from "./data";
+
+const HAS_ORDERED_KEY = "barbero-has-ordered";
+const COUPON_KEY = "barbero-coupon";
+
+function readHasOrdered() {
+  try {
+    return localStorage.getItem(HAS_ORDERED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function readSavedCoupon() {
+  try {
+    const code = normalizeCouponCode(localStorage.getItem(COUPON_KEY) || "");
+    return isFirstOrderCouponCode(code) ? code : "";
+  } catch {
+    return "";
+  }
+}
 import { notifyTelegramOrder } from "./notifyTelegram";
+import { notifyOrderEmail } from "./notifyOrderEmail";
+import { notifySheetsOrder } from "./notifySheetsOrder";
+import { saveCustomer } from "./saveCustomer";
+import { notifySupabaseOrder } from "./notifySupabaseOrder";
+import { parseProductFromLocation, syncProductLocation } from "./share";
+import {
+  trackMetaAddToCart,
+  trackMetaInitiateCheckout,
+  trackMetaViewContent,
+} from "./metaPixel";
 
 const StoreContext = createContext(null);
 
@@ -31,13 +66,20 @@ export function StoreProvider({ children }) {
   const [wishOpen, setWishOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [quickViewId, setQuickViewId] = useState(null);
+  const [quickViewId, setQuickViewId] = useState(() => parseProductFromLocation());
   const [info, setInfo] = useState(null);
   const [category, setCategory] = useState("הכל");
   const [toast, setToast] = useState(null);
   const [checkoutStep, setCheckoutStep] = useState("cart");
   const [order, setOrder] = useState(null);
   const [lastOrder, setLastOrder] = useState(null);
+  // Auto-seed first-order coupon for eligible visitors (ads / cold land) —
+  // discount + free shipping apply as soon as the cart has items.
+  const [appliedCoupon, setAppliedCoupon] = useState(() => {
+    if (readHasOrdered()) return "";
+    return readSavedCoupon() || FIRST_ORDER_COUPON.code;
+  });
+  const [couponError, setCouponError] = useState("");
 
   useEffect(() => {
     localStorage.setItem("barbero-cart", JSON.stringify(cart));
@@ -46,6 +88,33 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     localStorage.setItem("barbero-wishlist", JSON.stringify(wishlist));
   }, [wishlist]);
+
+  useEffect(() => {
+    try {
+      if (appliedCoupon) localStorage.setItem(COUPON_KEY, appliedCoupon);
+      else localStorage.removeItem(COUPON_KEY);
+    } catch {
+      /* ignore quota */
+    }
+  }, [appliedCoupon]);
+
+  useEffect(() => {
+    syncProductLocation(quickViewId);
+  }, [quickViewId]);
+
+  // Keep modal in sync when browser back/forward hits `/p/:id`
+  useEffect(() => {
+    const onPop = () => setQuickViewId(parseProductFromLocation());
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // ViewContent on every product open — including cold land from ad `/p/:id`
+  useEffect(() => {
+    if (!quickViewId) return;
+    const product = findProduct(quickViewId);
+    if (product) trackMetaViewContent(product, resolveOffer(product));
+  }, [quickViewId]);
 
   useEffect(() => {
     if (!toast) return undefined;
@@ -103,11 +172,62 @@ export function StoreProvider({ children }) {
   );
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-  const shipping = shippingFeeFor(subtotal);
-  const total = subtotal + shipping;
-  const remaining = Math.max(0, FREE_SHIPPING - subtotal);
-  const progress = subtotal <= 0 ? 0 : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
+  const firstOrderEligible = !readHasOrdered() && !lastOrder;
+  const couponBase = couponableSubtotal(lines);
+  const couponValid =
+    Boolean(appliedCoupon) &&
+    isFirstOrderCouponCode(appliedCoupon) &&
+    firstOrderEligible &&
+    couponBase > 0;
+  const discount = couponValid ? Math.min(FIRST_ORDER_COUPON.amount, couponBase) : 0;
+  const freeShipSku = cartHasFreeShippingSku(lines);
+  const shipping = shippingFeeFor(subtotal, { waive: couponValid || freeShipSku });
+  const total = Math.max(0, subtotal - discount) + shipping;
+  const remaining =
+    couponValid || freeShipSku ? 0 : Math.max(0, FREE_SHIPPING - subtotal);
+  const progress =
+    couponValid || freeShipSku
+      ? 100
+      : subtotal <= 0
+        ? 0
+        : Math.min(100, (subtotal / FREE_SHIPPING) * 100);
   const cartCount = cart.reduce((sum, line) => sum + line.qty, 0);
+  const freeShippingReason = couponValid
+    ? "coupon"
+    : freeShipSku
+      ? "flash"
+      : subtotal > 0 && shipping === 0
+        ? "threshold"
+        : null;
+
+  const applyCoupon = (rawCode, { quiet = false } = {}) => {
+    const code = normalizeCouponCode(rawCode);
+    setCouponError("");
+    if (!code) {
+      setCouponError("הזינו קוד קופון");
+      return false;
+    }
+    if (!isFirstOrderCouponCode(code)) {
+      setCouponError("קוד לא תקין");
+      return false;
+    }
+    if (!firstOrderEligible) {
+      setCouponError("הקוד להזמנה ראשונה בלבד");
+      return false;
+    }
+    setAppliedCoupon(code);
+    if (!quiet && subtotal > 0) {
+      notify(`הקופון הוחל — ₪${FIRST_ORDER_COUPON.amount} הנחה + משלוח חינם`);
+    } else if (!quiet && subtotal <= 0) {
+      notify("הקופון מוכן — יוחל בעגלה עם משלוח חינם");
+    }
+    return true;
+  };
+
+  const clearCoupon = () => {
+    setAppliedCoupon("");
+    setCouponError("");
+  };
 
   const notify = (message, action = null) => {
     setToast({ id: Date.now(), message, action });
@@ -151,6 +271,8 @@ export function StoreProvider({ children }) {
     });
     setCheckoutStep("cart");
     setOrder(null);
+
+    trackMetaAddToCart(product, offer, Math.max(1, nextQty - current));
 
     if (options.open) {
       setWishOpen(false);
@@ -231,27 +353,67 @@ export function StoreProvider({ children }) {
   };
 
   const placeOrder = (details) => {
+    const payment =
+      details?.payment === "paypal"
+        ? "paypal"
+        : details?.payment === "paybox"
+          ? "paybox"
+          : "bit";
+    const couponNote =
+      discount > 0 && appliedCoupon
+        ? `קופון ${appliedCoupon}: −₪${discount} (הזמנה ראשונה)`
+        : "";
+    const notes = [details?.notes, couponNote].filter(Boolean).join(" · ");
     const snapshot = {
       number: `BRB-${Math.floor(100000 + Math.random() * 900000)}`,
       createdAt: new Date().toISOString(),
-      details,
+      details: { ...details, notes },
+      payment,
       total,
       subtotal,
       shipping,
+      discount,
+      coupon: discount > 0 ? appliedCoupon : "",
       lines: lines.map((line) => ({
+        id: line.product.id,
         name: line.product.name,
         kind: line.product.kind,
         model: line.product.model,
         label: line.offer.label,
+        variantId: line.variantId,
         qty: line.qty,
+        unitPrice: line.offer.price,
         lineTotal: line.lineTotal,
       })),
     };
     setOrder(snapshot);
     setLastOrder(snapshot);
     setCart([]);
+    setAppliedCoupon("");
+    setCouponError("");
+    try {
+      localStorage.setItem(HAS_ORDERED_KEY, "1");
+      localStorage.removeItem(COUPON_KEY);
+    } catch {
+      /* ignore */
+    }
     setCheckoutStep("done");
+    // Purchase pixel fires only after real payment (Bit/PayPal confirm or ops «שולם»).
     notifyTelegramOrder(snapshot);
+    notifySheetsOrder(snapshot);
+    notifySupabaseOrder(snapshot);
+    notifyOrderEmail(snapshot);
+    saveCustomer({
+      name: details.name,
+      phone: details.phone,
+      email: details.email,
+      city: details.city,
+      address: details.address,
+      unit: details.unit,
+      postal: details.postal,
+      notes: details.notes,
+      last_order_number: snapshot.number,
+    });
   };
 
   const finishCheckout = () => {
@@ -265,6 +427,17 @@ export function StoreProvider({ children }) {
     setMenuOpen(false);
   };
 
+  const goToCheckoutStep = (step) => {
+    if (step === "details" && checkoutStep !== "details") {
+      trackMetaInitiateCheckout({
+        value: total,
+        numItems: cartCount,
+        contentIds: lines.map((line) => line.product.id),
+      });
+    }
+    setCheckoutStep(step);
+  };
+
   const value = {
     cart,
     lines,
@@ -273,9 +446,16 @@ export function StoreProvider({ children }) {
     wishCount: wishlist.length,
     subtotal,
     shipping,
+    discount,
     total,
     remaining,
     progress,
+    freeShippingReason,
+    appliedCoupon,
+    couponError,
+    applyCoupon,
+    clearCoupon,
+    firstOrderEligible,
     cartOpen,
     wishOpen,
     searchOpen,
@@ -288,7 +468,7 @@ export function StoreProvider({ children }) {
     toast,
     dismissToast: () => setToast(null),
     checkoutStep,
-    setCheckoutStep,
+    setCheckoutStep: goToCheckoutStep,
     order,
     lastOrder,
     addToCart,

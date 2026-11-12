@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>הורדת רילים — MinoxShop</title>
+  <style>
+    :root { --cream:#FBF6EE; --navy:#142444; --gold:#C49A4A; --ink:#0b1834; }
+    body {
+      margin:0;
+      font-family: Heebo, system-ui, sans-serif;
+      background:linear-gradient(180deg,#FBF6EE,#F3E8D7);
+      color:var(--navy);
+      min-height:100vh;
+      padding:24px;
+    }
+    main { width:min(560px,100%); margin:0 auto; display:grid; gap:18px; }
+    .card {
+      background:#fff;
+      border-radius:20px;
+      padding:24px;
+      box-shadow:0 10px 40px rgba(20,36,68,.08);
+    }
+    .card.dark {
+      background:var(--ink);
+      color:#fff;
+      box-shadow:0 10px 40px rgba(0,0,0,.25);
+    }
+    h1 { margin:0 0 8px; font-size:1.35rem; }
+    .dark h1 { color:#d4af6a; }
+    p { margin:0 0 16px; line-height:1.5; opacity:.88; }
+    .dark p { color:#b8c6d6; opacity:1; }
+    video, img {
+      width:100%;
+      max-width:320px;
+      border-radius:14px;
+      display:block;
+      margin:0 auto 16px;
+      background:#111;
+    }
+    a.btn {
+      display:block;
+      text-align:center;
+      text-decoration:none;
+      background:var(--navy);
+      color:#fff;
+      padding:14px 18px;
+      border-radius:12px;
+      font-weight:700;
+      margin:10px 0 0;
+    }
+    .dark a.btn { background:#d4af6a; color:var(--ink); }
+    a.btn.alt {
+      background:#1e3358;
+      color:#fff;
+      border:1px solid #d4af6a;
+    }
+    .card:not(.dark) a.btn.alt {
+      background:#fff;
+      color:var(--navy);
+      border:1px solid rgba(20,36,68,.2);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="card">
+      <h1>לוגו MinoxShop לפרופיל</h1>
+      <p>גרסה מקצועית שממלאת את כל העיגול — בלי רקע לבן. מומלץ לטיקטוק / אינסטגרם / יוטיוב.</p>
+      <img src="./minoxshop-logo-tiktok.jpg" alt="לוגו MinoxShop" style="background:#142444;max-width:280px;border-radius:50%;" />
+      <a class="btn" href="./minoxshop-logo-tiktok.png" download="minoxshop-logo-tiktok.png">הורדת אווטאר PNG 1080 (מומלץ)</a>
+      <a class="btn alt" href="./minoxshop-logo-tiktok-1200.png" download="minoxshop-logo-tiktok-1200.png">הורדת אווטאר PNG 1200</a>
+      <a class="btn alt" href="./minoxshop-logo-tiktok.jpg" download="minoxshop-logo-tiktok.jpg">הורדת אווטאר JPG</a>
+    </section>
+
+    <section class="card">
+      <h1>ריל MinoxShop — 30 שניות</h1>
+      <p>גרסה מעודכנת: משלוח עד הבית (בלי חינם על המסך). בטלפון לחצו על הזיפ — כך זה יורד ולא רק מנגן.</p>
+      <video src="./minoxshop_reel_30s.mp4" controls playsinline></video>
+      <a class="btn" href="./minoxshop_reel_30s.zip" download="MinoxShop-reel-30s.zip">הורדת זיפ לטלפון (מומלץ)</a>
+      <a class="btn alt" href="./minoxshop_reel_30s.mp4" download="minoxshop_reel_30s.mp4">הורדת MP4</a>
+      <a class="btn alt" href="./minoxshop_reel_30s.mp4" target="_blank" rel="noopener">פתיחה בחלון חדש</a>
+    </section>
+
+    <section class="card dark">
+      <h1>ריל Rogaine טיפות</h1>
+      <p>לחצו על הכפתור כדי להוריד לטלפון. אל תלחצו על הווידאו עצמו — רק על הכפתורים.</p>
+      <img src="cover.jpg" alt="קאבר ריל טיפות" />
+      <a class="btn" href="reel.zip" download="MinoxShop-Rogaine-Liquid.zip">הורד זיפ (וידאו + קאבר)</a>
+      <a class="btn alt" href="reel.mp4" download="MinoxShop-Rogaine-Liquid-Reel.mp4">הורד וידאו בלבד</a>
+      <a class="btn alt" href="cover.jpg" download="MinoxShop-Rogaine-Liquid-COVER.jpg">הורד קאבר</a>
+    </section>
+  </main>
+</body>
+</html>
