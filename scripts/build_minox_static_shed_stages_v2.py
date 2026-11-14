@@ -180,8 +180,8 @@ PLATE_C = kill_bottom_banner(PLATE_C, 0.16)
 BASE_A = fit_square(PLATE_A, SZ, 0.44)
 BASE_C = fit_square(PLATE_C, SZ, 0.44)
 EARLY = ImageEnhance.Brightness(BASE_A).enhance(1.03)
-MID = soft_blend(BASE_A, BASE_C, 0.45)
-LATE = soft_blend(BASE_A, BASE_C, 0.92)  # same head as A/B, clearly denser
+MID = soft_blend(BASE_A, BASE_C, 0.68)  # clearly past A — fine fill visible
+LATE = soft_blend(BASE_A, BASE_C, 1.0)  # full after plate, same framing as A/B
 LATE = ImageEnhance.Contrast(LATE).enhance(1.05)
 
 
