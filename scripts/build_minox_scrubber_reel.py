@@ -58,7 +58,7 @@ def text_size(draw, text, fnt, language=None):
 BEFORE_SRC = ImageEnhance.Contrast(Image.open(ASSETS / "ba-before.jpg").convert("RGB")).enhance(1.06)
 AFTER_SRC = ImageEnhance.Contrast(Image.open(ASSETS / "ba-after.jpg").convert("RGB")).enhance(1.1)
 LOGO = Image.open(ASSETS / "main-logo.png").convert("RGBA")
-PACK = Image.open(ASSETS / "rogaine-double-man.png").convert("RGBA")
+PACK = Image.open(ASSETS / "rogaine-double-man.png").convert("RGBA")  # transparent bg
 
 
 def fit_cover(im: Image.Image, tw: int, th: int, y_bias: float = 0.38) -> Image.Image:
@@ -236,10 +236,11 @@ def frame_at(t: float) -> Image.Image:
     progress = months_to_progress(months)
 
     # Scrubber dominates from first frame
+    # Scrubber fully clears before CTA (no floating month HUD)
     fade_out = 1.0
-    if t >= 9.0:
-        fade_out = max(0.0, 1.0 - (t - 9.0) / 0.7)
-    if fade_out > 0.02:
+    if t >= 8.55:
+        fade_out = max(0.0, 1.0 - (t - 8.55) / 0.55)
+    if fade_out > 0.03:
         draw_scrubber_fullbleed(im, progress, months, pulse=(t * 0.65) % 1.0, alpha=fade_out)
 
     # Hook line above plane (safe from TikTok username)
@@ -276,8 +277,8 @@ def frame_at(t: float) -> Image.Image:
             im.alpha_composite(layer)
 
     # OUTRO 9.2–12.0
-    if t >= 9.0:
-        u = ease_out(min(1.0, (t - 9.0) / 0.55))
+    if t >= 9.15:
+        u = ease_out(min(1.0, (t - 9.15) / 0.5))
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         d = ImageDraw.Draw(layer)
 
