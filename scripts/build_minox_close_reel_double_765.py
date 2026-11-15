@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """MinoxShop CLOSE reel — double pack year offer → WA.
 
-Short conversion closer after the feed post: hook → product+dropper →
-clear ₪765 math → WhatsApp CTA. ~10.5s, 9:16.
+Short conversion closer: product from frame 0 → clear ₪765 → WhatsApp.
+~10.5s, 9:16.
 
-Audio v2: ~96 BPM kick pulse, cut whooshes, price ding, louder master
-for TikTok/Reels retention (same picture cut).
+Audio v3 soft: warm pad + gentle 72 BPM pulse + soft whooshes.
+NO ticks, NO price ding, NO scary beeps (v2 rejected by owner).
 """
 from __future__ import annotations
 
@@ -276,41 +276,54 @@ def pill_caption(im, text, y, size, fill, u, pad=22):
     im.alpha_composite(layer)
 
 
-def price_block(im, u: float):
+def price_block(im, u: float, strike_u: float = 1.0):
     if u < 0.05:
         return
     a = int(255 * min(1.0, u * 1.2))
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    # strike
     draw_mixed_centered(layer, "₪1050", 1180, 34, MUTED, int(a * 0.85), True)
-    # strike line
     d = ImageDraw.Draw(layer)
     tw, _ = measure_mixed(d, "₪1050", 34, True)
     x0 = (W - tw) // 2
-    d.line([(x0, 1198), (x0 + tw, 1198)], fill=(*MUTED, a), width=3)
-    # big price
-    pop = 0.9 + 0.1 * ease_out_back(min(1.0, u))
+    # strike draws L→R with reveal
+    sw = max(0.0, min(1.0, strike_u))
+    d.line([(x0, 1198), (x0 + int(tw * sw), 1198)], fill=(*MUTED, a), width=3)
+    pop = 0.88 + 0.12 * ease_out_back(min(1.0, u))
     draw_mixed_centered(layer, "₪765", 1240, int(92 * pop), GOLD, a, True)
     draw_mixed_centered(layer, "₪64 לחודש  כולל משלוח", 1360, 34, IVORY, a, True)
     draw_mixed_centered(layer, "חיסכון ₪285", 1415, 30, GOLD_SOFT, a, True)
     im.alpha_composite(layer)
 
 
-def cta_block(im, u: float):
+def cta_block(im, u: float, t: float = 0.0):
     if u < 0.05:
         return
     a = int(255 * min(1.0, u * 1.2))
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    # gold CTA bar
     bw, bh = 780, 96
-    x0, y0 = (W - bw) // 2, 1480
-    scale = 0.94 + 0.06 * ease_out_back(min(1.0, u))
+    y0 = 1480
+    # gentle pulse without scary SFX
+    pulse = 1.0 + 0.03 * (0.5 + 0.5 * math.sin((t - 7.9) * 2 * math.pi / 0.9))
+    enter = 0.94 + 0.06 * ease_out_back(min(1.0, u))
+    scale = enter * pulse
     bw2, bh2 = int(bw * scale), int(bh * scale)
     x0 = (W - bw2) // 2
-    d.rounded_rectangle([x0, y0, x0 + bw2, y0 + bh2], 22, fill=(*GOLD, a))
-    draw_mixed_centered(layer, "הזמנה בוואטסאפ", y0 + 22, 40, INK, a, True)
-    draw_mixed_centered(layer, "הקישור בפרופיל", y0 + bh2 + 28, 30, GOLD_SOFT, a, True)
+    y0p = y0 - (bh2 - bh) // 2
+    d.rounded_rectangle([x0, y0p, x0 + bw2, y0p + bh2], 22, fill=(*GOLD, a))
+    draw_mixed_centered(layer, "הזמנה בוואטסאפ", y0p + 22, 40, INK, a, True)
+    draw_mixed_centered(layer, "הקישור בפרופיל", y0p + bh2 + 28, 30, GOLD_SOFT, a, True)
+    im.alpha_composite(layer)
+
+
+def bare_caption(im, text, y, size, fill, u):
+    """Hook text without black pill stickers — one composition with product."""
+    if u < 0.04:
+        return
+    a = int(255 * min(1.0, u * 1.2))
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    scale = 0.94 + 0.06 * ease_out(min(1.0, u))
+    draw_mixed_centered(layer, text, y, max(20, int(size * scale)), fill, a, True)
     im.alpha_composite(layer)
 
 
@@ -325,137 +338,105 @@ def apply_logo(im, alpha: float, y: int = 48):
 def render_frame(i: int) -> Image.Image:
     t = i / FPS
     im = bg(t)
-    apply_logo(im, min(1.0, t / 0.4) if t < DURATION - 0.3 else max(0.0, (DURATION - t) / 0.3))
+    apply_logo(im, min(1.0, t / 0.35) if t < DURATION - 0.3 else max(0.0, (DURATION - t) / 0.3))
 
-    # Beat A — hook 0–2.2
-    u_hook = line_u(t, 0.12, 2.25, 0.22, 0.28)
-    if u_hook > 0:
-        pill_caption(im, "שנה שלמה בבית", 780, 58, IVORY, u_hook)
-        pill_caption(im, "מארז כפול  שתי קופסאות", 900, 36, GOLD, u_hook * 0.95)
-
-    # Beat B — product hero 1.7–5.5
-    u_prod = line_u(t, 1.7, 5.55, 0.32, 0.28)
-    if u_prod > 0:
-        y = 580 + int(6 * math.sin(t * 2.0))
+    # Product from frame 0 — no text-only cold open
+    if t < 5.3:
+        u_prod = ease_out(min(1.0, t / 0.55))
+        y = 560 + int(5 * math.sin(t * 1.8))
         place_product(im, 900, y, pop=u_prod, alpha=1.0)
-        u_lab = line_u(t, 2.4, 5.4, 0.22, 0.25)
+        u_hook = line_u(t, 0.35, 2.4, 0.25, 0.3)
+        if u_hook > 0:
+            bare_caption(im, "שנה שלמה בבית", 1220, 54, IVORY, u_hook)
+            bare_caption(im, "מארז כפול  שתי קופסאות", 1305, 34, GOLD, u_hook * 0.95)
+        u_lab = line_u(t, 2.3, 5.15, 0.22, 0.25)
         if u_lab > 0:
-            pill_caption(im, "נוזל Kirkland  מקורי מארה״ב", 1280, 34, IVORY, u_lab)
+            bare_caption(im, "נוזל Kirkland  מקורי מארה״ב", 1385, 30, IVORY, u_lab)
 
-    # Beat C — offer math 5.3–8.1 (product smaller on top)
-    u_price = line_u(t, 5.3, 8.15, 0.28, 0.22)
+    # Offer math 5.2–8.05
+    u_price = line_u(t, 5.2, 8.1, 0.28, 0.22)
     if u_price > 0:
         place_product(im, 640, 500, pop=u_price, alpha=1.0)
-        price_block(im, u_price)
+        strike_u = ease_out(min(1.0, max(0.0, (t - 5.35) / 0.28)))
+        price_block(im, u_price, strike_u=strike_u)
 
-    # Beat D — WA close 7.9–10.5
-    u_cta = line_u(t, 7.9, 10.5, 0.26, 0.12)
+    # WA close 7.85–10.5
+    u_cta = line_u(t, 7.85, 10.5, 0.26, 0.12)
     if u_cta > 0:
         place_product(im, 560, 460, pop=1.0, alpha=0.95)
-        price_block(im, max(u_price, 0.9))
-        cta_block(im, u_cta)
+        price_block(im, max(u_price, 0.9), strike_u=1.0)
+        cta_block(im, u_cta, t=t)
 
     return im.convert("RGB")
 
 
 def write_soft_audio(path: Path, duration: float, sr: int = 44100):
-    """Retention audio v2 — ~96 BPM pulse + whooshes + ticks + price ding.
+    """Audio v3 soft — warm pad + gentle 72 BPM pulse + soft whooshes.
 
-    Hit map locked to picture: 0.20 open · 1.70–1.80 product · 5.30–5.60 price · 7.90–8.00 CTA.
-    Target louder than v1 (~−18 dBFS RMS) without clipping.
+    NO ticks, NO price ding, NO scary high beeps. Target ~−22 dBFS, peak ≤ −2 dB.
     """
     n = int(sr * duration)
-    beat = 60.0 / 96.0  # 0.625s
+    beat = 60.0 / 72.0
     samples = [0.0] * n
-
-    def add(i: int, v: float):
-        if 0 <= i < n:
-            samples[i] += v
-
-    # Precompute noise for whooshes
-    rng = np.random.default_rng(42)
+    rng = np.random.default_rng(7)
     noise = rng.standard_normal(n).astype(np.float64)
 
     for i in range(n):
         t = i / sr
-        # --- kick pulse every beat ---
-        kick = 0.0
-        # phase within beat
-        kphase = (t % beat)
-        if kphase < 0.08:
-            # decaying thump 60 Hz
-            kick_amp = 0.22 - 0.10 * (t / max(duration, 0.01))  # 0.22 → ~0.12
-            kick = kick_amp * math.exp(-kphase * 55) * math.sin(2 * math.pi * 62 * kphase)
-        # duck pad under kick
-        duck = 0.55 if kphase < 0.05 else (0.55 + 0.45 * min(1.0, (kphase - 0.05) / 0.12) if kphase < 0.17 else 1.0)
+        kphase = t % beat
+        pulse = 0.0
+        if kphase < 0.14:
+            pulse = 0.085 * math.exp(-kphase * 18) * math.sin(2 * math.pi * 55 * kphase)
+        duck = 0.78 if kphase < 0.06 else (
+            0.78 + 0.22 * min(1.0, (kphase - 0.06) / 0.10) if kphase < 0.16 else 1.0
+        )
+        breathe = 0.72 + 0.28 * math.sin(2 * math.pi * 0.28 * t)
+        pad = (
+            0.072 * math.sin(2 * math.pi * 98 * t)
+            + 0.040 * math.sin(2 * math.pi * 147 * t)
+            + 0.018 * math.sin(2 * math.pi * 196 * t)
+        ) * breathe * duck
+        shim = 0.012 * math.sin(2 * math.pi * 392 * t) * (0.55 + 0.45 * math.sin(2 * math.pi * 0.45 * t))
 
-        # --- warm pad (quieter under kicks) ---
-        breathe = 0.6 + 0.4 * math.sin(2 * math.pi * 0.35 * t)
-        pad = (0.055 * math.sin(2 * math.pi * 110 * t) + 0.028 * math.sin(2 * math.pi * 164.8 * t)) * breathe * duck
+        # price warmth swell (replaces ding)
+        if 5.30 <= t <= 5.90:
+            pad *= 1.0 + 0.18 * ease_in_out(min(1.0, (t - 5.30) / 0.40))
 
-        # --- shimmer (more present) ---
-        shim = 0.03 * math.sin(2 * math.pi * 990 * t) * (0.5 + 0.5 * math.sin(2 * math.pi * 0.5 * t))
-
-        # CTA swell 7.85–8.40
         swell = 1.0
         if 7.85 <= t <= 10.2:
-            swell = 1.0 + 0.55 * ease_in_out(min(1.0, (t - 7.85) / 0.55))
+            swell = 1.0 + 0.32 * ease_in_out(min(1.0, (t - 7.85) / 0.70))
 
-        samples[i] = (pad + shim) * swell + kick
+        samples[i] = (pad + shim) * swell + pulse
 
-    # --- whooshes (band-ish noise bursts) ---
-    for at, amp in ((1.70, 0.20), (5.30, 0.22), (7.90, 0.24)):
-        for j in range(int(0.12 * sr)):
+    # gentle whooshes only
+    for at, amp in ((1.70, 0.09), (5.30, 0.10), (7.90, 0.11)):
+        for j in range(int(0.18 * sr)):
             tt = j / sr
             idx = int(at * sr) + j
             if idx >= n:
                 break
-            env = math.exp(-tt * 22) * (1 - abs(tt - 0.04) / 0.08 if tt < 0.08 else 0.0)
-            # cheap BP feel: difference of two smoothings via sine AM mid
-            who = amp * env * noise[idx] * math.sin(2 * math.pi * 900 * tt)
-            samples[idx] += who
-            # brief pad duck around whoosh
-            for k in range(int(0.05 * sr)):
-                di = idx + k
-                if di < n:
-                    samples[di] *= 0.55 + 0.45 * (k / max(1, int(0.05 * sr)))
+            if tt < 0.05:
+                env = tt / 0.05
+            else:
+                env = max(0.0, 1.0 - (tt - 0.05) / 0.13)
+            env *= math.exp(-tt * 14)
+            samples[idx] += amp * env * noise[idx] * math.sin(2 * math.pi * 420 * tt)
 
-    # --- tick accents ---
-    for at, amp in ((0.20, 0.28), (1.80, 0.30), (5.60, 0.34), (8.00, 0.36)):
-        for j in range(int(0.08 * sr)):
-            tt = j / sr
-            idx = int(at * sr) + j
-            if idx >= n:
-                break
-            body = amp * math.exp(-tt * 40) * math.sin(2 * math.pi * 260 * tt)
-            click = amp * 0.55 * math.exp(-tt * 90) * math.sin(2 * math.pi * 2800 * tt)
-            samples[idx] += body + click
-
-    # --- price ding 5.55–5.70 ---
-    for j in range(int(0.10 * sr)):
-        tt = j / sr
-        idx = int(5.55 * sr) + j
-        if idx >= n:
-            break
-        ding = 0.18 * math.exp(-tt * 28) * (
-            math.sin(2 * math.pi * 880 * tt) + 0.45 * math.sin(2 * math.pi * 1760 * tt)
-        )
-        samples[idx] += ding
-
-    # master envelope + peak normalize to ~-1 dBTP with loudness lift
     out = array("h")
     peak = 1e-9
     for i, s in enumerate(samples):
         t = i / sr
         env = 1.0
-        if t < 0.08:
-            env = t / 0.08
+        if t < 0.12:
+            env = t / 0.12
         if t > 10.15:
             env *= max(0.0, (duration - t) / max(0.01, duration - 10.15))
-        samples[i] = s * env
-        peak = max(peak, abs(samples[i]))
-    # aim louder: scale so peak ~0.89 (−1 dBTP-ish)
-    gain = 0.89 / peak
+        v = s * env
+        if abs(v) > 0.95:
+            v = math.tanh(v)
+        samples[i] = v
+        peak = max(peak, abs(v))
+    gain = 0.794 / peak  # ≤ −2 dB peak
     for s in samples:
         out.append(int(max(-1.0, min(1.0, s * gain)) * 32767))
 
@@ -505,7 +486,11 @@ def main():
     ]
     subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     shutil.copy2(out_mp4, ARTIFACTS / mp4_name)
+    v3 = EXPORTS / "MinoxShop-CLOSE-double-765-audioV3-soft-10s.mp4"
+    shutil.copy2(out_mp4, v3)
+    shutil.copy2(out_mp4, ARTIFACTS / v3.name)
     print("OK", out_mp4, out_mp4.stat().st_size)
+    print("V3", v3)
     print("COVER", out_cover)
 
 
