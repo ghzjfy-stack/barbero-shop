@@ -319,9 +319,9 @@ def build() -> Image.Image:
         im.alpha_composite(card, (36, y))
         y += 312
 
-    # footer well inside frame
-    center_he(im, "ממשיכים כי עצירה מחזירה אחורה", 1255, 26, GOLD_SOFT, True)
-    center_he(im, "תוצאות משתנות מאדם לאדם", 1298, 22, MUTED, False)
+    # footer well inside frame — larger/brighter so disclaimer doesn't look broken
+    center_he(im, "ממשיכים כי עצירה מחזירה אחורה", 1248, 28, GOLD_SOFT, True)
+    center_he(im, "תוצאות משתנות מאדם לאדם", 1292, 26, (200, 206, 218), False)
     return im.convert("RGB")
 
 
