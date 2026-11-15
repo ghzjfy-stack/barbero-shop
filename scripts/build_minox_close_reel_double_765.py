@@ -3,6 +3,9 @@
 
 Short conversion closer after the feed post: hook → product+dropper →
 clear ₪765 math → WhatsApp CTA. ~10.5s, 9:16.
+
+Audio v2: ~96 BPM kick pulse, cut whooshes, price ding, louder master
+for TikTok/Reels retention (same picture cut).
 """
 from __future__ import annotations
 
@@ -356,34 +359,111 @@ def render_frame(i: int) -> Image.Image:
 
 
 def write_soft_audio(path: Path, duration: float, sr: int = 44100):
-    """Soft warm pad + light tick accents — not loud."""
+    """Retention audio v2 — ~96 BPM pulse + whooshes + ticks + price ding.
+
+    Hit map locked to picture: 0.20 open · 1.70–1.80 product · 5.30–5.60 price · 7.90–8.00 CTA.
+    Target louder than v1 (~−18 dBFS RMS) without clipping.
+    """
     n = int(sr * duration)
-    buf = array("h")
+    beat = 60.0 / 96.0  # 0.625s
+    samples = [0.0] * n
+
+    def add(i: int, v: float):
+        if 0 <= i < n:
+            samples[i] += v
+
+    # Precompute noise for whooshes
+    rng = np.random.default_rng(42)
+    noise = rng.standard_normal(n).astype(np.float64)
+
     for i in range(n):
         t = i / sr
-        # warm low pad
-        pad = 0.08 * math.sin(2 * math.pi * 110 * t) * (0.6 + 0.4 * math.sin(2 * math.pi * 0.35 * t))
-        pad += 0.04 * math.sin(2 * math.pi * 164.8 * t)
-        # soft high shimmer
-        shim = 0.015 * math.sin(2 * math.pi * 660 * t) * math.sin(2 * math.pi * 0.5 * t)
-        # beat accents at ~0.2, 1.8, 5.6, 8.0
-        accent = 0.0
-        for at, amp in ((0.2, 0.12), (1.8, 0.14), (5.6, 0.16), (8.0, 0.18)):
-            dt = t - at
-            if 0 <= dt < 0.12:
-                accent += amp * math.exp(-dt * 28) * math.sin(2 * math.pi * 220 * dt)
+        # --- kick pulse every beat ---
+        kick = 0.0
+        # phase within beat
+        kphase = (t % beat)
+        if kphase < 0.08:
+            # decaying thump 60 Hz
+            kick_amp = 0.22 - 0.10 * (t / max(duration, 0.01))  # 0.22 → ~0.12
+            kick = kick_amp * math.exp(-kphase * 55) * math.sin(2 * math.pi * 62 * kphase)
+        # duck pad under kick
+        duck = 0.55 if kphase < 0.05 else (0.55 + 0.45 * min(1.0, (kphase - 0.05) / 0.12) if kphase < 0.17 else 1.0)
+
+        # --- warm pad (quieter under kicks) ---
+        breathe = 0.6 + 0.4 * math.sin(2 * math.pi * 0.35 * t)
+        pad = (0.055 * math.sin(2 * math.pi * 110 * t) + 0.028 * math.sin(2 * math.pi * 164.8 * t)) * breathe * duck
+
+        # --- shimmer (more present) ---
+        shim = 0.03 * math.sin(2 * math.pi * 990 * t) * (0.5 + 0.5 * math.sin(2 * math.pi * 0.5 * t))
+
+        # CTA swell 7.85–8.40
+        swell = 1.0
+        if 7.85 <= t <= 10.2:
+            swell = 1.0 + 0.55 * ease_in_out(min(1.0, (t - 7.85) / 0.55))
+
+        samples[i] = (pad + shim) * swell + kick
+
+    # --- whooshes (band-ish noise bursts) ---
+    for at, amp in ((1.70, 0.20), (5.30, 0.22), (7.90, 0.24)):
+        for j in range(int(0.12 * sr)):
+            tt = j / sr
+            idx = int(at * sr) + j
+            if idx >= n:
+                break
+            env = math.exp(-tt * 22) * (1 - abs(tt - 0.04) / 0.08 if tt < 0.08 else 0.0)
+            # cheap BP feel: difference of two smoothings via sine AM mid
+            who = amp * env * noise[idx] * math.sin(2 * math.pi * 900 * tt)
+            samples[idx] += who
+            # brief pad duck around whoosh
+            for k in range(int(0.05 * sr)):
+                di = idx + k
+                if di < n:
+                    samples[di] *= 0.55 + 0.45 * (k / max(1, int(0.05 * sr)))
+
+    # --- tick accents ---
+    for at, amp in ((0.20, 0.28), (1.80, 0.30), (5.60, 0.34), (8.00, 0.36)):
+        for j in range(int(0.08 * sr)):
+            tt = j / sr
+            idx = int(at * sr) + j
+            if idx >= n:
+                break
+            body = amp * math.exp(-tt * 40) * math.sin(2 * math.pi * 260 * tt)
+            click = amp * 0.55 * math.exp(-tt * 90) * math.sin(2 * math.pi * 2800 * tt)
+            samples[idx] += body + click
+
+    # --- price ding 5.55–5.70 ---
+    for j in range(int(0.10 * sr)):
+        tt = j / sr
+        idx = int(5.55 * sr) + j
+        if idx >= n:
+            break
+        ding = 0.18 * math.exp(-tt * 28) * (
+            math.sin(2 * math.pi * 880 * tt) + 0.45 * math.sin(2 * math.pi * 1760 * tt)
+        )
+        samples[idx] += ding
+
+    # master envelope + peak normalize to ~-1 dBTP with loudness lift
+    out = array("h")
+    peak = 1e-9
+    for i, s in enumerate(samples):
+        t = i / sr
         env = 1.0
-        if t < 0.15:
-            env = t / 0.15
-        if t > duration - 0.35:
-            env *= max(0.0, (duration - t) / 0.35)
-        s = (pad + shim + accent) * env
-        buf.append(int(max(-1, min(1, s)) * 22000))
+        if t < 0.08:
+            env = t / 0.08
+        if t > 10.15:
+            env *= max(0.0, (duration - t) / max(0.01, duration - 10.15))
+        samples[i] = s * env
+        peak = max(peak, abs(samples[i]))
+    # aim louder: scale so peak ~0.89 (−1 dBTP-ish)
+    gain = 0.89 / peak
+    for s in samples:
+        out.append(int(max(-1.0, min(1.0, s * gain)) * 32767))
+
     with wave.open(str(path), "w") as w:
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(sr)
-        w.writeframes(buf.tobytes())
+        w.writeframes(out.tobytes())
 
 
 def main():
