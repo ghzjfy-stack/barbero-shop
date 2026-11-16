@@ -292,11 +292,11 @@ def place_kit(im, max_w: int, y_center: int, pop: float, alpha: float = 1.0, spe
     p = KIT.copy()
     target = int(max_w * (0.94 + 0.06 * ease_out_back(min(1.0, pop))))
     p.thumbnail((target, target), Image.Resampling.LANCZOS)
-    p = p.filter(ImageFilter.UnsharpMask(radius=1.5, percent=160, threshold=1))
-    p = ImageEnhance.Contrast(p).enhance(1.10)
-    p = ImageEnhance.Color(p).enhance(1.12)
-    p = ImageEnhance.Brightness(p).enhance(1.04)
-    p = ImageEnhance.Sharpness(p).enhance(1.22)
+    p = p.filter(ImageFilter.UnsharpMask(radius=1.15, percent=115, threshold=3))
+    p = ImageEnhance.Contrast(p).enhance(1.05)
+    p = ImageEnhance.Color(p).enhance(1.08)
+    p = ImageEnhance.Brightness(p).enhance(1.02)
+    p = ImageEnhance.Sharpness(p).enhance(1.10)
     if alpha < 0.99:
         p.putalpha(p.split()[-1].point(lambda a: int(a * alpha)))
     pw, ph = p.size
