@@ -314,7 +314,7 @@ def render_frame(i: int) -> Image.Image:
             layer.putalpha(layer.split()[-1].point(lambda a: int(a * fa)))
         im.alpha_composite(layer)
         apply_logo(im, logo_a * 0.85)
-        bare_caption(im, "פה יש חור בזקן", 1480, 50, IVORY, line_u(t, 0.25, 1.95, 0.25, 0.2))
+        bare_caption(im, "יש לי חור בזקן", 1480, 50, IVORY, line_u(t, 0.25, 1.95, 0.25, 0.2))
         return im.convert("RGB")
 
     # B 2.0–3.9: dropper on matching natural gap
