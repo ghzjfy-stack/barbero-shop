@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { fromPrice, products, resolveOffer } from "../data";
+import { fromPrice, productPath, products, resolveOffer } from "../data";
+import { navigate } from "../navigate";
 import { useStore } from "../store";
 import { IconChevron } from "./Icons";
 import Price from "./Price";
@@ -59,7 +60,7 @@ export default function Hero() {
           <p className="inline-block border border-gold/50 bg-gradient-to-l from-gold/20 via-gold/10 to-transparent px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-gold shadow-[0_0_24px_rgba(198,161,91,0.25)]">
             הדגם הנמכר ביותר
           </p>
-          <button type="button" className="mt-3 block w-full text-start" onClick={() => openQuickView(featured.id)}>
+          <button type="button" className="mt-3 block w-full text-start" onClick={() => navigate(productPath(featured.id))}>
             <div className="relative mx-auto h-72 w-full overflow-hidden sm:h-80 md:aspect-[3/4] md:h-auto md:max-h-[min(34rem,calc(100svh-26rem))]">
               <div
                 aria-hidden="true"

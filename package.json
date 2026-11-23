@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "feed": "node scripts/generate-merchant-feed.mjs",
+    "build": "node scripts/generate-merchant-feed.mjs && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
