@@ -2,25 +2,25 @@
 
 16s · 1080×1920 · cross-post IG / TikTok / FB / Shorts
 
-## Downloads (text-fix v2)
-- Video: https://gofile.io/d/VZrTPbS6
-- Cover: https://gofile.io/d/hxUeRoWE
+## Downloads (v3 — soft BF audio + pacing)
+- Video: https://gofile.io/d/hOSugdiM
+- Cover: https://gofile.io/d/llAv29HO
 
 ## Offer
-Rogaine foam men double pack · **₪758** (was ₪998) · save ₪240
+Rogaine foam men double pack · **₪758** (was ₪998) · save ₪240 · ≈₪126/mo
 
-## On-screen copy (natural Hebrew, Arimo + RTL)
-1. Hook — BLACK FRIDAY / Rogaine מארז כפול / במחיר שלא חוזר
-2. Before — מחיר מלא · היה · ₪998
-3. Price — עכשיו רק · ₪758 · חוסכים ₪240 על המארז
-4. Chips — מקורי מארה״ב · מארז כפול לשישה חודשים · קצף 5% לגברים · משלוח מהיר עד הבית
-5. CTA — המחיר הזה עד סוף השבוע · הקישור בפרופיל · MinoxShop
+## Expert-ranked changes (v3)
+1. Soft warm 108 BPM retail bed (no piercing synth hits)
+2. Deal numbers on hook (₪998 → ₪758)
+3. Shorter old-price smash → longer price hero
+4. Two chips + one footer (less clutter)
+5. Clean CTA: price + urgency + הקישור בפרופיל
 
 ## Caption
 ```
 Black Friday על Rogaine מארז כפול 🔥
 ₪998 → ₪758 · מקורי מארה״ב · 6 חודשים
-לינק בביו
+הקישור בפרופיל
 
 #BlackFriday #Rogaine #מינוקסידיל #MinoxShop #נשירתשיער
 ```
