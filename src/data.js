@@ -6,8 +6,29 @@ export const announcements = [
   "אחריות ושירות לקוחות בעברית",
 ];
 
+/** Canonical storefront origin for Merchant / sitemap / absolute image URLs */
+export const SITE_ORIGIN = "https://www.barbero.co.il";
+
 export const FREE_SHIPPING = 499;
 export const SHIPPING_FEE = 39;
+
+export function productPath(id) {
+  return `/product/${id}`;
+}
+
+export function productUrl(id) {
+  return `${SITE_ORIGIN}${productPath(id)}`;
+}
+
+export function absoluteAssetUrl(path) {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${SITE_ORIGIN}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
+export function shippingPriceForProduct(price) {
+  return price >= FREE_SHIPPING ? 0 : SHIPPING_FEE;
+}
 
 export function shippingFeeFor(subtotal) {
   if (subtotal > 0 && subtotal < FREE_SHIPPING) return SHIPPING_FEE;
@@ -114,7 +135,10 @@ export const products = [
     category: "מכונות תספורת",
     rating: 4.9,
     reviews: 114,
-    sku: "BRB-W-SN",
+    sku: "8504-400",
+    mpn: "8504-400",
+    gtin: "043917108834",
+    googleProductCategory: "529",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
     badge: "חדש",
@@ -140,6 +164,9 @@ export const products = [
     rating: 4.8,
     reviews: 56,
     sku: "8173-700",
+    mpn: "8173-700",
+    gtin: "043917027951",
+    googleProductCategory: "528",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
     badge: "Zero Finish",
@@ -170,6 +197,9 @@ export const products = [
     rating: 4.7,
     reviews: 42,
     sku: "9899-100",
+    mpn: "9899-100",
+    gtin: "043917104737",
+    googleProductCategory: "529",
     voltage: "100V-240V (מתח אוניברסלי)",
     origin: "ארה״ב",
     badge: "עמיד למים",

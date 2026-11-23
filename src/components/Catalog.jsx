@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { categories, discountPercent, fromPrice, products, resolveOffer } from "../data";
+import { categories, discountPercent, fromPrice, productPath, products, resolveOffer } from "../data";
+import { navigate } from "../navigate";
 import { useStore } from "../store";
 import { IconHeart, Stars } from "./Icons";
 import Price from "./Price";
@@ -107,8 +108,8 @@ function ProductCard({ product }) {
         <button
           type="button"
           className="absolute inset-0 p-3 sm:p-4"
-          onClick={() => openQuickView(product.id)}
-          aria-label={`מבט מהיר: ${product.name}`}
+          onClick={() => navigate(productPath(product.id))}
+          aria-label={product.name}
         >
           <ProductImage
             src={product.image}
@@ -160,7 +161,7 @@ function ProductCard({ product }) {
             <button
               type="button"
               className="line-clamp-3 h-full w-full text-start leading-6 hover:text-gold-soft"
-              onClick={() => openQuickView(product.id)}
+              onClick={() => navigate(productPath(product.id))}
             >
               <ProductTitle product={product} />
             </button>

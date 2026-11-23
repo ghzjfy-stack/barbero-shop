@@ -8,6 +8,7 @@ import Hero from "./components/Hero";
 import TrustGrid from "./components/TrustGrid";
 import Catalog from "./components/Catalog";
 import About from "./components/About";
+import ProductPage from "./components/ProductPage";
 import Footer from "./components/Footer";
 import CartDrawer from "./components/CartDrawer";
 import WishlistDrawer from "./components/WishlistDrawer";
@@ -17,11 +18,18 @@ import InfoDialog from "./components/InfoDialog";
 import Toast from "./components/Toast";
 import WhatsAppButton from "./components/WhatsAppButton";
 
+function productIdFromPath(path) {
+  const match = path.match(/^\/product\/([^/]+)$/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 function Shell() {
   const path = usePathname();
   const about = path === "/about";
+  const productId = productIdFromPath(path);
 
   useEffect(() => {
+    if (productId) return;
     document.title = about
       ? "אודות | BARBERO"
       : "BARBERO | מכונות תספורת וגילוח ביבוא ישיר";
@@ -30,7 +38,7 @@ function Shell() {
       return;
     }
     document.querySelector(window.location.hash)?.scrollIntoView();
-  }, [about]);
+  }, [about, productId]);
 
   return (
     <>
@@ -45,7 +53,9 @@ function Shell() {
         <Header />
       </div>
       <main>
-        {about ? (
+        {productId ? (
+          <ProductPage productId={productId} />
+        ) : about ? (
           <About />
         ) : (
           <>
