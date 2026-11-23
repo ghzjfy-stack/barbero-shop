@@ -30,20 +30,21 @@ FONT_REG = "/usr/share/fonts/truetype/croscore/Arimo-Regular.ttf"
 # Synthesized from multi-model Hebrew copy (Grok + Composer), expanded for screen story.
 COPY = {
     # Keep Latin brands on their own LTR lines so RTL doesn't flip word order.
+    # Final lines blend Grok/Composer variants + late Grok punch-ups.
     "hook": "BLACK FRIDAY",
     "hook_mid": "Rogaine מארז כפול",
     "hook_sub": "במחיר שלא חוזר",
     "before_tag": "היה",
-    "before_note": "לפני המבצע",
+    "before_note": "מחיר מלא",
     "now_tag": "עכשיו רק",
     "save_line": "חוסכים ₪240 על המארז",
     "chip1": "מקורי מארה״ב",
-    "chip2": "מארז כפול · מספיק ל־6 חודשים",
+    "chip2": "מארז כפול לשישה חודשים",
     "chip3": "קצף 5% לגברים",
     "chip4": "משלוח מהיר עד הבית",
-    "cta_product": "Rogaine מארז כפול",
-    "cta_urgency": "המחיר הזה לא נשאר",
-    "cta_action": "לינק בביו",
+    "cta_product": "Rogaine קצף 5% · מארז כפול",
+    "cta_urgency": "המחיר הזה עד סוף השבוע",
+    "cta_action": "הקישור בפרופיל",
     "cta_brand": "MinoxShop",
     "site": "minox-shop.co.il",
 }
