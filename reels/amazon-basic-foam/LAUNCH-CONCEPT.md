@@ -8,7 +8,9 @@ Pack fact used for the hook: the men’s carton is **blue / navy**, the can is *
 Renderer: `scripts/abc_foam_curiosity_reel.py` (v4 — **cans-only**, boost-safe)  
 Assets: `/tmp/minox-amazon/{box,cans}.png`
 
-**Boost note:** the carton prints “Compare to Men’s Rogaine®…”. Meta often blocks Boost / ads on competitor mentions. The reel uses the **cans packshot only** (no Rogaine text) so the post can be boosted. Hook still asks about the blue USA box; answer is the three cans + facts.
+**Boost note:** the carton prints “Compare to Men’s Rogaine®…”. Reel uses **cans only**. On-screen chips avoid the drug name (`קצף לגברים מארה״ב`). See `CAPTION-BOOST.md`.
+
+If Instagram Boost is still unavailable after that: minoxidil/hair products are often **Boost-blocked by category** — run spend from Ads Manager (Traffic/Sales + Health special category), not the in-app Boost button.
 
 ---
 

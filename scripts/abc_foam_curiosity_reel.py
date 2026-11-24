@@ -55,22 +55,6 @@ def load_rgb(path: Path) -> Image.Image:
     return Image.open(path).convert("RGB")
 
 
-def soft_blur_rogaine_badge(box: Image.Image) -> Image.Image:
-    """Gently blur only the compare-badge circle — keeps carton intact."""
-    im = box.convert("RGBA")
-    w, h = im.size
-    cx, cy, r = int(w * 0.82), int(h * 0.22), int(w * 0.12)
-    pad = r + 10
-    x0, y0 = max(0, cx - pad), max(0, cy - pad)
-    x1, y1 = min(w, cx + pad), min(h, cy + pad)
-    region = im.crop((x0, y0, x1, y1)).filter(ImageFilter.GaussianBlur(12))
-    mask = Image.new("L", (x1 - x0, y1 - y0), 0)
-    md = ImageDraw.Draw(mask)
-    md.ellipse((cx - r - x0, cy - r - y0, cx + r - x0, cy + r - y0), fill=230)
-    mask = mask.filter(ImageFilter.GaussianBlur(7))
-    im.paste(region, (x0, y0), mask)
-    return im.convert("RGB")
-
 
 def _corner_bg(im: Image.Image) -> tuple[int, int, int]:
     """Sample packshot corner so the tall stage matches with no seam."""
@@ -227,7 +211,8 @@ def chip_at(t: float) -> tuple[list[str], float, float] | None:
         op = ease_out(min(1.0, local / 0.22))
         if t > 7.4:
             op = 1.0 - ease_in((t - 7.4) / 0.2)
-        return (["מינוקסידיל 5% · קצף לגברים"], op, 0.0)
+        # No drug name on-screen — Meta Boost often flags minoxidil/health claims
+        return (["קצף לגברים מארה״ב"], op, 0.0)
     if 7.7 <= t < 9.3:
         local = t - 7.7
         op = ease_out(min(1.0, local / 0.2))
@@ -355,7 +340,7 @@ def render() -> Path:
         shutil.rmtree(frames)
     frames.mkdir()
 
-    # Boost-safe: cans only (carton has 'Compare to Rogaine' — Meta rejects boost).
+    # Cans only (no Rogaine carton). Chip copy avoids the drug name for Boost scans.
     box = load_rgb(ASSETS / "box.png")
     cans = load_rgb(ASSETS / "cans.png")
 
