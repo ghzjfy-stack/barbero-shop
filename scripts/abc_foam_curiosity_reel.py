@@ -150,7 +150,7 @@ def chip_block(canvas, cy, lines, *, size=48, opacity=1.0, slide_x=0.0, pop=1.0)
 
 
 def chip_at(t: float):
-    # Hook → BF smash price early → proof → CTA (user: pull buyers now)
+    # Box hook → cans reveal + BF → price → proof → door delivery → warmth → CTA
     if 0.25 <= t < 2.8:
         local = t - 0.25
         if local < 0.25:
@@ -158,66 +158,109 @@ def chip_at(t: float):
         if t > 2.55:
             return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.55) / 0.25), 0.0, 1.0)
         return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0)
-    if 2.9 <= t < 5.0:
+    if 2.9 <= t < 4.9:
         local = t - 2.9
         op = ease_out(min(1, local / 0.18))
-        if t > 4.8:
-            op = 1 - ease_in((t - 4.8) / 0.2)
+        if t > 4.7:
+            op = 1 - ease_in((t - 4.7) / 0.2)
         return (["BLACK FRIDAY"], op, 0.0, 1.14 if local < 0.28 else 1.0)
-    if 5.1 <= t < 7.4:
-        local = t - 5.1
+    if 5.0 <= t < 7.2:
+        local = t - 5.0
         op = ease_out(min(1, local / 0.16))
-        if t > 7.2:
-            op = 1 - ease_in((t - 7.2) / 0.2)
+        if t > 7.0:
+            op = 1 - ease_in((t - 7.0) / 0.2)
         return (["מחיר שובר שוק", "395₪"], op, 0.0, 1.16 if local < 0.28 else 1.0)
-    if 7.5 <= t < 9.6:
-        local = t - 7.5
+    if 7.3 <= t < 9.2:
+        local = t - 7.3
         op = ease_out(min(1, local / 0.18))
-        if t > 9.4:
-            op = 1 - ease_in((t - 9.4) / 0.2)
+        if t > 9.0:
+            op = 1 - ease_in((t - 9.0) / 0.2)
         return (["3 חודשים · קצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
-    if 9.7 <= t < 12.2:
-        local = t - 9.7
+    if 9.3 <= t < 11.3:
+        local = t - 9.3
         op = ease_out(min(1, local / 0.18))
-        if t > 12.0:
-            op = 1 - ease_in((t - 12.0) / 0.2)
-        return (["יבוא מארה״ב · משלוח חינם"], op, 0.0, 1.0)
-    if 12.4 <= t <= 15.01:
-        local = t - 12.4
+        if t > 11.1:
+            op = 1 - ease_in((t - 11.1) / 0.2)
+        return (["משלוח חינם עד הבית", "עם שליח"], op, 0.0, 1.04 if local < 0.25 else 1.0)
+    if 11.4 <= t < 12.8:
+        local = t - 11.4
+        op = ease_out(min(1, local / 0.2))
+        if t > 12.6:
+            op = 1 - ease_in((t - 12.6) / 0.2)
+        return (["אנחנו פה בשבילכם"], op, 0.0, 1.08 if local < 0.28 else 1.0)
+    if 12.9 <= t <= 15.01:
+        local = t - 12.9
         return (["הקישור בפרופיל"], ease_out(min(1, local / 0.22)), 0.0, 1.08 if local < 0.28 else 1.0)
     return None
 
 
 def beat_camera(t: float) -> tuple[float, float, float, float]:
-    """zoom≤1.0 so padded trio never clips caps/bases; motion = pan + flash."""
-    if t < 2.9:
+    """zoom≤1.0; box open then cans; motion = pan + flash on reveal."""
+    if t < 2.9:  # box curiosity
         local = t / 2.9
-        return 1.0, 0.48 + 0.04 * ease_out(local), 0.5, 0.0
-    if t < 5.0:  # BF hit
+        return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, 0.0
+    if t < 5.0:  # reveal + BF
         local = (t - 2.9) / 2.1
-        flash = 0.55 * (1 - local / 0.1) if local < 0.1 else 0.0
+        flash = 0.6 * (1 - local / 0.12) if local < 0.12 else 0.0
         return 1.0, 0.52 - 0.04 * ease_out(local), 0.5, max(0, flash)
-    if t < 7.4:  # price smash
-        local = (t - 5.0) / 2.4
-        flash = 0.5 * (1 - local / 0.1) if local < 0.1 else 0.0
+    if t < 7.2:
+        local = (t - 5.0) / 2.2
+        flash = 0.45 * (1 - local / 0.1) if local < 0.1 else 0.0
         return 1.0, 0.50, 0.5, max(0, flash)
-    if t < 9.6:
-        local = (t - 7.4) / 2.2
-        flash = 0.35 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, max(0, flash)
-    if t < 12.4:
-        local = (t - 9.6) / 2.8
+    if t < 9.3:
+        local = (t - 7.2) / 2.1
+        return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, 0.0
+    if t < 11.4:
+        local = (t - 9.3) / 2.1
         return 1.0, 0.54 - 0.08 * ease_out(local), 0.5, 0.0
-    local = (t - 12.4) / 2.6
-    flash = 0.3 * (1 - local / 0.1) if local < 0.1 else 0.0
+    if t < 12.9:
+        return 1.0, 0.50, 0.5, 0.0
+    local = (t - 12.9) / 2.1
+    flash = 0.28 * (1 - local / 0.1) if local < 0.1 else 0.0
     return 1.0, 0.50, 0.5, max(0, flash)
 
 
-def frame_at(i: int, trio: Image.Image, single: Image.Image) -> Image.Image:
+def prepare_logo(path: Path, width: int = 210) -> Image.Image:
+    """Knock out near-white plate so logo sits clean on the reel."""
+    im = Image.open(path).convert("RGBA")
+    arr = np.array(im)
+    rgb = arr[..., :3].astype(np.int16)
+    white = (rgb[:, :, 0] > 232) & (rgb[:, :, 1] > 232) & (rgb[:, :, 2] > 225)
+    arr[..., 3] = np.where(white, 0, 255).astype(np.uint8)
+    im = Image.fromarray(arr, "RGBA")
+    bbox = im.getbbox()
+    if bbox:
+        im = im.crop(bbox)
+    h = max(1, int(im.height * width / im.width))
+    return im.resize((width, h), Image.Resampling.LANCZOS)
+
+
+def paste_logo(canvas: Image.Image, logo: Image.Image, *, opacity: float = 0.92) -> None:
+    if opacity <= 0.02:
+        return
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    lw, lh = logo.size
+    x = (W - lw) // 2
+    y = H - lh - 110
+    # soft white pillow so it matches other MinoxShop reels
+    pillow = Image.new("RGBA", (lw + 48, lh + 36), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pillow)
+    pd.rounded_rectangle((0, 0, lw + 48, lh + 36), radius=22, fill=(255, 255, 255, int(210 * opacity)))
+    layer.alpha_composite(pillow, (x - 24, y - 18))
+    mark = logo.copy()
+    if opacity < 0.99:
+        a = mark.split()[-1].point(lambda v: int(v * opacity))
+        mark.putalpha(a)
+    layer.alpha_composite(mark, (x, y))
+    canvas.alpha_composite(layer)
+
+
+def frame_at(i: int, box: Image.Image, trio: Image.Image, logo: Image.Image) -> Image.Image:
     t = i / FPS
     zoom, fx, fy, flash = beat_camera(t)
-    # Always padded trio — skinny single strip looked cut / postcard
-    plate = cover_window(trio, zoom=zoom, focus_x=fx, focus_y=fy)
+    # Hook on the blue carton (matches copy) → reveal cans
+    src = box if t < 2.9 else trio
+    plate = cover_window(src, zoom=zoom, focus_x=fx, focus_y=fy)
     canvas = grade(plate)
     canvas = flash_white(canvas, flash)
     info = chip_at(t)
@@ -228,9 +271,15 @@ def frame_at(i: int, trio: Image.Image, single: Image.Image) -> Image.Image:
             size = 58
         if lines == ["מחיר שובר שוק", "395₪"]:
             size = 56
+        if lines == ["אנחנו פה בשבילכם"]:
+            size = 52
         if lines == ["הקישור בפרופיל"]:
             size = 58
         chip_block(canvas, int(H * 0.14), lines, size=size, opacity=op, slide_x=slide, pop=pop)
+    # Logo fades in after the box tease — brand match to other reels
+    if t >= 2.7:
+        lo = ease_out(min(1.0, (t - 2.7) / 0.45))
+        paste_logo(canvas, logo, opacity=0.9 * lo)
     return add_grain(canvas, amount=0.01, seed=i * 23 + 2).convert("RGB")
 
 
@@ -344,6 +393,9 @@ def render() -> Path:
     frames.mkdir()
 
     cans = load_rgb(ASSETS / "cans.png")
+    box_src = load_rgb(ASSETS / "box.png")
+    logo_path = Path(os.environ.get("MINOX_LOGO", "/tmp/minox-mp/main-logo.png"))
+    logo = prepare_logo(logo_path, width=210)
 
     def pad_pack(im: Image.Image, top: float = 0.22, side: float = 0.08, bottom: float = 0.08) -> Image.Image:
         pad_t = int(im.height * top)
@@ -354,11 +406,11 @@ def render() -> Path:
         return out
 
     trio = pad_pack(cans, top=0.26, side=0.12, bottom=0.14)
-    single = trio  # unused — kept for call signature
+    box = pad_pack(box_src, top=0.22, side=0.14, bottom=0.12)
 
-    print(f"Rendering {N} frames (v7 full-bleed)…")
+    print(f"Rendering {N} frames (v7 box→cans + logo)…")
     for i in range(N):
-        im = frame_at(i, trio, single)
+        im = frame_at(i, box, trio, logo)
         im.save(frames / f"f_{i:05d}.png")
         if i % 60 == 0:
             print(f"  {i}/{N}")
@@ -381,7 +433,7 @@ def render() -> Path:
         stderr=subprocess.DEVNULL,
     )
 
-    cover = frame_at(int(1.0 * FPS), trio, single)
+    cover = frame_at(int(1.0 * FPS), box, trio, logo)
     cover_path = OUT / "MinoxShop_ABC_curiosity_COVER.jpg"
     cover.save(cover_path, quality=95)
 
@@ -390,9 +442,8 @@ def render() -> Path:
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_COVER.jpg")
     shutil.copy2(mp4, ART / "abc_foam_curiosity_demo.mp4")
     shutil.copy2(cover_path, ART / "abc_foam_curiosity_cover.jpg")
-    for label, sec in (("hook", 1.0), ("left", 4.4), ("price", 9.4), ("cta", 13.3)):
-        frame_at(int(sec * FPS), trio, single).save(ART / f"abc_preview_{label}.jpg", quality=92)
-
+    for label, sec in (("hook", 1.0), ("bf", 3.5), ("ship", 10.2), ("love", 12.0), ("cta", 13.5)):
+        frame_at(int(sec * FPS), box, trio, logo).save(ART / f"abc_preview_{label}.jpg", quality=92)
     print("Wrote", mp4)
     return mp4
 
