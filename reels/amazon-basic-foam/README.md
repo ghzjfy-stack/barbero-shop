@@ -31,7 +31,8 @@ Cross-platform (what actually moves hook rate / replays):
 ### YouTube Shorts
 - Title (searchable): `מינוקסידיל 5% קצף לגברים | Black Friday 395₪`
 - Description: first line = same promise as chips; add `#Shorts` optional.
-- Don’t start with logo/intro — cold open (already).
+- Shorts **cannot** set a custom cover — upload `MinoxShop_ABC_curiosity_YT.mp4` (or the main file after re-render): it holds the BF+395 cover for ~0.8s at frame 0. In upload → choose that first frame as the thumbnail.
+- Don’t start with logo/intro after the cover hold — cold open into the curiosity beat.
 
 ### Instagram Reels
 - Paste `CAPTION.md`. 3–5 hashtags max.

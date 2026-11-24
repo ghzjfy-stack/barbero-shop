@@ -23,6 +23,10 @@ from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
 W, H, FPS, DUR = 1080, 1920, 30, 15
 N = FPS * DUR
+# YouTube Shorts can't set a custom thumb — hold the grid cover on frame 0
+# so uploaders can pick it (IG/TikTok still use the separate COVER.jpg).
+COVER_HOLD_SEC = 0.8
+COVER_HOLD_N = int(round(COVER_HOLD_SEC * FPS))
 
 ASSETS = Path(os.environ.get("ABC_ASSETS", "/tmp/minox-amazon"))
 OUT = Path(os.environ.get("ABC_OUT", "/tmp/abc-foam-curiosity"))
@@ -510,6 +514,68 @@ def make_audio(path: Path) -> None:
         w.writeframes(b"".join(struct.pack("<h", int(x * 30000)) for x in audio))
 
 
+def build_grid_cover(box_src: Image.Image) -> Image.Image:
+    """Navy BF + 395₪ cover — center-safe for IG grid + YT Shorts frame-0 thumb."""
+    safe_top = 420
+    canvas = Image.new("RGBA", (W, H), (8, 18, 42, 255))
+    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    for i in range(12, 0, -1):
+        r = 120 + i * 45
+        gd.ellipse((W // 2 - r, 780 - r, W // 2 + r, 780 + r), fill=(28, 60, 120, max(0, 10 - i)))
+    canvas = Image.alpha_composite(canvas, glow)
+
+    box = box_src.convert("RGBA")
+    bw = 500
+    bh = int(box.height * bw / box.width)
+    box = box.resize((bw, bh), Image.Resampling.LANCZOS)
+    plate = Image.new("RGBA", (bw + 40, bh + 32), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(plate)
+    pd.rounded_rectangle((0, 0, bw + 40, bh + 32), radius=18, fill=(248, 249, 251, 255))
+    bx = (W - (bw + 40)) // 2
+    by = safe_top + 28
+    canvas.alpha_composite(plate, (bx, by))
+    canvas.alpha_composite(box, (bx + 20, by + 16))
+
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    y = by + bh + 32 + 18
+
+    def measure(text: str, size: int) -> tuple[int, int]:
+        bb = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), text, font=font(size))
+        return bb[2] - bb[0], bb[3] - bb[1]
+
+    def centered(yy: int, text: str, size: int, fill: tuple[int, ...], *, rtl: bool = True) -> None:
+        kw: dict = dict(font=font(size), fill=fill, anchor="mm")
+        if rtl and any("\u0590" <= c <= "\u05FF" for c in text):
+            kw["direction"] = "rtl"
+            kw["language"] = "he"
+        d.text((W // 2, yy), text, **kw)
+
+    bf = "BLACK FRIDAY"
+    ww, hh = measure(bf, 46)
+    bfw, bfh = ww + 52, hh + 26
+    bfx = (W - bfw) // 2
+    d.rounded_rectangle((bfx, y, bfx + bfw, y + bfh), radius=12, fill=(196, 22, 32, 255))
+    centered(y + bfh // 2, bf, 46, (255, 255, 255, 255), rtl=False)
+    y += bfh + 18
+
+    price = "395₪"
+    ww, hh = measure(price, 160)
+    pw, ph = ww + 80, hh + 44
+    px = (W - pw) // 2
+    d.rounded_rectangle((px, y, px + pw, y + ph), radius=28, fill=(0, 0, 0, 250))
+    centered(y + ph // 2, price, 160, (255, 255, 255, 255), rtl=False)
+    y += ph + 20
+
+    centered(y, "מחיר שובר שוק", 54, (255, 205, 55, 255))
+    y += 62
+    centered(y, "מינוקסידיל 5% · 3 חודשים קצף", 36, (225, 232, 245, 255))
+    y += 52
+    centered(y, "מה יש בקופסה הכחולה מארה״ב?", 34, (165, 180, 210, 255))
+    return Image.alpha_composite(canvas, layer).convert("RGB")
+
+
 def render() -> Path:
     OUT.mkdir(parents=True, exist_ok=True)
     frames = OUT / "frames"
@@ -533,16 +599,38 @@ def render() -> Path:
     trio = pad_pack(cans, top=0.26, side=0.12, bottom=0.14)
     box = pad_pack(box_src, top=0.22, side=0.14, bottom=0.12)
 
-    print(f"Rendering {N} frames (v8 jump-cuts + price smash)…")
+    cover = build_grid_cover(box_src)
+    cover_path = OUT / "MinoxShop_ABC_curiosity_COVER.jpg"
+    cover.save(cover_path, quality=95)
+
+    total = COVER_HOLD_N + N
+    print(f"Rendering {total} frames ({COVER_HOLD_SEC:.1f}s cover hold + v8 body)…")
+    for i in range(COVER_HOLD_N):
+        cover.save(frames / f"f_{i:05d}.png")
     for i in range(N):
         im = frame_at(i, box, trio, logo)
-        im.save(frames / f"f_{i:05d}.png")
+        im.save(frames / f"f_{COVER_HOLD_N + i:05d}.png")
         if i % 60 == 0:
-            print(f"  {i}/{N}")
+            print(f"  body {i}/{N}")
 
     audio = OUT / "audio.wav"
     make_audio(audio)
+    # Pad lead silence so music still syncs to the body after the cover hold
+    if COVER_HOLD_N > 0:
+        with wave.open(str(audio), "rb") as r:
+            sr = r.getframerate()
+            sw = r.getsampwidth()
+            ch = r.getnchannels()
+            body = r.readframes(r.getnframes())
+        lead = b"\x00" * (int(COVER_HOLD_SEC * sr) * sw * ch)
+        with wave.open(str(audio), "wb") as w:
+            w.setnchannels(ch)
+            w.setsampwidth(sw)
+            w.setframerate(sr)
+            w.writeframes(lead + body)
+
     mp4 = OUT / "MinoxShop_ABC_curiosity_15s.mp4"
+    yt_mp4 = OUT / "MinoxShop_ABC_curiosity_YT.mp4"
     subprocess.check_call(
         [
             "ffmpeg", "-y",
@@ -557,47 +645,17 @@ def render() -> Path:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-
-    # Dedicated grid cover: dark high-contrast Hebrew (readable in IG profile thumb)
-    cover = frame_at(int(0.5 * FPS), box, trio, logo).convert("RGBA")
-    # Reinforce hook as big dark+gold plate so grid doesn't look like bare cans
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    od = ImageDraw.Draw(overlay)
-    for y in range(0, int(H * 0.34)):
-        a = int(140 * (1 - y / (H * 0.34)) ** 1.1)
-        od.line((0, y, W, y), fill=(8, 12, 20, a))
-    cover = Image.alpha_composite(cover, overlay)
-    chip_block(
-        cover,
-        int(H * 0.14),
-        ["מה יש בקופסה הכחולה", "מארה״ב?"],
-        size=68,
-        opacity=1.0,
-        style="stamp",
-        pop=1.0,
-    )
-    # BF · price micro-pill under hook
-    pill = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    pd = ImageDraw.Draw(pill)
-    label = "BLACK FRIDAY · 395₪"
-    f = font(38)
-    bb = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), label, font=f)
-    bw, bh = bb[2] - bb[0] + 40, bb[3] - bb[1] + 24
-    bx, by = (W - bw) // 2, int(H * 0.22)
-    pd.rounded_rectangle((bx, by, bx + bw, by + bh), radius=18, fill=(255, 255, 255, 245))
-    draw_text(pd, (bx + bw // 2, by + bh // 2), label, size=38, fill=(*INK, 255))
-    cover = Image.alpha_composite(cover, pill)
-    cover_path = OUT / "MinoxShop_ABC_curiosity_COVER.jpg"
-    cover.convert("RGB").save(cover_path, quality=95)
+    shutil.copy2(mp4, yt_mp4)
 
     ART.mkdir(parents=True, exist_ok=True)
     shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_15s.mp4")
+    shutil.copy2(yt_mp4, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_YT.mp4")
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_COVER.jpg")
     shutil.copy2(mp4, ART / "abc_foam_curiosity_demo.mp4")
     shutil.copy2(cover_path, ART / "abc_foam_curiosity_cover.jpg")
     for label, sec in (("hook", 0.4), ("bf", 3.0), ("clarity", 4.8), ("tease", 6.5), ("price", 7.8), ("cta", 14.2)):
         frame_at(int(sec * FPS), box, trio, logo).save(ART / f"abc_preview_{label}.jpg", quality=92)
-    print("Wrote", mp4)
+    print("Wrote", mp4, "+ cover hold for YT thumb")
     return mp4
 
 
