@@ -150,104 +150,84 @@ def chip_block(canvas, cy, lines, *, size=48, opacity=1.0, slide_x=0.0, pop=1.0)
 
 
 def chip_at(t: float):
-    if 0.28 <= t < 3.8:
-        local = t - 0.28
-        if local < 0.28:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(local / 0.28), 44 * (1 - ease_out(local / 0.28)), 0.94 + 0.1 * ease_out(local / 0.28))
-        if t > 3.55:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 3.55) / 0.25), 0.0, 1.0)
+    # Hook → BF smash price early → proof → CTA (user: pull buyers now)
+    if 0.25 <= t < 2.8:
+        local = t - 0.25
+        if local < 0.25:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(local / 0.25), 40 * (1 - ease_out(local / 0.25)), 0.95 + 0.1 * ease_out(local / 0.25))
+        if t > 2.55:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.55) / 0.25), 0.0, 1.0)
         return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0)
-    if 3.9 <= t < 6.6:
-        local = t - 3.9
-        op = ease_out(min(1, local / 0.2))
-        if t > 6.4:
-            op = 1 - ease_in((t - 6.4) / 0.2)
-        return (["קצף לגברים מארה״ב"], op, 0.0, 1.0 + 0.08 * (1 - ease_out(min(1, local / 0.3))))
-    if 6.7 <= t < 8.8:
-        local = t - 6.7
+    if 2.9 <= t < 5.0:
+        local = t - 2.9
         op = ease_out(min(1, local / 0.18))
-        if t > 8.6:
-            op = 1 - ease_in((t - 8.6) / 0.2)
-        return (["3 חודשים"], op, 0.0, 1.08 if local < 0.25 else 1.0)
-    if 8.9 <= t < 10.7:
-        local = t - 8.9
+        if t > 4.8:
+            op = 1 - ease_in((t - 4.8) / 0.2)
+        return (["BLACK FRIDAY"], op, 0.0, 1.14 if local < 0.28 else 1.0)
+    if 5.1 <= t < 7.4:
+        local = t - 5.1
+        op = ease_out(min(1, local / 0.16))
+        if t > 7.2:
+            op = 1 - ease_in((t - 7.2) / 0.2)
+        return (["מחיר שובר שוק", "395₪"], op, 0.0, 1.16 if local < 0.28 else 1.0)
+    if 7.5 <= t < 9.6:
+        local = t - 7.5
         op = ease_out(min(1, local / 0.18))
-        if t > 10.5:
-            op = 1 - ease_in((t - 10.5) / 0.2)
-        return (["395₪"], op, 0.0, 1.12 if local < 0.25 else 1.0)
-    if 10.8 <= t < 12.7:
-        local = t - 10.8
-        op = ease_out(min(1, local / 0.2))
-        if t > 12.5:
-            op = 1 - ease_in((t - 12.5) / 0.2)
+        if t > 9.4:
+            op = 1 - ease_in((t - 9.4) / 0.2)
+        return (["3 חודשים · קצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
+    if 9.7 <= t < 12.2:
+        local = t - 9.7
+        op = ease_out(min(1, local / 0.18))
+        if t > 12.0:
+            op = 1 - ease_in((t - 12.0) / 0.2)
         return (["יבוא מארה״ב · משלוח חינם"], op, 0.0, 1.0)
-    if 12.85 <= t <= 15.01:
-        local = t - 12.85
-        return (["הקישור בפרופיל"], ease_out(min(1, local / 0.25)), 0.0, 1.06 if local < 0.3 else 1.0)
+    if 12.4 <= t <= 15.01:
+        local = t - 12.4
+        return (["הקישור בפרופיל"], ease_out(min(1, local / 0.22)), 0.0, 1.08 if local < 0.28 else 1.0)
     return None
 
 
 def beat_camera(t: float) -> tuple[float, float, float, float]:
-    """Return zoom, focus_x, focus_y, flash.
-
-    focus_y≈0 keeps the TOP of the packshot (clear caps) in frame.
-    """
-    # 0–3.8: full trio, caps visible, gentle push
-    if t < 3.8:
-        local = t / 3.8
-        return 1.02 + 0.06 * ease_out(local), 0.50, 0.08 + 0.06 * local, 0.0
-    # 3.8–5.2: left can — still show cap
-    if t < 5.2:
-        local = (t - 3.8) / 1.4
-        flash = 0.5 * (1 - local / 0.12) if local < 0.12 else 0.0
-        return 1.28 + 0.06 * ease_out(local), 0.16, 0.10 + 0.05 * local, max(0, flash)
-    # 5.2–6.7: right can — cap visible
-    if t < 6.7:
-        local = (t - 5.2) / 1.5
-        flash = 0.4 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.26 + 0.05 * ease_out(local), 0.84, 0.12, max(0, flash)
-    # 6.7–8.9: pull back trio for "3 months"
-    if t < 8.9:
-        local = (t - 6.7) / 2.2
-        flash = 0.3 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.04 + 0.05 * ease_out(local), 0.50, 0.12 + 0.05 * local, max(0, flash)
-    # 8.9–10.8: slight push for price (keep caps)
-    if t < 10.8:
-        local = (t - 8.9) / 1.9
-        flash = 0.45 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.18 + 0.05 * ease_out(local), 0.50, 0.18, max(0, flash)
-    # 10.8–12.8: wide for shipping
-    if t < 12.8:
-        local = (t - 10.8) / 2.0
-        return 1.03 + 0.04 * ease_out(local), 0.50, 0.10, 0.0
-    # 12.8–15: slow push CTA
-    local = (t - 12.8) / 2.2
-    return 1.06 + 0.10 * ease_in(local), 0.50, 0.08 + 0.04 * local, 0.0
+    """zoom≤1.0 so padded trio never clips caps/bases; motion = pan + flash."""
+    if t < 2.9:
+        local = t / 2.9
+        return 1.0, 0.48 + 0.04 * ease_out(local), 0.5, 0.0
+    if t < 5.0:  # BF hit
+        local = (t - 2.9) / 2.1
+        flash = 0.55 * (1 - local / 0.1) if local < 0.1 else 0.0
+        return 1.0, 0.52 - 0.04 * ease_out(local), 0.5, max(0, flash)
+    if t < 7.4:  # price smash
+        local = (t - 5.0) / 2.4
+        flash = 0.5 * (1 - local / 0.1) if local < 0.1 else 0.0
+        return 1.0, 0.50, 0.5, max(0, flash)
+    if t < 9.6:
+        local = (t - 7.4) / 2.2
+        flash = 0.35 * (1 - local / 0.1) if local < 0.1 else 0.0
+        return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, max(0, flash)
+    if t < 12.4:
+        local = (t - 9.6) / 2.8
+        return 1.0, 0.54 - 0.08 * ease_out(local), 0.5, 0.0
+    local = (t - 12.4) / 2.6
+    flash = 0.3 * (1 - local / 0.1) if local < 0.1 else 0.0
+    return 1.0, 0.50, 0.5, max(0, flash)
 
 
 def frame_at(i: int, trio: Image.Image, single: Image.Image) -> Image.Image:
     t = i / FPS
     zoom, fx, fy, flash = beat_camera(t)
-    # Close beats use a real single-can plate (not a zoom into the trio)
-    use_single = 3.8 <= t < 6.7 or 8.9 <= t < 10.8
-    src = single if use_single else trio
-    if use_single:
-        # Recenter camera for single-can plate
-        if 3.8 <= t < 5.2:
-            zoom, fx, fy = 1.08 + 0.08 * ease_out((t - 3.8) / 1.4), 0.50, 0.10
-        elif t < 6.7:
-            zoom, fx, fy = 1.10 + 0.06 * ease_out((t - 5.2) / 1.5), 0.50, 0.12
-        else:
-            zoom, fx, fy = 1.15 + 0.06 * ease_out((t - 8.9) / 1.9), 0.50, 0.35
-    plate = cover_window(src, zoom=zoom, focus_x=fx, focus_y=fy)
+    # Always padded trio — skinny single strip looked cut / postcard
+    plate = cover_window(trio, zoom=zoom, focus_x=fx, focus_y=fy)
     canvas = grade(plate)
     canvas = flash_white(canvas, flash)
     info = chip_at(t)
     if info:
         lines, op, slide, pop = info
         size = 50 if len(lines) > 1 else 54
-        if lines == ["395₪"]:
-            size = 72
+        if lines and lines[0] == "BLACK FRIDAY":
+            size = 58
+        if lines == ["מחיר שובר שוק", "395₪"]:
+            size = 56
         if lines == ["הקישור בפרופיל"]:
             size = 58
         chip_block(canvas, int(H * 0.14), lines, size=size, opacity=op, slide_x=slide, pop=pop)
@@ -260,7 +240,7 @@ def make_audio(path: Path) -> None:
     n = int(DUR * sr)
     rng = np.random.default_rng(11)
     t = np.arange(n) / sr
-    bpm = 96
+    bpm = 118  # tighter groove, less sleepy
     beat = 60 / bpm
 
     def adsr(length, a=0.01, d=0.08, s=0.7, r=0.1):
@@ -273,15 +253,21 @@ def make_audio(path: Path) -> None:
         return e[:length]
 
     kick = np.zeros(n)
+    snare = np.zeros(n)
     for i, bt in enumerate(np.arange(0, DUR, beat)):
         i0 = int(bt * sr)
         length = int(0.22 * sr)
         if i0 + length > n:
             break
         tt = np.arange(length) / sr
-        freq = 90 * np.exp(-15 * tt) + 40
-        amp = 0.24 if i % 2 == 0 else 0.14
-        kick[i0 : i0 + length] += amp * np.sin(2 * np.pi * np.cumsum(freq) / sr) * np.exp(-8 * tt)
+        freq = 95 * np.exp(-16 * tt) + 42
+        amp = 0.38 if i % 2 == 0 else 0.22
+        kick[i0 : i0 + length] += amp * np.sin(2 * np.pi * np.cumsum(freq) / sr) * np.exp(-9 * tt)
+        if i % 2 == 1:  # clap on offbeats
+            sl = int(0.09 * sr)
+            if i0 + sl <= n:
+                noise = rng.standard_normal(sl)
+                snare[i0 : i0 + sl] += 0.16 * noise * np.exp(-38 * np.arange(sl) / sr)
 
     bass = np.zeros(n)
     notes = [73.42, 73.42, 87.31, 65.41]
@@ -333,7 +319,7 @@ def make_audio(path: Path) -> None:
         env = np.sin(np.linspace(0, np.pi, length)) ** 1.5
         whoosh[i0 : i0 + length] += 0.04 * amp * noise * env
 
-    bed = kick + bass + pad + pluck + whoosh
+    bed = kick + snare + bass + pad + pluck + whoosh
     quiet = int(0.25 * sr)
     bed[:quiet] *= np.linspace(0.2, 1, quiet)
     peak = np.max(np.abs(bed)) + 1e-9
@@ -359,18 +345,16 @@ def render() -> Path:
 
     cans = load_rgb(ASSETS / "cans.png")
 
-    def pad_pack(im: Image.Image, top: float = 0.14) -> Image.Image:
+    def pad_pack(im: Image.Image, top: float = 0.22, side: float = 0.08, bottom: float = 0.08) -> Image.Image:
         pad_t = int(im.height * top)
-        pad_s = int(im.width * 0.05)
-        pad_b = int(im.height * 0.05)
-        out = Image.new("RGB", (im.width + 2 * pad_s, im.height + pad_t + pad_b), (255, 255, 255))
+        pad_s = int(im.width * side)
+        pad_b = int(im.height * bottom)
+        out = Image.new("RGB", (im.width + 2 * pad_s, im.height + pad_t + pad_b), (236, 238, 242))
         out.paste(im, (pad_s, pad_t))
         return out
 
-    trio = pad_pack(cans, top=0.14)
-    # Single can from left of original (full height of can + pad)
-    w, h = cans.size
-    single = pad_pack(cans.crop((int(w * 0.02), 0, int(w * 0.38), h)), top=0.16)
+    trio = pad_pack(cans, top=0.26, side=0.12, bottom=0.14)
+    single = trio  # unused — kept for call signature
 
     print(f"Rendering {N} frames (v7 full-bleed)…")
     for i in range(N):
