@@ -151,10 +151,10 @@ def chip_block(canvas, cy, lines, *, size=48, opacity=1.0, slide_x=0.0, pop=1.0)
 
 def chip_at(t: float):
     # Clarity-first story: hook → BF → WHAT IT IS → price smash → proof → door → warmth → CTA
-    if 0.25 <= t < 2.6:
-        local = t - 0.25
-        if local < 0.22:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(local / 0.22), 40 * (1 - ease_out(local / 0.22)), 0.95 + 0.1 * ease_out(local / 0.22))
+    # Hook from frame 0 — mute scroll / hook-rate (first 1–2s decide views)
+    if 0.0 <= t < 2.6:
+        if t < 0.18:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(t / 0.18), 36 * (1 - ease_out(t / 0.18)), 0.96 + 0.1 * ease_out(t / 0.18))
         if t > 2.4:
             return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.4) / 0.2), 0.0, 1.0)
         return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0)
@@ -205,7 +205,9 @@ def beat_camera(t: float) -> tuple[float, float, float, float]:
     """zoom≤1.0; box → cans; flash on reveal + clarity beat."""
     if t < 2.7:
         local = t / 2.7
-        return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, 0.0
+        # tiny open flash = motion in first frames (hook rate)
+        flash = 0.22 * (1 - t / 0.2) if t < 0.2 else 0.0
+        return 1.0, 0.44 + 0.10 * ease_out(local), 0.5, max(0, flash)
     if t < 4.3:
         local = (t - 2.7) / 1.6
         flash = 0.6 * (1 - local / 0.12) if local < 0.12 else 0.0
@@ -294,6 +296,10 @@ def frame_at(i: int, box: Image.Image, trio: Image.Image, logo: Image.Image) -> 
     # Hook on the blue carton (matches copy) → reveal cans
     src = box if t < 2.7 else trio
     plate = cover_window(src, zoom=zoom, focus_x=fx, focus_y=fy)
+    # Soft loop back to box in last 0.6s — Shorts/Reels replay boost, doesn't change story
+    if t >= 14.4:
+        box_plate = cover_window(box, zoom=1.0, focus_x=0.50, focus_y=0.5)
+        plate = Image.blend(plate.convert("RGB"), box_plate.convert("RGB"), ease_in((t - 14.4) / 0.6))
     canvas = grade(plate)
     canvas = flash_white(canvas, flash)
     foam_sparkles(canvas, t, seed=7)
@@ -395,18 +401,19 @@ def make_audio(path: Path) -> None:
         pluck[i0 : i0 + length] += 0.085 * tone
 
     whoosh = np.zeros(n)
-    for wt, amp in ((3.82, 0.2), (5.22, 0.16), (6.72, 0.14), (8.92, 0.18), (12.85, 0.16)):
+    # Hit on story cuts — SFX = retention cue across mute-off viewers
+    for wt, amp in ((0.05, 0.14), (2.7, 0.28), (4.3, 0.2), (6.5, 0.24), (10.1, 0.16), (13.2, 0.18)):
         i0 = int(wt * sr)
         length = min(int(0.28 * sr), n - i0)
         if length <= 0:
             continue
         noise = np.convolve(rng.standard_normal(length), np.ones(100) / 100, mode="same")
         env = np.sin(np.linspace(0, np.pi, length)) ** 1.5
-        whoosh[i0 : i0 + length] += 0.04 * amp * noise * env
+        whoosh[i0 : i0 + length] += 0.055 * amp * noise * env
 
     bed = kick + snare + bass + pad + pluck + whoosh
-    quiet = int(0.25 * sr)
-    bed[:quiet] *= np.linspace(0.2, 1, quiet)
+    quiet = int(0.08 * sr)  # almost immediate — don't bury the open
+    bed[:quiet] *= np.linspace(0.55, 1, quiet)
     peak = np.max(np.abs(bed)) + 1e-9
     bed = np.tanh(bed / peak * 0.68 * 1.08) * 0.9
     bed = np.convolve(bed, np.ones(5) / 5, mode="same")
@@ -469,7 +476,7 @@ def render() -> Path:
         stderr=subprocess.DEVNULL,
     )
 
-    cover = frame_at(int(1.0 * FPS), box, trio, logo)
+    cover = frame_at(int(0.35 * FPS), box, trio, logo)
     cover_path = OUT / "MinoxShop_ABC_curiosity_COVER.jpg"
     cover.save(cover_path, quality=95)
 
@@ -478,7 +485,7 @@ def render() -> Path:
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_COVER.jpg")
     shutil.copy2(mp4, ART / "abc_foam_curiosity_demo.mp4")
     shutil.copy2(cover_path, ART / "abc_foam_curiosity_cover.jpg")
-    for label, sec in (("hook", 1.0), ("bf", 3.5), ("ship", 10.2), ("love", 12.0), ("cta", 13.5)):
+    for label, sec in (("hook", 0.35), ("bf", 3.5), ("clarity", 5.2), ("ship", 10.5), ("cta", 13.5)):
         frame_at(int(sec * FPS), box, trio, logo).save(ART / f"abc_preview_{label}.jpg", quality=92)
     print("Wrote", mp4)
     return mp4
