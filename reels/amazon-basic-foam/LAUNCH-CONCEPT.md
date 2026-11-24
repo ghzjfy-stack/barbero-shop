@@ -5,8 +5,10 @@ MinoxShop · `amazon-basic-foam-man` · men 5% foam · 3×2.11oz · **₪395** �
 
 Pack fact used for the hook: the men’s carton is **blue / navy**, the can is **blue**. Men’s Rogaine foam is a blue carton and a **gray** can. A “why isn’t it green?” hook is false for both. The carton also prints “Compare to Men’s Rogaine® active ingredient” — that line stays out of frame.
 
-Renderer: `scripts/abc_foam_curiosity_reel.py` (v3 — full packshot on seamless studio, **no mid-face crops / no cutout fringe**)  
+Renderer: `scripts/abc_foam_curiosity_reel.py` (v4 — **cans-only**, boost-safe)  
 Assets: `/tmp/minox-amazon/{box,cans}.png`
+
+**Boost note:** the carton prints “Compare to Men’s Rogaine®…”. Meta often blocks Boost / ads on competitor mentions. The reel uses the **cans packshot only** (no Rogaine text) so the post can be boosted. Hook still asks about the blue USA box; answer is the three cans + facts.
 
 ---
 

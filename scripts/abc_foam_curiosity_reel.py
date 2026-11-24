@@ -259,31 +259,28 @@ def crossfade(a: Image.Image, b: Image.Image, t: float) -> Image.Image:
 
 
 def frame_at(i: int, box: Image.Image, cans: Image.Image) -> Image.Image:
+    """Boost-safe: cans only — carton prints 'Compare to Rogaine' and Meta blocks boost."""
     t = i / FPS
     chip_y = int(H * 0.14)
+    _ = box  # kept for API compat / optional future boost-safe carton
 
-    # Whole product always visible — studio contain + gentle scale Ken Burns.
+    # Whole cans always visible — studio contain + gentle Ken Burns.
     if t < 4.8:
         local = t / 4.8
         sc = 0.94 + 0.06 * ease_out(local)
         drop = 14 * (1 - ease_out(min(1.0, t / 0.35))) if t < 0.35 else 0
-        plate = studio_plate(box, scale=sc, dy=drop)
+        plate = studio_plate(cans, scale=sc, dy=drop)
         canvas = stage_grade(plate)
-    elif t < 7.0:
-        local = (t - 4.8) / 2.2
-        box_p = stage_grade(studio_plate(box, scale=1.0))
-        cans_p = stage_grade(studio_plate(cans, scale=0.98))
-        canvas = crossfade(box_p, cans_p, ease_in_out(local)).convert("RGBA")
     elif t < 12.4:
-        local = (t - 7.0) / 5.4
-        sc = 0.98 + 0.04 * ease_out(local)
+        local = (t - 4.8) / 7.6
+        sc = 0.98 + 0.05 * ease_out(local)
         plate = studio_plate(cans, scale=sc)
         canvas = stage_grade(plate)
     else:
         local = (t - 12.4) / 2.6
-        cans_p = stage_grade(studio_plate(cans, scale=1.0))
-        box_p = stage_grade(studio_plate(box, scale=0.96 + 0.04 * ease_out(local)))
-        canvas = crossfade(cans_p, box_p, ease_in_out(min(1.0, local / 0.7))).convert("RGBA")
+        sc = 1.02 + 0.04 * ease_out(local)
+        plate = studio_plate(cans, scale=sc)
+        canvas = stage_grade(plate)
 
     if canvas.mode != "RGBA":
         canvas = canvas.convert("RGBA")
@@ -358,8 +355,7 @@ def render() -> Path:
         shutil.rmtree(frames)
     frames.mkdir()
 
-    # Full clean packshots — no badge smudge, no cutout. Compare line is soft
-    # enough in motion; looking whole beats a blur blob.
+    # Boost-safe: cans only (carton has 'Compare to Rogaine' — Meta rejects boost).
     box = load_rgb(ASSETS / "box.png")
     cans = load_rgb(ASSETS / "cans.png")
 
