@@ -13,7 +13,6 @@ import shutil
 import struct
 import subprocess
 import wave
-from collections import deque
 from pathlib import Path
 
 import numpy as np
@@ -57,50 +56,40 @@ def load_rgb(path: Path) -> Image.Image:
     return Image.open(path).convert("RGB")
 
 
-def load_rgba(path: Path) -> Image.Image:
-    return Image.open(path).convert("RGBA")
-
-
-def knock_studio_bg(im: Image.Image, thresh: float = 245.0) -> Image.Image:
-    """Border flood-fill key — protects white can bodies; kills floor plate fringe."""
-    arr = np.array(im.convert("RGBA"))
-    h, w = arr.shape[:2]
-    rgb = arr[..., :3].astype(np.float32)
-    near_white = np.min(rgb, axis=2) >= thresh
-    visited = np.zeros((h, w), dtype=bool)
-    q: deque[tuple[int, int]] = deque()
-    for x in range(w):
-        for y in (0, h - 1):
-            if near_white[y, x] and not visited[y, x]:
-                visited[y, x] = True
-                q.append((y, x))
-    for y in range(h):
-        for x in (0, w - 1):
-            if near_white[y, x] and not visited[y, x]:
-                visited[y, x] = True
-                q.append((y, x))
-    while q:
-        y, x = q.popleft()
-        for ny, nx in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
-            if 0 <= ny < h and 0 <= nx < w and not visited[ny, nx] and near_white[ny, nx]:
-                visited[ny, nx] = True
-                q.append((ny, nx))
-    # Soft studio shadow under cans (bottom band, bright) → transparent
-    soft_floor = (np.min(rgb, axis=2) >= 235) & (np.arange(h)[:, None] >= int(h * 0.82))
-    kill = visited | soft_floor
-    alpha = np.where(kill, 0, 255).astype(np.uint8)
-    soft = Image.fromarray(alpha, "L").filter(ImageFilter.MinFilter(5))
-    soft = soft.filter(ImageFilter.GaussianBlur(1.2))
-    a = np.array(soft).astype(np.float32)
-    a = np.where(kill, 0, a)
-    arr[..., 3] = np.clip(a, 0, 255).astype(np.uint8)
-    return Image.fromarray(arr, "RGBA")
-
-
 def fit_contain(im: Image.Image, tw: int, th: int) -> Image.Image:
     scale = min(tw / im.width, th / im.height)
     nw, nh = max(1, int(im.width * scale)), max(1, int(im.height * scale))
     return im.resize((nw, nh), Image.Resampling.LANCZOS)
+
+
+def packshot_plate(
+    canvas: Image.Image,
+    pack: Image.Image,
+    *,
+    cy: int,
+    max_w: int,
+    max_h: int,
+    scale: float = 1.0,
+    dx: int = 0,
+    dy: int = 0,
+) -> None:
+    """Paste FULL RGB packshot (caps intact — no keying). Soft-feather sides/bottom only."""
+    im = fit_contain(pack.convert("RGB"), int(max_w * scale), int(max_h * scale)).convert("RGBA")
+    # Asymmetric feather: almost no top fade so clear caps stay crisp;
+    # sides + bottom melt into the dark stage.
+    mask = Image.new("L", im.size, 255)
+    md = ImageDraw.Draw(mask)
+    side = max(22, int(im.width * 0.05))
+    bottom = max(28, int(im.height * 0.06))
+    # NO top fade — clear caps must stay fully opaque
+    md.rectangle((0, im.height - bottom, im.width, im.height), fill=0)
+    md.rectangle((0, 0, side, im.height), fill=0)
+    md.rectangle((im.width - side, 0, im.width, im.height), fill=0)
+    mask = mask.filter(ImageFilter.GaussianBlur(max(14, side // 2)))
+    im.putalpha(mask)
+    x = (W - im.width) // 2 + dx
+    y = cy - im.height // 2 + dy
+    canvas.alpha_composite(im, (x, y))
 
 
 def fit_cover(im: Image.Image, tw: int, th: int, zoom: float = 1.0, pan: float = 0.5) -> Image.Image:
@@ -133,14 +122,14 @@ def dark_stage(life: Image.Image | None, t: float) -> Image.Image:
         gd.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(30, 55, 95, a))
     glow = glow.filter(ImageFilter.GaussianBlur(50))
     canvas = Image.alpha_composite(canvas, glow)
-    # Top veil for chips + bottom falloff
+    # Soft top veil only above chip zone — stop before product caps
     veil = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     vd = ImageDraw.Draw(veil)
-    for y in range(0, int(H * 0.28)):
-        a = int(130 * (1 - y / (H * 0.28)) ** 1.15)
+    for y in range(0, int(H * 0.18)):
+        a = int(100 * (1 - y / (H * 0.18)) ** 1.2)
         vd.line((0, y, W, y), fill=(4, 6, 10, a))
-    for y in range(int(H * 0.78), H):
-        a = int(140 * ((y - H * 0.78) / (H * 0.22)))
+    for y in range(int(H * 0.82), H):
+        a = int(140 * ((y - H * 0.82) / (H * 0.18)))
         vd.line((0, y, W, y), fill=(4, 6, 10, min(170, a)))
     # Vignette
     vig = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -152,37 +141,6 @@ def dark_stage(life: Image.Image | None, t: float) -> Image.Image:
     canvas = Image.alpha_composite(canvas, veil)
     return Image.alpha_composite(canvas, vig)
 
-
-def contact_shadow(size: tuple[int, int]) -> Image.Image:
-    w, h = size
-    sh = Image.new("RGBA", (w + 140, h + 120), (0, 0, 0, 0))
-    d = ImageDraw.Draw(sh)
-    d.ellipse(
-        (70 + int(w * 0.12), 70 + int(h * 0.86), 70 + int(w * 0.88), 70 + int(h * 0.98)),
-        fill=(0, 0, 0, 140),
-    )
-    return sh.filter(ImageFilter.GaussianBlur(48))
-
-
-def paste_keyed(
-    canvas: Image.Image,
-    product: Image.Image,
-    *,
-    cy: int,
-    max_w: int,
-    max_h: int,
-    scale: float = 1.0,
-    dx: int = 0,
-    dy: int = 0,
-) -> None:
-    im = fit_contain(product, int(max_w * scale), int(max_h * scale))
-    shadow = contact_shadow(im.size)
-    sx = max(0, min(W - shadow.width, (W - shadow.width) // 2 + dx))
-    sy = max(0, min(H - shadow.height, cy - im.height // 2 + dy + 10))
-    canvas.alpha_composite(shadow, (sx, sy))
-    x = (W - im.width) // 2 + dx
-    y = cy - im.height // 2 + dy
-    canvas.alpha_composite(im, (x, y))
 
 
 def add_grain(im: Image.Image, amount: float = 0.012, seed: int = 0) -> Image.Image:
@@ -314,9 +272,10 @@ def chip_at(t: float) -> tuple[list[str], float, float, float] | None:
 
 
 def one_can(cans: Image.Image) -> Image.Image:
-    """Left can only, full height — complete object, no neighbor sliver."""
+    """Left can only, full height including clear cap — no neighbor sliver."""
     w, h = cans.size
-    return cans.crop((int(w * 0.02), 0, int(w * 0.36), h))
+    # Keep top/bottom padding from packshot so the clear cap stays whole
+    return cans.crop((int(w * 0.02), int(h * 0.02), int(w * 0.36), int(h * 0.98)))
 
 
 def frame_at(
@@ -329,59 +288,60 @@ def frame_at(
     canvas = dark_stage(life, t)
     chip_y = int(H * 0.15)
 
-    # Beat map for presence:
+    # Full packshots (no keying) so clear caps stay intact.
     # 0–4.5  three cans settle + slow push-in (hook)
-    # 4.5–7.4 hard cut to one can (answer energy)
-    # 7.4–12.5 three cans again, gentle zoom (price/facts)
-    # 12.5–15  push-in hold + CTA
+    # 4.5–7.4 hard cut to one can
+    # 7.4–12.5 three cans again (price/facts)
+    # 12.5–15  push-in + CTA
     if t < 4.5:
         local = t / 4.5
         drop = 28 * (1 - ease_out(min(1.0, t / 0.4))) if t < 0.4 else 0
-        sc = 0.90 + 0.12 * ease_out(local)
+        sc = 0.86 + 0.08 * ease_out(local)
         dx = int(10 * np.sin(local * np.pi))
-        paste_keyed(
+        # Slightly lower + modest scale → headroom above clear caps
+        packshot_plate(
             canvas,
             cans,
-            cy=int(H * 0.56) + int(drop),
-            max_w=980,
-            max_h=1280,
+            cy=int(H * 0.58) + int(drop),
+            max_w=920,
+            max_h=1180,
             scale=sc,
             dx=dx,
         )
     elif t < 7.4:
-        local = (t - 4.5) / 2.9
-        # punch in first 4 frames
-        punch = 1.18 if t < 4.5 + 4 / FPS else 1.10 - 0.06 * ease_out(min(1.0, (t - 4.5 - 4 / FPS) / 2.5))
-        paste_keyed(
+        punch = 1.12 if t < 4.5 + 4 / FPS else 1.06 - 0.04 * ease_out(
+            min(1.0, (t - 4.5 - 4 / FPS) / 2.5)
+        )
+        packshot_plate(
             canvas,
             can1,
-            cy=int(H * 0.54),
-            max_w=620,
-            max_h=1400,
+            cy=int(H * 0.57),
+            max_w=560,
+            max_h=1240,
             scale=punch,
         )
     elif t < 12.5:
         local = (t - 7.4) / 5.1
-        sc = 0.96 + 0.08 * ease_out(local)
+        sc = 0.92 + 0.06 * ease_out(local)
         dx = int(-8 + 16 * ease_in_out(local))
-        paste_keyed(
+        packshot_plate(
             canvas,
             cans,
-            cy=int(H * 0.55),
-            max_w=1000,
-            max_h=1300,
+            cy=int(H * 0.58),
+            max_w=940,
+            max_h=1200,
             scale=sc,
             dx=dx,
         )
     else:
         local = (t - 12.5) / 2.5
-        sc = 1.02 + 0.10 * ease_in(local)
-        paste_keyed(
+        sc = 0.96 + 0.06 * ease_in(local)
+        packshot_plate(
             canvas,
             cans,
-            cy=int(H * 0.55),
-            max_w=1000,
-            max_h=1300,
+            cy=int(H * 0.58),
+            max_w=940,
+            max_h=1200,
             scale=sc,
         )
 
@@ -461,8 +421,18 @@ def render() -> Path:
         shutil.rmtree(frames)
     frames.mkdir()
 
-    cans = knock_studio_bg(load_rgba(ASSETS / "cans.png"))
-    can1 = knock_studio_bg(one_can(load_rgba(ASSETS / "cans.png")))
+    cans_raw = load_rgb(ASSETS / "cans.png")
+    # Extra white headroom so clear caps never sit on the plate edge
+    pad_t = int(cans_raw.height * 0.10)
+    pad_s = int(cans_raw.width * 0.05)
+    pad_b = int(cans_raw.height * 0.05)
+    cans = Image.new(
+        "RGB",
+        (cans_raw.width + 2 * pad_s, cans_raw.height + pad_t + pad_b),
+        (255, 255, 255),
+    )
+    cans.paste(cans_raw, (pad_s, pad_t))
+    can1 = one_can(cans)
     life = None
     for cand in (LIFE / "journey-growth.jpg", LIFE / "hero-life.png"):
         if cand.exists():
