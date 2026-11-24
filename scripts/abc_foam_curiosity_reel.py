@@ -176,116 +176,113 @@ def chip_block(
 
 
 def chip_at(t: float):
-    """Viral commerce beat map: hook → stamp → clarity → price tease → smash → proof → door → warm → CTA."""
+    """Readable pacing: ~2s for 2-line chips, ~1.2s+ for short lines, punchy 395."""
     # returns lines, opacity, slide_x, pop, style, rotate
-    if 0.0 <= t < 2.2:
+    if 0.0 <= t < 2.4:
         if t < 0.14:
             return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(t / 0.14), 48 * (1 - ease_out(t / 0.14)), 1.0 + 0.12 * ease_out(t / 0.14), "clean", 0.0)
-        if t > 2.0:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.0) / 0.2), 0.0, 1.0, "clean", 0.0)
+        if t > 2.2:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.2) / 0.2), 0.0, 1.0, "clean", 0.0)
         return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0, "clean", 0.0)
-    if 2.25 <= t < 3.7:
-        local = t - 2.25
+    if 2.45 <= t < 3.7:
+        local = t - 2.45
         op = ease_out(min(1, local / 0.12))
         if t > 3.5:
             op = 1 - ease_in((t - 3.5) / 0.2)
         rot = -7 + 3 * ease_out(min(1, local / 0.25))
         return (["BLACK FRIDAY"], op, 0.0, 1.22 if local < 0.22 else 1.06, "stamp", rot)
-    if 3.8 <= t < 5.5:
+    if 3.8 <= t < 5.95:
         local = t - 3.8
-        op = ease_out(min(1, local / 0.12))
-        if t > 5.3:
-            op = 1 - ease_in((t - 5.3) / 0.2)
-        return (["מינוקסידיל 5%", "לחיזוק וצמיחת השיער"], op, -30 * (1 - ease_out(min(1, local / 0.2))), 1.12 if local < 0.22 else 1.0, "clean", 0.0)
-    if 5.55 <= t < 6.45:
-        local = t - 5.55
-        op = ease_out(min(1, local / 0.1))
-        if t > 6.3:
-            op = 1 - ease_in((t - 6.3) / 0.15)
-        # Guess-the-price tease (top Shop format)
-        return (["חשבתם שזה יקר?"], op, 40 * (1 - ease_out(min(1, local / 0.18))), 1.14 if local < 0.2 else 1.0, "clean", 0.0)
-    if 6.5 <= t < 7.35:
-        local = t - 6.5
-        op = ease_out(min(1, local / 0.08))
-        if t > 7.2:
-            op = 1 - ease_in((t - 7.2) / 0.15)
-        return (["395₪"], op, 0.0, 1.35 if local < 0.2 else 1.18, "smash", 0.0)
-    if 7.4 <= t < 8.6:
-        local = t - 7.4
-        op = ease_out(min(1, local / 0.12))
-        if t > 8.4:
-            op = 1 - ease_in((t - 8.4) / 0.2)
-        return (["מחיר שובר שוק", "3 חודשים"], op, 0.0, 1.1 if local < 0.22 else 1.0, "smash", 0.0)
-    if 8.7 <= t < 10.1:
-        local = t - 8.7
-        op = ease_out(min(1, local / 0.12))
-        if t > 9.9:
-            op = 1 - ease_in((t - 9.9) / 0.2)
-        return (["קצף לגברים · יבוא מארה״ב"], op, 0.0, 1.06 if local < 0.2 else 1.0, "clean", 0.0)
-    if 10.2 <= t < 11.7:
-        local = t - 10.2
-        op = ease_out(min(1, local / 0.12))
-        if t > 11.5:
-            op = 1 - ease_in((t - 11.5) / 0.2)
-        return (["משלוח חינם עד הבית", "עם שליח"], op, 0.0, 1.06 if local < 0.2 else 1.0, "clean", 0.0)
-    if 11.8 <= t < 13.0:
-        local = t - 11.8
         op = ease_out(min(1, local / 0.14))
-        if t > 12.8:
-            op = 1 - ease_in((t - 12.8) / 0.2)
-        return (["אנחנו פה בשבילכם"], op, 0.0, 1.1 if local < 0.22 else 1.0, "clean", 0.0)
-    if 13.1 <= t <= 15.01:
-        local = t - 13.1
+        if t > 5.75:
+            op = 1 - ease_in((t - 5.75) / 0.2)
+        return (["מינוקסידיל 5%", "לחיזוק וצמיחת השיער"], op, -24 * (1 - ease_out(min(1, local / 0.22))), 1.1 if local < 0.22 else 1.0, "clean", 0.0)
+    if 6.0 <= t < 7.25:
+        local = t - 6.0
+        op = ease_out(min(1, local / 0.12))
+        if t > 7.05:
+            op = 1 - ease_in((t - 7.05) / 0.2)
+        return (["חשבתם שזה יקר?"], op, 32 * (1 - ease_out(min(1, local / 0.2))), 1.12 if local < 0.2 else 1.0, "clean", 0.0)
+    if 7.3 <= t < 8.4:
+        local = t - 7.3
+        op = ease_out(min(1, local / 0.1))
+        if t > 8.2:
+            op = 1 - ease_in((t - 8.2) / 0.2)
+        return (["395₪"], op, 0.0, 1.32 if local < 0.2 else 1.16, "smash", 0.0)
+    if 8.45 <= t < 9.85:
+        local = t - 8.45
+        op = ease_out(min(1, local / 0.12))
+        if t > 9.65:
+            op = 1 - ease_in((t - 9.65) / 0.2)
+        return (["מחיר שובר שוק", "3 חודשים"], op, 0.0, 1.1 if local < 0.22 else 1.0, "smash", 0.0)
+    if 9.9 <= t < 11.25:
+        local = t - 9.9
+        op = ease_out(min(1, local / 0.12))
+        if t > 11.05:
+            op = 1 - ease_in((t - 11.05) / 0.2)
+        return (["קצף לגברים · יבוא מארה״ב"], op, 0.0, 1.06 if local < 0.2 else 1.0, "clean", 0.0)
+    if 11.3 <= t < 12.9:
+        local = t - 11.3
+        op = ease_out(min(1, local / 0.12))
+        if t > 12.7:
+            op = 1 - ease_in((t - 12.7) / 0.2)
+        return (["משלוח חינם עד הבית", "עם שליח"], op, 0.0, 1.06 if local < 0.2 else 1.0, "clean", 0.0)
+    if 12.95 <= t < 13.75:
+        local = t - 12.95
+        op = ease_out(min(1, local / 0.12))
+        if t > 13.55:
+            op = 1 - ease_in((t - 13.55) / 0.2)
+        return (["אנחנו פה בשבילכם"], op, 0.0, 1.08 if local < 0.2 else 1.0, "clean", 0.0)
+    if 13.8 <= t <= 15.01:
+        local = t - 13.8
         return (["הקישור בפרופיל"], ease_out(min(1, local / 0.18)), 0.0, 1.1 if local < 0.22 else 1.0, "clean", 0.0)
     return None
 
 
 def beat_camera(t: float) -> tuple[float, float, float, float, float]:
-    """zoom, focus_x, focus_y, flash, shake — jump-cuts + impact flashes."""
-    # Jump-cut anchors every ~1.8s (pattern interrupt)
-    cuts = [0.0, 1.8, 2.25, 3.8, 5.55, 6.5, 7.4, 8.7, 10.2, 11.8, 13.1]
+    """zoom, focus_x, focus_y, flash, shake — synced to readable chip beats."""
+    cuts = [0.0, 2.0, 2.45, 3.8, 6.0, 7.3, 8.45, 9.9, 11.3, 12.95, 13.8]
     fx_cycle = [0.42, 0.58, 0.48, 0.55, 0.45, 0.50, 0.52, 0.46, 0.54, 0.50, 0.50]
 
-    def seg(i0, i1, default_fx=0.5):
+    def seg(i0, i1):
         a, b = cuts[i0], cuts[i1] if i1 < len(cuts) else DUR
         local = (t - a) / max(0.01, b - a)
-        flash = 0.55 * (1 - local / 0.1) if local < 0.1 else 0.0
-        shake = 10.0 * (1 - local / 0.12) if local < 0.12 else 2.2
+        flash = 0.45 * (1 - local / 0.1) if local < 0.1 else 0.0
+        shake = 8.0 * (1 - local / 0.12) if local < 0.12 else 2.0
         fx = fx_cycle[i0] + (fx_cycle[min(i0 + 1, len(fx_cycle) - 1)] - fx_cycle[i0]) * ease_out(min(1, local))
         return local, flash, shake, fx
 
-    if t < 2.25:
-        local = t / 2.25
+    if t < 2.45:
+        local = t / 2.45
         flash = 0.28 * (1 - t / 0.18) if t < 0.18 else 0.0
-        return 1.0, 0.42 + 0.12 * ease_out(local), 0.5, flash, 3.0 + 2.0 * math.sin(t * 11)
+        return 1.0, 0.42 + 0.12 * ease_out(local), 0.5, flash, 2.5 + 1.5 * math.sin(t * 11)
     if t < 3.8:
         _, flash, shake, fx = seg(2, 3)
-        return 1.0, fx, 0.5, max(flash, 0.65 * (1 - (t - 2.25) / 0.12) if t < 2.37 else 0), shake
-    if t < 5.55:
+        return 1.0, fx, 0.5, max(flash, 0.6 * (1 - (t - 2.45) / 0.12) if t < 2.57 else 0), shake
+    if t < 6.0:
         _, flash, shake, fx = seg(3, 4)
         return 1.0, fx, 0.5, flash, shake
-    if t < 6.5:
+    if t < 7.3:
         _, flash, shake, fx = seg(4, 5)
         return 1.0, fx, 0.5, flash, shake
-    if t < 7.4:
-        # price smash — hard impact
-        local = (t - 6.5) / 0.9
-        flash = 0.7 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.0, 0.50, 0.5, flash, 14 * (1 - min(1, local / 0.15)) + 2
-    if t < 8.7:
+    if t < 8.45:
+        local = (t - 7.3) / 1.15
+        flash = 0.65 * (1 - local / 0.1) if local < 0.1 else 0.0
+        return 1.0, 0.50, 0.5, flash, 12 * (1 - min(1, local / 0.15)) + 2
+    if t < 9.9:
         _, flash, shake, fx = seg(6, 7)
         return 1.0, fx, 0.5, flash, shake
-    if t < 10.2:
+    if t < 11.3:
         _, flash, shake, fx = seg(7, 8)
         return 1.0, fx, 0.5, flash, shake
-    if t < 11.8:
+    if t < 12.95:
         _, flash, shake, fx = seg(8, 9)
         return 1.0, fx, 0.5, flash, shake
-    if t < 13.1:
-        return 1.0, 0.50, 0.5, 0.0, 2.0
-    local = (t - 13.1) / 1.9
-    flash = 0.3 * (1 - local / 0.1) if local < 0.1 else 0.0
-    return 1.0, 0.50, 0.5, flash, 2.5
+    if t < 13.8:
+        return 1.0, 0.50, 0.5, 0.0, 1.8
+    local = (t - 13.8) / 1.2
+    flash = 0.28 * (1 - local / 0.1) if local < 0.1 else 0.0
+    return 1.0, 0.50, 0.5, flash, 2.0
 
 
 def foam_sparkles(canvas: Image.Image, t: float, seed: int = 7) -> None:
@@ -317,7 +314,7 @@ def apply_shake(im: Image.Image, amount: float, t: float) -> Image.Image:
 
 def whip_smear(im: Image.Image, t: float) -> Image.Image:
     """Brief horizontal smear on jump-cut frames — native Shorts feel."""
-    cuts = (2.25, 3.8, 5.55, 6.5, 7.4, 8.7, 10.2, 13.1)
+    cuts = (2.45, 3.8, 6.0, 7.3, 8.45, 9.9, 11.3, 13.8)
     strength = 0.0
     for c in cuts:
         if abs(t - c) < 0.07:
@@ -366,7 +363,7 @@ def paste_logo(canvas: Image.Image, logo: Image.Image, *, opacity: float = 0.92)
 def frame_at(i: int, box: Image.Image, trio: Image.Image, logo: Image.Image) -> Image.Image:
     t = i / FPS
     zoom, fx, fy, flash, shake = beat_camera(t)
-    src = box if t < 2.25 else trio
+    src = box if t < 2.45 else trio
     plate = cover_window(src, zoom=zoom, focus_x=fx, focus_y=fy)
     if t >= 14.4:
         box_plate = cover_window(box, zoom=1.0, focus_x=0.50, focus_y=0.5)
@@ -401,8 +398,8 @@ def frame_at(i: int, box: Image.Image, trio: Image.Image, logo: Image.Image) -> 
             style=style,
             rotate=rot,
         )
-    if t >= 2.2:
-        lo = ease_out(min(1.0, (t - 2.2) / 0.4))
+    if t >= 2.4:
+        lo = ease_out(min(1.0, (t - 2.4) / 0.4))
         paste_logo(canvas, logo, opacity=0.9 * lo)
     return add_grain(canvas, amount=0.012, seed=i * 23 + 2).convert("RGB")
 
@@ -484,7 +481,7 @@ def make_audio(path: Path) -> None:
 
     whoosh = np.zeros(n)
     impact = np.zeros(n)
-    for wt, amp in ((0.04, 0.16), (2.25, 0.34), (3.8, 0.26), (5.55, 0.22), (6.5, 0.4), (7.4, 0.28), (10.2, 0.2), (13.1, 0.22)):
+    for wt, amp in ((0.04, 0.16), (2.45, 0.34), (3.8, 0.26), (6.0, 0.22), (7.3, 0.4), (8.45, 0.28), (11.3, 0.2), (13.8, 0.22)):
         i0 = int(wt * sr)
         length = min(int(0.26 * sr), n - i0)
         if length <= 0:
@@ -570,7 +567,7 @@ def render() -> Path:
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_COVER.jpg")
     shutil.copy2(mp4, ART / "abc_foam_curiosity_demo.mp4")
     shutil.copy2(cover_path, ART / "abc_foam_curiosity_cover.jpg")
-    for label, sec in (("hook", 0.35), ("bf", 2.8), ("clarity", 4.5), ("tease", 6.0), ("price", 6.9), ("cta", 13.5)):
+    for label, sec in (("hook", 0.4), ("bf", 3.0), ("clarity", 4.8), ("tease", 6.5), ("price", 7.8), ("cta", 14.2)):
         frame_at(int(sec * FPS), box, trio, logo).save(ART / f"abc_preview_{label}.jpg", quality=92)
     print("Wrote", mp4)
     return mp4
