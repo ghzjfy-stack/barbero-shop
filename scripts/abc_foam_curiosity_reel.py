@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
-"""MinoxShop Amazon Basic Care — curiosity reel v7 FULL-BLEED.
+"""MinoxShop Amazon Basic Care — curiosity reel v8 VIEW-OPS.
 
-New direction (user feedback: cutouts looked bad, static, weird music):
-- Product photo fills the entire 1080×1920 frame (cover crop) — no stickers, no keying.
-- Varied Ken Burns windows + hard cuts so it doesn't feel like one looping still.
-- Warm soft beat (BF-style), not a hollow pad.
+Copies patterns from top commerce Shorts/Reels/TikTok (no UGC needed):
+- Frame-0 hook text · jump-cuts every ~2s · BF stamp · price-smash reveal
+- Handheld micro-shake · impact SFX on cuts · soft end-loop to box
 
-15s · cans only (boost-safer) · Hebrew chips · CTA הקישור בפרופיל
-Hook: מה יש בקופסה הכחולה מארה״ב?
+15s · Hebrew chips · CTA הקישור בפרופיל · MinoxShop logo
 """
 
 from __future__ import annotations
@@ -122,7 +120,19 @@ def draw_text(draw, xy, text, *, size=64, fill=(255, 255, 255), anchor="mm", bol
     draw.text(xy, text, **kwargs)
 
 
-def chip_block(canvas, cy, lines, *, size=48, opacity=1.0, slide_x=0.0, pop=1.0):
+def chip_block(
+    canvas,
+    cy,
+    lines,
+    *,
+    size=48,
+    opacity=1.0,
+    slide_x=0.0,
+    pop=1.0,
+    style: str = "clean",
+    rotate: float = 0.0,
+):
+    """clean = white pill · stamp = BF tilted badge · smash = giant price."""
     if opacity <= 0.02:
         return
     size = max(28, int(size * pop))
@@ -133,126 +143,189 @@ def chip_block(canvas, cy, lines, *, size=48, opacity=1.0, slide_x=0.0, pop=1.0)
         bbox = probe.textbbox((0, 0), line, font=f, direction="rtl", language="he")
         widths.append(bbox[2] - bbox[0])
         heights.append(bbox[3] - bbox[1])
-    pad_x, pad_y, gap = 46, 20, 8
+    pad_x, pad_y, gap = (52, 24, 10) if style != "smash" else (40, 28, 6)
     pw = max(widths) + pad_x * 2
     ph = sum(heights) + gap * (len(lines) - 1) + pad_y * 2
-    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    x0 = (W - pw) // 2 + int(slide_x)
-    y0 = cy - ph // 2
-    d.rounded_rectangle((x0 + 3, y0 + 4, x0 + pw + 3, y0 + ph + 4), radius=24, fill=(0, 0, 0, int(100 * opacity)))
-    d.rounded_rectangle((x0, y0, x0 + pw, y0 + ph), radius=24, fill=(255, 255, 255, int(240 * opacity)))
-    y = y0 + pad_y
-    for line, th in zip(lines, heights):
-        draw_text(d, (x0 + pw // 2, y + th // 2), line, size=size, fill=(*INK, int(255 * opacity)))
+    chip = Image.new("RGBA", (pw + 12, ph + 12), (0, 0, 0, 0))
+    d = ImageDraw.Draw(chip)
+    if style == "stamp":
+        d.rounded_rectangle((4, 6, pw + 4, ph + 6), radius=18, fill=(0, 0, 0, int(120 * opacity)))
+        d.rounded_rectangle((0, 0, pw, ph), radius=18, fill=(16, 18, 22, int(240 * opacity)))
+        d.rounded_rectangle((0, 0, pw, ph), radius=18, outline=(255, 205, 60, int(230 * opacity)), width=5)
+        ink = (255, 255, 255)
+    elif style == "smash":
+        d.rounded_rectangle((3, 5, pw + 3, ph + 5), radius=28, fill=(0, 0, 0, int(110 * opacity)))
+        d.rounded_rectangle((0, 0, pw, ph), radius=28, fill=(255, 255, 255, int(245 * opacity)))
+        ink = INK
+    else:
+        d.rounded_rectangle((3, 4, pw + 3, ph + 4), radius=24, fill=(0, 0, 0, int(100 * opacity)))
+        d.rounded_rectangle((0, 0, pw, ph), radius=24, fill=(255, 255, 255, int(240 * opacity)))
+        ink = INK
+    y = pad_y
+    for i, (line, th) in enumerate(zip(lines, heights)):
+        fill = (255, 255, 255) if style == "stamp" else ink
+        draw_text(d, (pw // 2, y + th // 2), line, size=size, fill=(*fill, int(255 * opacity)))
         y += th + gap
+    if abs(rotate) > 0.2:
+        chip = chip.rotate(rotate, resample=Image.Resampling.BICUBIC, expand=True)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    x0 = (W - chip.width) // 2 + int(slide_x)
+    y0 = cy - chip.height // 2
+    layer.alpha_composite(chip, (x0, y0))
     canvas.alpha_composite(layer)
 
 
 def chip_at(t: float):
-    # Clarity-first story: hook → BF → WHAT IT IS → price smash → proof → door → warmth → CTA
-    # Hook from frame 0 — mute scroll / hook-rate (first 1–2s decide views)
-    if 0.0 <= t < 2.6:
-        if t < 0.18:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(t / 0.18), 36 * (1 - ease_out(t / 0.18)), 0.96 + 0.1 * ease_out(t / 0.18))
-        if t > 2.4:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.4) / 0.2), 0.0, 1.0)
-        return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0)
-    if 2.7 <= t < 4.2:
-        local = t - 2.7
-        op = ease_out(min(1, local / 0.16))
-        if t > 4.0:
-            op = 1 - ease_in((t - 4.0) / 0.2)
-        return (["BLACK FRIDAY"], op, 0.0, 1.14 if local < 0.26 else 1.0)
-    if 4.3 <= t < 6.4:
-        local = t - 4.3
-        op = ease_out(min(1, local / 0.16))
-        if t > 6.2:
-            op = 1 - ease_in((t - 6.2) / 0.2)
-        # The clarity beat — no guessing what the product does
-        return (["מינוקסידיל 5%", "לחיזוק וצמיחת השיער"], op, 0.0, 1.1 if local < 0.28 else 1.0)
-    if 6.5 <= t < 8.3:
+    """Viral commerce beat map: hook → stamp → clarity → price tease → smash → proof → door → warm → CTA."""
+    # returns lines, opacity, slide_x, pop, style, rotate
+    if 0.0 <= t < 2.2:
+        if t < 0.14:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(t / 0.14), 48 * (1 - ease_out(t / 0.14)), 1.0 + 0.12 * ease_out(t / 0.14), "clean", 0.0)
+        if t > 2.0:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.0) / 0.2), 0.0, 1.0, "clean", 0.0)
+        return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0, "clean", 0.0)
+    if 2.25 <= t < 3.7:
+        local = t - 2.25
+        op = ease_out(min(1, local / 0.12))
+        if t > 3.5:
+            op = 1 - ease_in((t - 3.5) / 0.2)
+        rot = -7 + 3 * ease_out(min(1, local / 0.25))
+        return (["BLACK FRIDAY"], op, 0.0, 1.22 if local < 0.22 else 1.06, "stamp", rot)
+    if 3.8 <= t < 5.5:
+        local = t - 3.8
+        op = ease_out(min(1, local / 0.12))
+        if t > 5.3:
+            op = 1 - ease_in((t - 5.3) / 0.2)
+        return (["מינוקסידיל 5%", "לחיזוק וצמיחת השיער"], op, -30 * (1 - ease_out(min(1, local / 0.2))), 1.12 if local < 0.22 else 1.0, "clean", 0.0)
+    if 5.55 <= t < 6.45:
+        local = t - 5.55
+        op = ease_out(min(1, local / 0.1))
+        if t > 6.3:
+            op = 1 - ease_in((t - 6.3) / 0.15)
+        # Guess-the-price tease (top Shop format)
+        return (["חשבתם שזה יקר?"], op, 40 * (1 - ease_out(min(1, local / 0.18))), 1.14 if local < 0.2 else 1.0, "clean", 0.0)
+    if 6.5 <= t < 7.35:
         local = t - 6.5
-        op = ease_out(min(1, local / 0.16))
-        if t > 8.1:
-            op = 1 - ease_in((t - 8.1) / 0.2)
-        return (["מחיר שובר שוק", "395₪"], op, 0.0, 1.16 if local < 0.28 else 1.0)
-    if 8.4 <= t < 10.0:
-        local = t - 8.4
-        op = ease_out(min(1, local / 0.16))
-        if t > 9.8:
-            op = 1 - ease_in((t - 9.8) / 0.2)
-        return (["3 חודשים · קצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
-    if 10.1 <= t < 11.8:
-        local = t - 10.1
-        op = ease_out(min(1, local / 0.16))
-        if t > 11.6:
-            op = 1 - ease_in((t - 11.6) / 0.2)
-        return (["משלוח חינם עד הבית", "עם שליח"], op, 0.0, 1.04 if local < 0.25 else 1.0)
-    if 11.9 <= t < 13.1:
-        local = t - 11.9
-        op = ease_out(min(1, local / 0.18))
-        if t > 12.9:
-            op = 1 - ease_in((t - 12.9) / 0.2)
-        return (["אנחנו פה בשבילכם"], op, 0.0, 1.08 if local < 0.28 else 1.0)
-    if 13.2 <= t <= 15.01:
-        local = t - 13.2
-        return (["הקישור בפרופיל"], ease_out(min(1, local / 0.22)), 0.0, 1.08 if local < 0.28 else 1.0)
+        op = ease_out(min(1, local / 0.08))
+        if t > 7.2:
+            op = 1 - ease_in((t - 7.2) / 0.15)
+        return (["395₪"], op, 0.0, 1.35 if local < 0.2 else 1.18, "smash", 0.0)
+    if 7.4 <= t < 8.6:
+        local = t - 7.4
+        op = ease_out(min(1, local / 0.12))
+        if t > 8.4:
+            op = 1 - ease_in((t - 8.4) / 0.2)
+        return (["מחיר שובר שוק", "3 חודשים"], op, 0.0, 1.1 if local < 0.22 else 1.0, "smash", 0.0)
+    if 8.7 <= t < 10.1:
+        local = t - 8.7
+        op = ease_out(min(1, local / 0.12))
+        if t > 9.9:
+            op = 1 - ease_in((t - 9.9) / 0.2)
+        return (["קצף לגברים · יבוא מארה״ב"], op, 0.0, 1.06 if local < 0.2 else 1.0, "clean", 0.0)
+    if 10.2 <= t < 11.7:
+        local = t - 10.2
+        op = ease_out(min(1, local / 0.12))
+        if t > 11.5:
+            op = 1 - ease_in((t - 11.5) / 0.2)
+        return (["משלוח חינם עד הבית", "עם שליח"], op, 0.0, 1.06 if local < 0.2 else 1.0, "clean", 0.0)
+    if 11.8 <= t < 13.0:
+        local = t - 11.8
+        op = ease_out(min(1, local / 0.14))
+        if t > 12.8:
+            op = 1 - ease_in((t - 12.8) / 0.2)
+        return (["אנחנו פה בשבילכם"], op, 0.0, 1.1 if local < 0.22 else 1.0, "clean", 0.0)
+    if 13.1 <= t <= 15.01:
+        local = t - 13.1
+        return (["הקישור בפרופיל"], ease_out(min(1, local / 0.18)), 0.0, 1.1 if local < 0.22 else 1.0, "clean", 0.0)
     return None
 
 
-def beat_camera(t: float) -> tuple[float, float, float, float]:
-    """zoom≤1.0; box → cans; flash on reveal + clarity beat."""
-    if t < 2.7:
-        local = t / 2.7
-        # tiny open flash = motion in first frames (hook rate)
-        flash = 0.22 * (1 - t / 0.2) if t < 0.2 else 0.0
-        return 1.0, 0.44 + 0.10 * ease_out(local), 0.5, max(0, flash)
-    if t < 4.3:
-        local = (t - 2.7) / 1.6
-        flash = 0.6 * (1 - local / 0.12) if local < 0.12 else 0.0
-        return 1.0, 0.52 - 0.04 * ease_out(local), 0.5, max(0, flash)
+def beat_camera(t: float) -> tuple[float, float, float, float, float]:
+    """zoom, focus_x, focus_y, flash, shake — jump-cuts + impact flashes."""
+    # Jump-cut anchors every ~1.8s (pattern interrupt)
+    cuts = [0.0, 1.8, 2.25, 3.8, 5.55, 6.5, 7.4, 8.7, 10.2, 11.8, 13.1]
+    fx_cycle = [0.42, 0.58, 0.48, 0.55, 0.45, 0.50, 0.52, 0.46, 0.54, 0.50, 0.50]
+
+    def seg(i0, i1, default_fx=0.5):
+        a, b = cuts[i0], cuts[i1] if i1 < len(cuts) else DUR
+        local = (t - a) / max(0.01, b - a)
+        flash = 0.55 * (1 - local / 0.1) if local < 0.1 else 0.0
+        shake = 10.0 * (1 - local / 0.12) if local < 0.12 else 2.2
+        fx = fx_cycle[i0] + (fx_cycle[min(i0 + 1, len(fx_cycle) - 1)] - fx_cycle[i0]) * ease_out(min(1, local))
+        return local, flash, shake, fx
+
+    if t < 2.25:
+        local = t / 2.25
+        flash = 0.28 * (1 - t / 0.18) if t < 0.18 else 0.0
+        return 1.0, 0.42 + 0.12 * ease_out(local), 0.5, flash, 3.0 + 2.0 * math.sin(t * 11)
+    if t < 3.8:
+        _, flash, shake, fx = seg(2, 3)
+        return 1.0, fx, 0.5, max(flash, 0.65 * (1 - (t - 2.25) / 0.12) if t < 2.37 else 0), shake
+    if t < 5.55:
+        _, flash, shake, fx = seg(3, 4)
+        return 1.0, fx, 0.5, flash, shake
     if t < 6.5:
-        local = (t - 4.3) / 2.2
-        flash = 0.35 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.0, 0.50, 0.5, max(0, flash)
-    if t < 8.4:
-        local = (t - 6.5) / 1.9
-        flash = 0.45 * (1 - local / 0.1) if local < 0.1 else 0.0
-        return 1.0, 0.50, 0.5, max(0, flash)
-    if t < 10.1:
-        local = (t - 8.4) / 1.7
-        return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, 0.0
-    if t < 11.9:
-        local = (t - 10.1) / 1.8
-        return 1.0, 0.54 - 0.08 * ease_out(local), 0.5, 0.0
-    if t < 13.2:
-        return 1.0, 0.50, 0.5, 0.0
-    local = (t - 13.2) / 1.8
-    flash = 0.28 * (1 - local / 0.1) if local < 0.1 else 0.0
-    return 1.0, 0.50, 0.5, max(0, flash)
+        _, flash, shake, fx = seg(4, 5)
+        return 1.0, fx, 0.5, flash, shake
+    if t < 7.4:
+        # price smash — hard impact
+        local = (t - 6.5) / 0.9
+        flash = 0.7 * (1 - local / 0.1) if local < 0.1 else 0.0
+        return 1.0, 0.50, 0.5, flash, 14 * (1 - min(1, local / 0.15)) + 2
+    if t < 8.7:
+        _, flash, shake, fx = seg(6, 7)
+        return 1.0, fx, 0.5, flash, shake
+    if t < 10.2:
+        _, flash, shake, fx = seg(7, 8)
+        return 1.0, fx, 0.5, flash, shake
+    if t < 11.8:
+        _, flash, shake, fx = seg(8, 9)
+        return 1.0, fx, 0.5, flash, shake
+    if t < 13.1:
+        return 1.0, 0.50, 0.5, 0.0, 2.0
+    local = (t - 13.1) / 1.9
+    flash = 0.3 * (1 - local / 0.1) if local < 0.1 else 0.0
+    return 1.0, 0.50, 0.5, flash, 2.5
 
 
 def foam_sparkles(canvas: Image.Image, t: float, seed: int = 7) -> None:
-    """Soft rising foam dots — product-coded motion, not falling-hair stock."""
-    if t < 2.7:
+    """Rising foam dots — denser after reveal for motion without looking like falling hair."""
+    if t < 2.2:
         return
-    rng = np.random.default_rng(seed)
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    life = min(1.0, (t - 2.7) / 0.6)
-    for i in range(18):
-        # deterministic float paths
-        x = int((0.12 + 0.76 * ((i * 37 % 100) / 100)) * W)
-        speed = 28 + (i * 13 % 40)
-        y = int(H * 0.92 - ((t * speed * 8 + i * 90) % (H * 0.75)))
-        r = 3 + (i % 4)
-        a = int((55 + (i % 5) * 8) * life * (0.55 + 0.45 * abs(math.sin(t * 1.7 + i))))
+    life = min(1.0, (t - 2.2) / 0.45)
+    for i in range(28):
+        x = int((0.08 + 0.84 * ((i * 37 % 100) / 100)) * W)
+        speed = 32 + (i * 17 % 48)
+        y = int(H * 0.94 - ((t * speed * 9 + i * 80) % (H * 0.8)))
+        r = 3 + (i % 5)
+        a = int((70 + (i % 5) * 10) * life * (0.5 + 0.5 * abs(math.sin(t * 2.1 + i))))
         d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255, a))
-        if i % 3 == 0:
-            d.ellipse((x - r // 2, y - r - 6, x + r // 2, y - r), fill=(255, 255, 255, a // 2))
     canvas.alpha_composite(layer)
-    _ = rng  # keep seed hook for future variance
+
+
+def apply_shake(im: Image.Image, amount: float, t: float) -> Image.Image:
+    if amount < 0.5:
+        return im
+    dx = int(amount * math.sin(t * 53.0))
+    dy = int(amount * 0.7 * math.cos(t * 41.0))
+    out = Image.new("RGB", (W, H), (18, 20, 24))
+    out.paste(im.convert("RGB"), (dx, dy))
+    return out
+
+
+def whip_smear(im: Image.Image, t: float) -> Image.Image:
+    """Brief horizontal smear on jump-cut frames — native Shorts feel."""
+    cuts = (2.25, 3.8, 5.55, 6.5, 7.4, 8.7, 10.2, 13.1)
+    strength = 0.0
+    for c in cuts:
+        if abs(t - c) < 0.07:
+            strength = max(strength, 1.0 - abs(t - c) / 0.07)
+    if strength < 0.15:
+        return im
+    blurred = im.filter(ImageFilter.GaussianBlur(radius=1.2 + 3.5 * strength))
+    return Image.blend(im.convert("RGB"), blurred.convert("RGB"), 0.55 * strength)
 
 
 def prepare_logo(path: Path, width: int = 210) -> Image.Image:
@@ -292,46 +365,55 @@ def paste_logo(canvas: Image.Image, logo: Image.Image, *, opacity: float = 0.92)
 
 def frame_at(i: int, box: Image.Image, trio: Image.Image, logo: Image.Image) -> Image.Image:
     t = i / FPS
-    zoom, fx, fy, flash = beat_camera(t)
-    # Hook on the blue carton (matches copy) → reveal cans
-    src = box if t < 2.7 else trio
+    zoom, fx, fy, flash, shake = beat_camera(t)
+    src = box if t < 2.25 else trio
     plate = cover_window(src, zoom=zoom, focus_x=fx, focus_y=fy)
-    # Soft loop back to box in last 0.6s — Shorts/Reels replay boost, doesn't change story
     if t >= 14.4:
         box_plate = cover_window(box, zoom=1.0, focus_x=0.50, focus_y=0.5)
         plate = Image.blend(plate.convert("RGB"), box_plate.convert("RGB"), ease_in((t - 14.4) / 0.6))
+    plate = apply_shake(plate, shake, t)
+    plate = whip_smear(plate, t)
     canvas = grade(plate)
     canvas = flash_white(canvas, flash)
     foam_sparkles(canvas, t, seed=7)
     info = chip_at(t)
     if info:
-        lines, op, slide, pop = info
-        size = 50 if len(lines) > 1 else 54
-        if lines and lines[0] == "BLACK FRIDAY":
+        lines, op, slide, pop, style, rot = info
+        size = 50 if len(lines) > 1 else 56
+        if style == "stamp":
+            size = 64
+        if style == "smash" and lines == ["395₪"]:
+            size = 92
+        elif style == "smash":
             size = 58
         if lines and lines[0] == "מינוקסידיל 5%":
             size = 52
-        if lines == ["מחיר שובר שוק", "395₪"]:
-            size = 56
-        if lines == ["אנחנו פה בשבילכם"]:
-            size = 52
         if lines == ["הקישור בפרופיל"]:
-            size = 58
-        chip_block(canvas, int(H * 0.14), lines, size=size, opacity=op, slide_x=slide, pop=pop)
-    # Logo fades in after the box tease — brand match to other reels
-    if t >= 2.7:
-        lo = ease_out(min(1.0, (t - 2.7) / 0.45))
+            size = 60
+        chip_block(
+            canvas,
+            int(H * 0.14),
+            lines,
+            size=size,
+            opacity=op,
+            slide_x=slide,
+            pop=pop,
+            style=style,
+            rotate=rot,
+        )
+    if t >= 2.2:
+        lo = ease_out(min(1.0, (t - 2.2) / 0.4))
         paste_logo(canvas, logo, opacity=0.9 * lo)
-    return add_grain(canvas, amount=0.01, seed=i * 23 + 2).convert("RGB")
+    return add_grain(canvas, amount=0.012, seed=i * 23 + 2).convert("RGB")
 
 
 def make_audio(path: Path) -> None:
-    """Warm soft beat — closer to BF reel energy, not hollow pad."""
+    """Punchier commerce bed — kicks + impacts synced to jump-cuts."""
     sr = 44100
     n = int(DUR * sr)
     rng = np.random.default_rng(11)
     t = np.arange(n) / sr
-    bpm = 118  # tighter groove, less sleepy
+    bpm = 126
     beat = 60 / bpm
 
     def adsr(length, a=0.01, d=0.08, s=0.7, r=0.1):
@@ -347,18 +429,18 @@ def make_audio(path: Path) -> None:
     snare = np.zeros(n)
     for i, bt in enumerate(np.arange(0, DUR, beat)):
         i0 = int(bt * sr)
-        length = int(0.22 * sr)
+        length = int(0.2 * sr)
         if i0 + length > n:
             break
         tt = np.arange(length) / sr
-        freq = 95 * np.exp(-16 * tt) + 42
-        amp = 0.38 if i % 2 == 0 else 0.22
-        kick[i0 : i0 + length] += amp * np.sin(2 * np.pi * np.cumsum(freq) / sr) * np.exp(-9 * tt)
-        if i % 2 == 1:  # clap on offbeats
-            sl = int(0.09 * sr)
+        freq = 100 * np.exp(-17 * tt) + 40
+        amp = 0.42 if i % 2 == 0 else 0.24
+        kick[i0 : i0 + length] += amp * np.sin(2 * np.pi * np.cumsum(freq) / sr) * np.exp(-10 * tt)
+        if i % 2 == 1:
+            sl = int(0.08 * sr)
             if i0 + sl <= n:
                 noise = rng.standard_normal(sl)
-                snare[i0 : i0 + sl] += 0.16 * noise * np.exp(-38 * np.arange(sl) / sr)
+                snare[i0 : i0 + sl] += 0.2 * noise * np.exp(-42 * np.arange(sl) / sr)
 
     bass = np.zeros(n)
     notes = [73.42, 73.42, 87.31, 65.41]
@@ -370,25 +452,25 @@ def make_audio(path: Path) -> None:
         if length <= 0:
             break
         tt = np.arange(length) / sr
-        wave_b = 0.55 * np.sin(2 * np.pi * note * tt) + 0.2 * np.sin(2 * np.pi * note * 2 * tt)
-        bass[i0 : i0 + length] += 0.14 * wave_b * adsr(length)
+        wave_b = 0.55 * np.sin(2 * np.pi * note * tt) + 0.22 * np.sin(2 * np.pi * note * 2 * tt)
+        bass[i0 : i0 + length] += 0.16 * wave_b * adsr(length)
 
     pad = np.zeros(n)
     for f in (146.83, 174.61, 220.0):
         pad += np.sin(2 * np.pi * f * (1 + 0.002 * rng.standard_normal()) * t)
-    pad = pad / 4.2 * 0.07 * (0.8 + 0.2 * np.sin(2 * np.pi * 0.12 * t))
+    pad = pad / 4.2 * 0.06 * (0.8 + 0.2 * np.sin(2 * np.pi * 0.12 * t))
     pad = np.convolve(pad, np.ones(41) / 41, mode="same")
 
     pluck = np.zeros(n)
     melody = [
-        (0.5, 293.66, 0.35),
-        (2.0, 349.23, 0.3),
-        (3.9, 392.0, 0.35),
-        (5.3, 349.23, 0.3),
-        (6.8, 440.0, 0.35),
-        (8.9, 392.0, 0.35),
-        (10.9, 349.23, 0.4),
-        (12.9, 293.66, 0.45),
+        (0.4, 293.66, 0.3),
+        (2.25, 392.0, 0.28),
+        (3.8, 440.0, 0.3),
+        (5.55, 349.23, 0.25),
+        (6.5, 523.25, 0.35),
+        (8.7, 392.0, 0.3),
+        (10.2, 349.23, 0.35),
+        (13.1, 293.66, 0.4),
     ]
     for st, freq, length_s in melody:
         i0 = int(st * sr)
@@ -397,27 +479,30 @@ def make_audio(path: Path) -> None:
             continue
         tt = np.arange(length) / sr
         tone = np.sin(2 * np.pi * freq * tt) * np.exp(-2.8 * tt)
-        tone += 0.18 * np.sin(2 * np.pi * freq * 2 * tt) * np.exp(-5 * tt)
-        pluck[i0 : i0 + length] += 0.085 * tone
+        tone += 0.2 * np.sin(2 * np.pi * freq * 2 * tt) * np.exp(-5 * tt)
+        pluck[i0 : i0 + length] += 0.1 * tone
 
     whoosh = np.zeros(n)
-    # Hit on story cuts — SFX = retention cue across mute-off viewers
-    for wt, amp in ((0.05, 0.14), (2.7, 0.28), (4.3, 0.2), (6.5, 0.24), (10.1, 0.16), (13.2, 0.18)):
+    impact = np.zeros(n)
+    for wt, amp in ((0.04, 0.16), (2.25, 0.34), (3.8, 0.26), (5.55, 0.22), (6.5, 0.4), (7.4, 0.28), (10.2, 0.2), (13.1, 0.22)):
         i0 = int(wt * sr)
-        length = min(int(0.28 * sr), n - i0)
+        length = min(int(0.26 * sr), n - i0)
         if length <= 0:
             continue
-        noise = np.convolve(rng.standard_normal(length), np.ones(100) / 100, mode="same")
-        env = np.sin(np.linspace(0, np.pi, length)) ** 1.5
-        whoosh[i0 : i0 + length] += 0.055 * amp * noise * env
+        noise = np.convolve(rng.standard_normal(length), np.ones(80) / 80, mode="same")
+        env = np.sin(np.linspace(0, np.pi, length)) ** 1.4
+        whoosh[i0 : i0 + length] += 0.07 * amp * noise * env
+        # sub impact thump
+        tt = np.arange(length) / sr
+        impact[i0 : i0 + length] += amp * 0.35 * np.sin(2 * np.pi * (55 * np.exp(-20 * tt)) * tt) * np.exp(-12 * tt)
 
-    bed = kick + snare + bass + pad + pluck + whoosh
-    quiet = int(0.08 * sr)  # almost immediate — don't bury the open
-    bed[:quiet] *= np.linspace(0.55, 1, quiet)
+    bed = kick + snare + bass + pad + pluck + whoosh + impact
+    quiet = int(0.06 * sr)
+    bed[:quiet] *= np.linspace(0.6, 1, quiet)
     peak = np.max(np.abs(bed)) + 1e-9
-    bed = np.tanh(bed / peak * 0.68 * 1.08) * 0.9
-    bed = np.convolve(bed, np.ones(5) / 5, mode="same")
-    fi, fo = int(0.12 * sr), int(0.55 * sr)
+    bed = np.tanh(bed / peak * 0.72 * 1.1) * 0.92
+    bed = np.convolve(bed, np.ones(4) / 4, mode="same")
+    fi, fo = int(0.08 * sr), int(0.45 * sr)
     bed[:fi] *= np.linspace(0, 1, fi)
     bed[-fo:] *= np.linspace(1, 0, fo)
     audio = np.clip(bed, -1, 1)
@@ -451,7 +536,7 @@ def render() -> Path:
     trio = pad_pack(cans, top=0.26, side=0.12, bottom=0.14)
     box = pad_pack(box_src, top=0.22, side=0.14, bottom=0.12)
 
-    print(f"Rendering {N} frames (v7 box→cans + logo)…")
+    print(f"Rendering {N} frames (v8 jump-cuts + price smash)…")
     for i in range(N):
         im = frame_at(i, box, trio, logo)
         im.save(frames / f"f_{i:05d}.png")
@@ -485,7 +570,7 @@ def render() -> Path:
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_COVER.jpg")
     shutil.copy2(mp4, ART / "abc_foam_curiosity_demo.mp4")
     shutil.copy2(cover_path, ART / "abc_foam_curiosity_cover.jpg")
-    for label, sec in (("hook", 0.35), ("bf", 3.5), ("clarity", 5.2), ("ship", 10.5), ("cta", 13.5)):
+    for label, sec in (("hook", 0.35), ("bf", 2.8), ("clarity", 4.5), ("tease", 6.0), ("price", 6.9), ("cta", 13.5)):
         frame_at(int(sec * FPS), box, trio, logo).save(ART / f"abc_preview_{label}.jpg", quality=92)
     print("Wrote", mp4)
     return mp4
