@@ -16,4 +16,4 @@ BLACK FRIDAY 🔥
 
 
 
-Cover: use `MinoxShop_ABC_curiosity_COVER.jpg` (frame ~1.2s — question + unexplained navy corner).
+Cover: use `MinoxShop_ABC_curiosity_COVER.jpg` — navy grid thumb with **BLACK FRIDAY** + giant **395₪** + מחיר שובר שוק (center-safe for IG profile). Replace on already-posted Reels via ⋯ → Edit → Cover → Photo.
