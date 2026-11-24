@@ -182,7 +182,7 @@ def chip_at(t: float):
         op = ease_out(min(1, local / 0.16))
         if t > 9.8:
             op = 1 - ease_in((t - 9.8) / 0.2)
-        return (["3 חודשים · הקצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
+        return (["3 חודשים · קצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
     if 10.1 <= t < 11.8:
         local = t - 10.1
         op = ease_out(min(1, local / 0.16))
