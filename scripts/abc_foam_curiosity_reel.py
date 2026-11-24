@@ -150,74 +150,107 @@ def chip_block(canvas, cy, lines, *, size=48, opacity=1.0, slide_x=0.0, pop=1.0)
 
 
 def chip_at(t: float):
-    # Box hook → cans reveal + BF → price → proof → door delivery → warmth → CTA
-    if 0.25 <= t < 2.8:
+    # Clarity-first story: hook → BF → WHAT IT IS → price smash → proof → door → warmth → CTA
+    if 0.25 <= t < 2.6:
         local = t - 0.25
-        if local < 0.25:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(local / 0.25), 40 * (1 - ease_out(local / 0.25)), 0.95 + 0.1 * ease_out(local / 0.25))
-        if t > 2.55:
-            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.55) / 0.25), 0.0, 1.0)
+        if local < 0.22:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], ease_out(local / 0.22), 40 * (1 - ease_out(local / 0.22)), 0.95 + 0.1 * ease_out(local / 0.22))
+        if t > 2.4:
+            return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1 - ease_in((t - 2.4) / 0.2), 0.0, 1.0)
         return (["מה יש בקופסה הכחולה", "מארה״ב?"], 1.0, 0.0, 1.0)
-    if 2.9 <= t < 4.9:
-        local = t - 2.9
-        op = ease_out(min(1, local / 0.18))
-        if t > 4.7:
-            op = 1 - ease_in((t - 4.7) / 0.2)
-        return (["BLACK FRIDAY"], op, 0.0, 1.14 if local < 0.28 else 1.0)
-    if 5.0 <= t < 7.2:
-        local = t - 5.0
+    if 2.7 <= t < 4.2:
+        local = t - 2.7
         op = ease_out(min(1, local / 0.16))
-        if t > 7.0:
-            op = 1 - ease_in((t - 7.0) / 0.2)
+        if t > 4.0:
+            op = 1 - ease_in((t - 4.0) / 0.2)
+        return (["BLACK FRIDAY"], op, 0.0, 1.14 if local < 0.26 else 1.0)
+    if 4.3 <= t < 6.4:
+        local = t - 4.3
+        op = ease_out(min(1, local / 0.16))
+        if t > 6.2:
+            op = 1 - ease_in((t - 6.2) / 0.2)
+        # The clarity beat — no guessing what the product does
+        return (["מינוקסידיל 5%", "לחיזוק וצמיחת השיער"], op, 0.0, 1.1 if local < 0.28 else 1.0)
+    if 6.5 <= t < 8.3:
+        local = t - 6.5
+        op = ease_out(min(1, local / 0.16))
+        if t > 8.1:
+            op = 1 - ease_in((t - 8.1) / 0.2)
         return (["מחיר שובר שוק", "395₪"], op, 0.0, 1.16 if local < 0.28 else 1.0)
-    if 7.3 <= t < 9.2:
-        local = t - 7.3
-        op = ease_out(min(1, local / 0.18))
-        if t > 9.0:
-            op = 1 - ease_in((t - 9.0) / 0.2)
-        return (["3 חודשים · קצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
-    if 9.3 <= t < 11.3:
-        local = t - 9.3
-        op = ease_out(min(1, local / 0.18))
-        if t > 11.1:
-            op = 1 - ease_in((t - 11.1) / 0.2)
+    if 8.4 <= t < 10.0:
+        local = t - 8.4
+        op = ease_out(min(1, local / 0.16))
+        if t > 9.8:
+            op = 1 - ease_in((t - 9.8) / 0.2)
+        return (["3 חודשים · הקצף לגברים"], op, 0.0, 1.06 if local < 0.25 else 1.0)
+    if 10.1 <= t < 11.8:
+        local = t - 10.1
+        op = ease_out(min(1, local / 0.16))
+        if t > 11.6:
+            op = 1 - ease_in((t - 11.6) / 0.2)
         return (["משלוח חינם עד הבית", "עם שליח"], op, 0.0, 1.04 if local < 0.25 else 1.0)
-    if 11.4 <= t < 12.8:
-        local = t - 11.4
-        op = ease_out(min(1, local / 0.2))
-        if t > 12.6:
-            op = 1 - ease_in((t - 12.6) / 0.2)
+    if 11.9 <= t < 13.1:
+        local = t - 11.9
+        op = ease_out(min(1, local / 0.18))
+        if t > 12.9:
+            op = 1 - ease_in((t - 12.9) / 0.2)
         return (["אנחנו פה בשבילכם"], op, 0.0, 1.08 if local < 0.28 else 1.0)
-    if 12.9 <= t <= 15.01:
-        local = t - 12.9
+    if 13.2 <= t <= 15.01:
+        local = t - 13.2
         return (["הקישור בפרופיל"], ease_out(min(1, local / 0.22)), 0.0, 1.08 if local < 0.28 else 1.0)
     return None
 
 
 def beat_camera(t: float) -> tuple[float, float, float, float]:
-    """zoom≤1.0; box open then cans; motion = pan + flash on reveal."""
-    if t < 2.9:  # box curiosity
-        local = t / 2.9
+    """zoom≤1.0; box → cans; flash on reveal + clarity beat."""
+    if t < 2.7:
+        local = t / 2.7
         return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, 0.0
-    if t < 5.0:  # reveal + BF
-        local = (t - 2.9) / 2.1
+    if t < 4.3:
+        local = (t - 2.7) / 1.6
         flash = 0.6 * (1 - local / 0.12) if local < 0.12 else 0.0
         return 1.0, 0.52 - 0.04 * ease_out(local), 0.5, max(0, flash)
-    if t < 7.2:
-        local = (t - 5.0) / 2.2
+    if t < 6.5:
+        local = (t - 4.3) / 2.2
+        flash = 0.35 * (1 - local / 0.1) if local < 0.1 else 0.0
+        return 1.0, 0.50, 0.5, max(0, flash)
+    if t < 8.4:
+        local = (t - 6.5) / 1.9
         flash = 0.45 * (1 - local / 0.1) if local < 0.1 else 0.0
         return 1.0, 0.50, 0.5, max(0, flash)
-    if t < 9.3:
-        local = (t - 7.2) / 2.1
+    if t < 10.1:
+        local = (t - 8.4) / 1.7
         return 1.0, 0.46 + 0.08 * ease_out(local), 0.5, 0.0
-    if t < 11.4:
-        local = (t - 9.3) / 2.1
+    if t < 11.9:
+        local = (t - 10.1) / 1.8
         return 1.0, 0.54 - 0.08 * ease_out(local), 0.5, 0.0
-    if t < 12.9:
+    if t < 13.2:
         return 1.0, 0.50, 0.5, 0.0
-    local = (t - 12.9) / 2.1
+    local = (t - 13.2) / 1.8
     flash = 0.28 * (1 - local / 0.1) if local < 0.1 else 0.0
     return 1.0, 0.50, 0.5, max(0, flash)
+
+
+def foam_sparkles(canvas: Image.Image, t: float, seed: int = 7) -> None:
+    """Soft rising foam dots — product-coded motion, not falling-hair stock."""
+    if t < 2.7:
+        return
+    rng = np.random.default_rng(seed)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    life = min(1.0, (t - 2.7) / 0.6)
+    for i in range(18):
+        # deterministic float paths
+        x = int((0.12 + 0.76 * ((i * 37 % 100) / 100)) * W)
+        speed = 28 + (i * 13 % 40)
+        y = int(H * 0.92 - ((t * speed * 8 + i * 90) % (H * 0.75)))
+        r = 3 + (i % 4)
+        a = int((55 + (i % 5) * 8) * life * (0.55 + 0.45 * abs(math.sin(t * 1.7 + i))))
+        d.ellipse((x - r, y - r, x + r, y + r), fill=(255, 255, 255, a))
+        if i % 3 == 0:
+            d.ellipse((x - r // 2, y - r - 6, x + r // 2, y - r), fill=(255, 255, 255, a // 2))
+    canvas.alpha_composite(layer)
+    _ = rng  # keep seed hook for future variance
 
 
 def prepare_logo(path: Path, width: int = 210) -> Image.Image:
@@ -259,16 +292,19 @@ def frame_at(i: int, box: Image.Image, trio: Image.Image, logo: Image.Image) -> 
     t = i / FPS
     zoom, fx, fy, flash = beat_camera(t)
     # Hook on the blue carton (matches copy) → reveal cans
-    src = box if t < 2.9 else trio
+    src = box if t < 2.7 else trio
     plate = cover_window(src, zoom=zoom, focus_x=fx, focus_y=fy)
     canvas = grade(plate)
     canvas = flash_white(canvas, flash)
+    foam_sparkles(canvas, t, seed=7)
     info = chip_at(t)
     if info:
         lines, op, slide, pop = info
         size = 50 if len(lines) > 1 else 54
         if lines and lines[0] == "BLACK FRIDAY":
             size = 58
+        if lines and lines[0] == "מינוקסידיל 5%":
+            size = 52
         if lines == ["מחיר שובר שוק", "395₪"]:
             size = 56
         if lines == ["אנחנו פה בשבילכם"]:
