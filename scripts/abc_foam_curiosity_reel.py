@@ -558,9 +558,37 @@ def render() -> Path:
         stderr=subprocess.DEVNULL,
     )
 
-    cover = frame_at(int(0.35 * FPS), box, trio, logo)
+    # Dedicated grid cover: dark high-contrast Hebrew (readable in IG profile thumb)
+    cover = frame_at(int(0.5 * FPS), box, trio, logo).convert("RGBA")
+    # Reinforce hook as big dark+gold plate so grid doesn't look like bare cans
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    od = ImageDraw.Draw(overlay)
+    for y in range(0, int(H * 0.34)):
+        a = int(140 * (1 - y / (H * 0.34)) ** 1.1)
+        od.line((0, y, W, y), fill=(8, 12, 20, a))
+    cover = Image.alpha_composite(cover, overlay)
+    chip_block(
+        cover,
+        int(H * 0.14),
+        ["מה יש בקופסה הכחולה", "מארה״ב?"],
+        size=68,
+        opacity=1.0,
+        style="stamp",
+        pop=1.0,
+    )
+    # BF · price micro-pill under hook
+    pill = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    pd = ImageDraw.Draw(pill)
+    label = "BLACK FRIDAY · 395₪"
+    f = font(38)
+    bb = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), label, font=f)
+    bw, bh = bb[2] - bb[0] + 40, bb[3] - bb[1] + 24
+    bx, by = (W - bw) // 2, int(H * 0.22)
+    pd.rounded_rectangle((bx, by, bx + bw, by + bh), radius=18, fill=(255, 255, 255, 245))
+    draw_text(pd, (bx + bw // 2, by + bh // 2), label, size=38, fill=(*INK, 255))
+    cover = Image.alpha_composite(cover, pill)
     cover_path = OUT / "MinoxShop_ABC_curiosity_COVER.jpg"
-    cover.save(cover_path, quality=95)
+    cover.convert("RGB").save(cover_path, quality=95)
 
     ART.mkdir(parents=True, exist_ok=True)
     shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_ABC_curiosity_15s.mp4")
