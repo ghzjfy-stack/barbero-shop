@@ -533,41 +533,42 @@ def make_audio(path: Path):
             env[-ir:] = np.linspace(env[-ir] if len(env) else s, 0, ir)
         return env
 
-    # aggressive clipper buzz during hook → hard cut to silence
+    # LOUD clipper buzz during hook → hard cut to silence (Reels phone speaker)
     buzz = np.zeros(n)
     hook_n = int(HOOK_END * sr)
     tt = np.arange(hook_n) / sr
     buzz[:hook_n] = (
-        0.18 * np.sin(2 * np.pi * 78 * tt)
-        + 0.12 * np.sin(2 * np.pi * 156 * tt)
-        + 0.09 * np.sin(2 * np.pi * 312 * tt)
-        + 0.07 * rng.standard_normal(hook_n)
-    ) * (0.5 + 0.5 * np.sin(2 * np.pi * 32 * tt))
+        0.34 * np.sin(2 * np.pi * 78 * tt)
+        + 0.26 * np.sin(2 * np.pi * 156 * tt)
+        + 0.18 * np.sin(2 * np.pi * 312 * tt)
+        + 0.12 * np.sin(2 * np.pi * 468 * tt)
+        + 0.14 * rng.standard_normal(hook_n)
+    ) * (0.55 + 0.45 * np.sin(2 * np.pi * 34 * tt))
     # hard kill into «רגע» silence
-    cut = int(0.04 * sr)
+    cut = int(0.05 * sr)
     if hook_n > cut:
         buzz[hook_n - cut : hook_n] *= np.linspace(1, 0, cut)
     # keep stop beat nearly silent (pattern interrupt)
     stop_a, stop_b = int(HOOK_END * sr), int(STOP_END * sr)
     mute = np.ones(n)
-    mute[stop_a:stop_b] = 0.08
+    mute[stop_a:stop_b] = 0.06
 
     kick = np.zeros(n)
     snare = np.zeros(n)
     for i, bt in enumerate(np.arange(STOP_END, DUR, beat)):
         i0 = int(bt * sr)
-        length = int(0.2 * sr)
+        length = int(0.22 * sr)
         if i0 + length > n:
             break
         tt = np.arange(length) / sr
-        freq = 100 * np.exp(-17 * tt) + 40
-        amp = 0.40 if i % 2 == 0 else 0.22
-        kick[i0 : i0 + length] += amp * np.sin(2 * np.pi * np.cumsum(freq) / sr) * np.exp(-10 * tt)
+        freq = 105 * np.exp(-16 * tt) + 42
+        amp = 0.62 if i % 2 == 0 else 0.36
+        kick[i0 : i0 + length] += amp * np.sin(2 * np.pi * np.cumsum(freq) / sr) * np.exp(-9 * tt)
         if i % 2 == 1:
-            sl = int(0.08 * sr)
+            sl = int(0.09 * sr)
             if i0 + sl <= n:
                 noise = rng.standard_normal(sl)
-                snare[i0 : i0 + sl] += 0.18 * noise * np.exp(-42 * np.arange(sl) / sr)
+                snare[i0 : i0 + sl] += 0.32 * noise * np.exp(-38 * np.arange(sl) / sr)
 
     bass = np.zeros(n)
     notes = [73.42, 73.42, 87.31, 65.41]
@@ -579,53 +580,55 @@ def make_audio(path: Path):
         if length <= 0:
             break
         tt = np.arange(length) / sr
-        wave_b = 0.55 * np.sin(2 * np.pi * note * tt) + 0.22 * np.sin(2 * np.pi * note * 2 * tt)
-        bass[i0 : i0 + length] += 0.15 * wave_b * adsr(length)
+        wave_b = 0.62 * np.sin(2 * np.pi * note * tt) + 0.28 * np.sin(2 * np.pi * note * 2 * tt)
+        bass[i0 : i0 + length] += 0.28 * wave_b * adsr(length)
 
     impact = np.zeros(n)
     for wt, amp in (
-        (0.04, 0.18),
-        (HOOK_END, 0.62),
-        (PRODUCT_IN, 0.42),
-        (MONTHS_END, 0.72),  # BF price punch
-        (FOAM_IN, 0.35),
-        (SHIP_END, 0.28),
+        (0.04, 0.32),
+        (HOOK_END, 0.95),
+        (PRODUCT_IN, 0.70),
+        (MONTHS_END, 1.15),  # BF price punch — biggest hit
+        (PRICE_END, 0.55),
+        (FOAM_IN, 0.62),
+        (SHIP_END, 0.48),
     ):
         i0 = int(wt * sr)
-        length = min(int(0.32 * sr), n - i0)
+        length = min(int(0.36 * sr), n - i0)
         if length <= 0:
             continue
         tt = np.arange(length) / sr
-        impact[i0 : i0 + length] += amp * np.sin(2 * np.pi * (55 * np.exp(-16 * tt)) * tt) * np.exp(-10 * tt)
-        noise = np.convolve(rng.standard_normal(length), np.ones(60) / 60, mode="same")
-        impact[i0 : i0 + length] += 0.11 * amp * noise * np.sin(np.linspace(0, np.pi, length))
+        impact[i0 : i0 + length] += amp * np.sin(2 * np.pi * (58 * np.exp(-15 * tt)) * tt) * np.exp(-9 * tt)
+        noise = np.convolve(rng.standard_normal(length), np.ones(48) / 48, mode="same")
+        impact[i0 : i0 + length] += 0.18 * amp * noise * np.sin(np.linspace(0, np.pi, length))
 
     # short riser into BF price
     riser = np.zeros(n)
-    r0 = int((MONTHS_END - 0.45) * sr)
-    rl = int(0.45 * sr)
+    r0 = int((MONTHS_END - 0.50) * sr)
+    rl = int(0.50 * sr)
     if r0 > 0 and r0 + rl < n:
         tt = np.arange(rl) / sr
-        riser[r0 : r0 + rl] = 0.14 * np.sin(2 * np.pi * (220 + 680 * (tt / 0.45)) * tt) * (tt / 0.45)
+        riser[r0 : r0 + rl] = 0.26 * np.sin(2 * np.pi * (220 + 820 * (tt / 0.50)) * tt) * (tt / 0.50)
 
     pad = np.zeros(n)
     for f in (146.83, 174.61, 220.0):
         pad += np.sin(2 * np.pi * f * t)
-    pad = pad / 4.5 * 0.045
+    pad = pad / 4.5 * 0.08
     pad = np.convolve(pad, np.ones(41) / 41, mode="same")
-    pad[: int(STOP_END * sr)] *= 0.15
+    pad[: int(STOP_END * sr)] *= 0.12
 
     bed = (buzz + kick + snare + bass + pad + impact + riser) * mute
     # lift energy after product reveal (BF push)
     gate = np.ones(n)
     gi = int(PRODUCT_IN * sr)
-    gate[gi:] = 1.10
+    gate[gi:] = 1.22
     gbf = int(MONTHS_END * sr)
-    gate[gbf:] = 1.18
+    gate[gbf:] = 1.38
     bed = bed * gate
+    # hot normalize — Reels phones bury quiet beds
     peak = np.max(np.abs(bed)) + 1e-9
-    bed = np.tanh(bed / peak * 0.82) * 0.95
-    fi, fo = int(0.04 * sr), int(0.35 * sr)
+    bed = np.tanh(bed / peak * 1.22) * 0.98
+    fi, fo = int(0.03 * sr), int(0.28 * sr)
     bed[:fi] *= np.linspace(0, 1, fi)
     bed[-fo:] *= np.linspace(1, 0, fo)
     audio = np.clip(bed, -1, 1)
@@ -633,18 +636,18 @@ def make_audio(path: Path):
         w.setnchannels(1)
         w.setsampwidth(2)
         w.setframerate(sr)
-        w.writeframes(b"".join(struct.pack("<h", int(x * 30000)) for x in audio))
+        w.writeframes(b"".join(struct.pack("<h", int(x * 32750)) for x in audio))
 
 
 def build_hook_cover(scalp: Image.Image) -> Image.Image:
     """Scroll-stop cover: blade-forward crop + lean offer (less sticker clutter)."""
     hook = load_hook_plate(scalp)
     # tighter on teeth/hand — stronger first-frame punch
-    plate = cover_window(hook, zoom=1.62, focus_x=0.60, focus_y=0.28)
-    plate = grade(plate, contrast=1.14, bright=0.93, color=0.97)
-    plate = phone_photo(plate, seed=7, strength=1.0)
+    plate = cover_window(hook, zoom=1.72, focus_x=0.62, focus_y=0.26)
+    plate = grade(plate, contrast=1.16, bright=0.92, color=0.96)
+    plate = phone_photo(plate, seed=7, strength=1.05)
     canvas = plate.convert("RGBA")
-    chip_block(canvas, int(H * 0.07), ["לגלח את זה", "ולגמור עם זה?"], size=60, opacity=1.0, style="hook", pop=1.0)
+    chip_block(canvas, int(H * 0.065), ["לגלח את זה", "ולגמור עם זה?"], size=66, opacity=1.0, style="hook", pop=1.0)
 
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
@@ -666,6 +669,25 @@ def build_hook_cover(scalp: Image.Image) -> Image.Image:
     return Image.alpha_composite(canvas, layer).convert("RGB")
 
 
+def loudness_boost(src: Path, dst: Path):
+    """Reels-hot bed: compress → loudnorm ~-9 LUFS → brickwall (TP < 0)."""
+    af = (
+        "acompressor=threshold=-17dB:ratio=4.5:attack=5:release=55:makeup=8.5,"
+        "alimiter=limit=0.90:attack=1:release=40:level=disabled,"
+        "loudnorm=I=-9:TP=-1.2:LRA=7"
+    )
+    subprocess.check_call(
+        [
+            "ffmpeg", "-y", "-i", str(src),
+            "-af", af,
+            "-ar", "44100", "-ac", "1", "-c:a", "pcm_s16le",
+            str(dst),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def encode_mp4(frames_dir: Path, audio: Path, mp4: Path, start_idx: int = 0, count: int | None = None):
     # ffmpeg image2 from numbered sequence — write a contiguous temp pattern if needed
     pattern = frames_dir / "f_%05d.png"
@@ -676,7 +698,7 @@ def encode_mp4(frames_dir: Path, audio: Path, mp4: Path, start_idx: int = 0, cou
         "-i", str(pattern),
         "-i", str(audio),
         "-c:v", "libx264", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-b:a", "160k",
+        "-c:a", "aac", "-b:a", "192k",
         "-shortest", "-movflags", "+faststart",
         str(mp4),
     ]
@@ -713,15 +735,17 @@ def render() -> Path:
     cover_path = OUT / "MinoxShop_MM_clipper_v8_COVER.jpg"
     cover.save(cover_path, quality=95)
 
-    print(f"Rendering {N} frames (v8 de-AI — phone grain + tighter cover)…")
+    print(f"Rendering {N} frames (v8 loud-9 — hot audio + tighter cover)…")
     for i in range(N):
         im = frame_at(i, scalp, bottles_p, foam_p, logo)
         im.save(frames / f"f_{i:05d}.png")
         if i % 60 == 0:
             print(f"  body {i}/{N}")
 
+    audio_raw = OUT / "audio_raw.wav"
     audio = OUT / "audio.wav"
-    make_audio(audio)
+    make_audio(audio_raw)
+    loudness_boost(audio_raw, audio)
 
     mp4 = OUT / "MinoxShop_MM_clipper_v8_24s.mp4"
     encode_mp4(frames, audio, mp4)
