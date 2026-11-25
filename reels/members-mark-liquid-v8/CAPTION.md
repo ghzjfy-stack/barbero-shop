@@ -23,3 +23,7 @@ BLACK FRIDAY · מחיר שובר שוק · 375₪
 
 - IG/TT/FB → `MinoxShop_MM_clipper_v8_24s.mp4` + `…_v8_COVER.jpg`
 - YT → `MinoxShop_MM_clipper_v8_YT.mp4`
+
+## כריכה (FB/IG thumb)
+עברית טבעית בלבד — בלי ערבוב EN/HE בשורה (שובר RTL).
+`MinoxShop_MM_clipper_v8_COVER.jpg`

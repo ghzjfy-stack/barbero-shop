@@ -640,32 +640,58 @@ def make_audio(path: Path):
 
 
 def build_hook_cover(scalp: Image.Image) -> Image.Image:
-    """Scroll-stop cover: blade-forward crop + lean offer (less sticker clutter)."""
+    """Scroll-stop cover: blade-forward + natural Hebrew offer (no EN/HE mix)."""
     hook = load_hook_plate(scalp)
-    # tighter on teeth/hand — stronger first-frame punch
-    plate = cover_window(hook, zoom=1.72, focus_x=0.62, focus_y=0.26)
-    plate = grade(plate, contrast=1.16, bright=0.92, color=0.96)
-    plate = phone_photo(plate, seed=7, strength=1.05)
+    # blade-forward but keep enough scalp so it reads as a head (not body hair)
+    plate = cover_window(hook, zoom=1.78, focus_x=0.62, focus_y=0.28)
+    plate = grade(plate, contrast=1.20, bright=0.91, color=0.95)
+    plate = phone_photo(plate, seed=11, strength=1.08)
     canvas = plate.convert("RGBA")
-    chip_block(canvas, int(H * 0.065), ["לגלח את זה", "ולגמור עם זה?"], size=66, opacity=1.0, style="hook", pop=1.0)
+
+    # bottom shade — text sits clean, blade/scalp stay visible above
+    shade = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shade)
+    for i in range(380):
+        a = int(200 * (i / 380) ** 1.4)
+        y = H - 380 + i
+        sd.line([(0, y), (W, y)], fill=(0, 0, 0, a))
+    canvas = Image.alpha_composite(canvas, shade)
+
+    chip_block(
+        canvas,
+        int(H * 0.055),
+        ["לגלח את זה", "ולגמור עם זה?"],
+        size=68,
+        opacity=1.0,
+        style="hook",
+        pop=1.0,
+    )
 
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    y = int(H * 0.78)
 
     def measure(text: str, size: int):
         bb = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), text, font=font(size))
         return bb[2] - bb[0], bb[3] - bb[1]
 
-    # lean stack — price dominates, less banner spam
-    price = "375₪"
-    ww, hh = measure(price, 108)
-    pw, ph = ww + 56, hh + 28
+    # offer stack low — pure Hebrew (EN+HE on one line scrambled on FB)
+    y = int(H * 0.78)
+    price = "₪375"
+    ww, hh = measure(price, 112)
+    pw, ph = ww + 60, hh + 30
     px = (W - pw) // 2
-    d.rounded_rectangle((px, y, px + pw, y + ph), radius=22, fill=(0, 0, 0, 235))
-    draw_text(d, (W // 2, y + ph // 2), price, size=108, fill=(255, 255, 255, 255))
-    y += ph + 12
-    draw_text(d, (W // 2, y), "BLACK FRIDAY · 6 בקבוקים", size=32, fill=(255, 220, 80, 255))
+    d.rounded_rectangle((px, y, px + pw, y + ph), radius=24, fill=(0, 0, 0, 245))
+    d.rounded_rectangle(
+        (px, y, px + pw, y + ph),
+        radius=24,
+        outline=(255, 214, 40, 220),
+        width=3,
+    )
+    draw_text(d, (W // 2, y + ph // 2), price, size=112, fill=(255, 255, 255, 255))
+    y += ph + 16
+    draw_text(d, (W // 2, y), "שישה בקבוקים · מחיר שובר שוק", size=33, fill=(255, 230, 90, 255))
+    y += 42
+    draw_text(d, (W // 2, y), "בלאק פריידי · משלוח חינם עד הבית", size=27, fill=(255, 255, 255, 235))
     return Image.alpha_composite(canvas, layer).convert("RGB")
 
 
