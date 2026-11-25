@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """MinoxShop Member's Mark — clipper fake-out v8 (aim 9.5/10 upload).
 
-Fixes vs what felt weak after IG upload:
-- more realistic 3D red clipper (not flat sticker)
-- NO box+logo mid-overlap clutter — keep 6 bottles clean
-- logo only on CTA (bottom), never on product hero
-- stronger clipper buzz + hard silence on «רגע» + BF drop
-- hook cover built-in (viral thumb)
+Hook uses a real hand + classic barber clipper on scalp (instantly readable),
+not a floating toy cutout. Product mid stays clean 6-pack; logo CTA-only.
 """
 
 from __future__ import annotations
@@ -31,9 +27,12 @@ ASSETS = Path(os.environ.get("MM_ASSETS", "/tmp/mm-reel"))
 OUT = Path(os.environ.get("MM_OUT", "/tmp/mm-clipper-v8"))
 ART = Path("/opt/cursor/artifacts")
 LOGO_PATH = Path(os.environ.get("MINOX_LOGO", "/tmp/minox-mp/main-logo.png"))
-_REPO_CLIPPER = Path(__file__).resolve().parent.parent / "reels/members-mark-liquid-v8/assets/clipper_rgba.png"
+_REPO_DIR = Path(__file__).resolve().parent.parent / "reels/members-mark-liquid-v8/assets"
+_REPO_CLIPPER = _REPO_DIR / "clipper_rgba.png"
+_REPO_HOOK = _REPO_DIR / "clipper_hand_hook.jpg"
 CLIPPER_PATH = Path(os.environ.get("MM_CLIPPER", str(_REPO_CLIPPER if _REPO_CLIPPER.exists() else ASSETS / "clipper_rgba.png")))
 _CLIPPER_CACHE: Image.Image | None = None
+_HOOK_CACHE: Image.Image | None = None
 
 
 def load_clipper() -> Image.Image | None:
@@ -45,6 +44,19 @@ def load_clipper() -> Image.Image | None:
             _CLIPPER_CACHE = Image.open(path).convert("RGBA")
             return _CLIPPER_CACHE
     return None
+
+
+def load_hook_plate(fallback: Image.Image) -> Image.Image:
+    """Real hand + classic clipper on scalp — reads instantly as a haircut machine."""
+    global _HOOK_CACHE
+    if _HOOK_CACHE is not None:
+        return _HOOK_CACHE
+    for path in (_REPO_HOOK, ASSETS / "clipper_hand_hook.jpg", ASSETS / "scalp.jpg"):
+        if path.exists():
+            _HOOK_CACHE = load_rgb(path)
+            return _HOOK_CACHE
+    _HOOK_CACHE = fallback
+    return _HOOK_CACHE
 
 FONT = "/usr/share/fonts/truetype/croscore/Arimo-Bold.ttf"
 FONT_REG = "/usr/share/fonts/truetype/croscore/Arimo-Regular.ttf"
@@ -229,18 +241,18 @@ def flash_white(im: Image.Image, amount: float) -> Image.Image:
 
 
 def _prep_clipper(scale: float) -> Image.Image | None:
-    """Resize + rotate so blade tip points down the scalp path."""
+    """Resize classic clipper — blade teeth dominate, tip aimed down."""
     src = load_clipper()
     if src is None:
         return None
-    h = int(400 * scale)
+    # classic asset is wide (blade left); scale larger so teeth read clearly
+    h = int(520 * scale)
     w = max(1, int(src.width * h / src.height))
     clip = src.resize((w, h), Image.Resampling.LANCZOS)
-    # source tip is bottom-left; ~42° aims the teeth downward on the vertical path
-    clip = clip.rotate(42, expand=True, resample=Image.Resampling.BICUBIC)
-    # micro-choke at composite time so LANCZOS resize can't reintroduce white fringe
+    # tip is bottom-left → rotate so teeth face down
+    clip = clip.rotate(55, expand=True, resample=Image.Resampling.BICUBIC)
     a = clip.split()[-1].filter(ImageFilter.MinFilter(3))
-    a = a.filter(ImageFilter.GaussianBlur(0.6))
+    a = a.filter(ImageFilter.GaussianBlur(0.55))
     clip.putalpha(a)
     return clip
 
@@ -359,8 +371,9 @@ def draw_sparkles(canvas: Image.Image, t: float, amount: float):
 
 def beat_camera(t: float):
     if t < HOOK_END:
-        z = 1.20 + 0.12 * ease_out(t / HOOK_END) + 0.025 * math.sin(t * 10)
-        return z, 0.50, 0.36, 0.0, 0.70 + 0.30 * math.sin(t * 26)
+        # punch into blade-on-scalp contact of the hand+clipper plate
+        z = 1.28 + 0.18 * ease_out(t / HOOK_END) + 0.02 * math.sin(t * 8)
+        return z, 0.54, 0.34, 0.0, 0.55 + 0.25 * math.sin(t * 22)
     if t < STOP_END:
         return 1.0, 0.5, 0.45, 0.0, 0.0
     u = t - PRODUCT_IN
@@ -419,23 +432,11 @@ def frame_at(i: int, scalp: Image.Image, bottles: Image.Image, foam: Image.Image
     zoom, fx, fy, flash, shake = beat_camera(t)
 
     if t < HOOK_END:
-        plate = cover_window(scalp, zoom=zoom, focus_x=fx, focus_y=fy)
-        plate = grade(plate, contrast=1.22, bright=0.88, color=1.08)
+        # Real hand gripping a classic clipper on the scalp — instantly readable
+        hook = load_hook_plate(scalp)
+        plate = cover_window(hook, zoom=zoom, focus_x=fx, focus_y=fy)
+        plate = grade(plate, contrast=1.18, bright=0.92, color=1.06)
         canvas = plate.convert("RGBA")
-        # slower descent across the longer hook
-        progress = ease_in_out(min(1.0, t / 2.55))
-        tip_y = H * (0.28 + 0.38 * progress)
-        enter = ease_out(min(1.0, t / 0.35))
-        clip_tip = tip_y + (1.0 - enter) * (-200)
-        clip_x = W * 0.50 + 8 * math.sin(t * 16)
-        tip_contact(canvas, clip_tip, t)
-        draw_red_clipper(
-            canvas,
-            clip_x,
-            clip_tip,
-            scale=1.55 + 0.08 * math.sin(t * 14),
-            buzz=0.85 + 0.40 * math.sin(t * 36),
-        )
     elif t < STOP_END:
         canvas = Image.new("RGBA", (W, H), (6, 8, 12, 255))
     else:
@@ -611,13 +612,11 @@ def make_audio(path: Path):
 
 
 def build_hook_cover(scalp: Image.Image) -> Image.Image:
-    """Viral scroll-stop cover: clipper threat + BF chip."""
-    plate = cover_window(scalp, zoom=1.30, focus_x=0.50, focus_y=0.36)
-    plate = grade(plate, contrast=1.24, bright=0.87, color=1.08)
+    """Viral scroll-stop cover: real clipper-in-hand + BF chip."""
+    hook = load_hook_plate(scalp)
+    plate = cover_window(hook, zoom=1.42, focus_x=0.54, focus_y=0.34)
+    plate = grade(plate, contrast=1.20, bright=0.90, color=1.06)
     canvas = plate.convert("RGBA")
-    tip_y = H * 0.52
-    tip_contact(canvas, tip_y, 1.25)
-    draw_red_clipper(canvas, W * 0.50, tip_y, scale=1.72, buzz=0.55)
     chip_block(canvas, int(H * 0.08), ["לגלח את זה", "ולגמור עם זה?"], size=64, opacity=1.0, style="hook", pop=1.0)
 
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -693,7 +692,7 @@ def render() -> Path:
     cover_path = OUT / "MinoxShop_MM_clipper_v8_COVER.jpg"
     cover.save(cover_path, quality=95)
 
-    print(f"Rendering {N} frames (v8 pace — slower holds, no red stripe)…")
+    print(f"Rendering {N} frames (v8 clear — hand+clipper hook, slower holds)…")
     for i in range(N):
         im = frame_at(i, scalp, bottles_p, foam_p, logo)
         im.save(frames / f"f_{i:05d}.png")
