@@ -463,10 +463,11 @@ def frame_at(i: int, scalp: Image.Image, bottles: Image.Image, foam: Image.Image
         mix = foam_mix(t)
         # Full 6-pack width — no box swap (that caused logo-on-product clutter)
         pack_zoom = 1.0 + 0.035 * min(1.0, max(0.0, (t - PRODUCT_IN) / 8.0))
-        liquid = fit_pack(bottles, zoom=pack_zoom, margin_x=0.04, margin_y=0.18)
+        # Extra pad so top chips / BF stack clear bottle caps
+        liquid = fit_pack(bottles, zoom=pack_zoom, margin_x=0.04, margin_y=0.24)
         liquid = grade(liquid, contrast=1.14, bright=0.97, color=1.05)
         if mix > 0.01:
-            foam_plate = fit_pack(foam, zoom=1.0, margin_x=0.06, margin_y=0.18)
+            foam_plate = fit_pack(foam, zoom=1.0, margin_x=0.06, margin_y=0.24)
             foam_plate = grade(foam_plate, contrast=1.12, bright=1.0, color=1.05)
             plate = Image.blend(liquid, foam_plate, mix)
         else:
@@ -496,10 +497,11 @@ def frame_at(i: int, scalp: Image.Image, bottles: Image.Image, foam: Image.Image
             y = int(H * 0.40)
             chip_block(canvas, y, lines, size=size, opacity=op, style=style, pop=pop)
         elif style == "bf":
-            y = int(H * 0.28)
+            # Top stack + tighter pack margin — was covering mid caps at 0.28
+            y = int(H * 0.05)
             draw_bf_stack(canvas, y, lines, opacity=op, pop=pop)
         else:
-            y = int(H * 0.12)
+            y = int(H * 0.07)
             chip_block(canvas, y, lines, size=size, opacity=op, style=style, pop=pop)
 
     # Logo ONLY on CTA — never over product hero (that looked messy on IG)

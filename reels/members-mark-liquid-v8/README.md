@@ -3,7 +3,7 @@
 After IG upload feedback:
 - Photoreal red clipper cutout (`assets/clipper_rgba.png`) — choked matte, no white fringe
 - Threat laser under the blade tip + dark wake (no white shave blob / no logo-on-product)
-- Clean 6-bottle pack; logo only on CTA
+- Clean 6-bottle pack; BF price stack at top with room so caps/labels stay clear; logo only on CTA
 - Harder buzz → silence on «רגע» + stronger BF audio punch
 - Hook cover built-in
 
