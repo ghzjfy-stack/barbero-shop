@@ -130,6 +130,29 @@ def grade(im: Image.Image, *, contrast: float = 1.1, bright: float = 0.94, color
     return ImageEnhance.Brightness(im).enhance(bright)
 
 
+def phone_photo(im: Image.Image, *, seed: int = 0, strength: float = 1.0) -> Image.Image:
+    """Break AI-clean look: grain, mild blur/sharpen, vignette — keeps the read intact."""
+    s = max(0.0, min(1.5, strength))
+    arr = np.array(im.convert("RGB")).astype(np.float32)
+    h, w = arr.shape[:2]
+    rng = np.random.default_rng(19_000 + int(seed) % 10_000)
+    grain = rng.normal(0, 5.5 * s, (h, w)).astype(np.float32)
+    arr[..., 0] += grain * 0.9
+    arr[..., 1] += grain * 0.85
+    arr[..., 2] += grain * 0.95
+    # soft vignette
+    yy, xx = np.mgrid[0:h, 0:w]
+    rad = np.sqrt(((yy - h / 2) / (h * 0.75)) ** 2 + ((xx - w / 2) / (w * 0.75)) ** 2)
+    vig = np.clip(1.0 - 0.18 * s * (rad ** 1.5), 0.82, 1.0)
+    arr *= vig[..., None]
+    out = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8))
+    out = out.filter(ImageFilter.GaussianBlur(0.35 * s))
+    out = ImageEnhance.Sharpness(out).enhance(1.0 + 0.22 * s)
+    out = ImageEnhance.Color(out).enhance(0.92)  # AI often oversaturates
+    out = ImageEnhance.Contrast(out).enhance(1.04)
+    return out
+
+
 def prepare_logo(path: Path, width: int = 200) -> Image.Image:
     logo = Image.open(path).convert("RGBA")
     arr = np.array(logo)
@@ -371,9 +394,9 @@ def draw_sparkles(canvas: Image.Image, t: float, amount: float):
 
 def beat_camera(t: float):
     if t < HOOK_END:
-        # punch into blade-on-scalp contact of the hand+clipper plate
-        z = 1.28 + 0.18 * ease_out(t / HOOK_END) + 0.02 * math.sin(t * 8)
-        return z, 0.54, 0.34, 0.0, 0.55 + 0.25 * math.sin(t * 22)
+        # tighter punch into blade teeth — stronger scroll-stop, less empty scalp
+        z = 1.38 + 0.22 * ease_out(t / HOOK_END) + 0.015 * math.sin(t * 7)
+        return z, 0.58, 0.30, 0.0, 0.45 + 0.22 * math.sin(t * 20)
     if t < STOP_END:
         return 1.0, 0.5, 0.45, 0.0, 0.0
     u = t - PRODUCT_IN
@@ -432,10 +455,11 @@ def frame_at(i: int, scalp: Image.Image, bottles: Image.Image, foam: Image.Image
     zoom, fx, fy, flash, shake = beat_camera(t)
 
     if t < HOOK_END:
-        # Real hand gripping a classic clipper on the scalp — instantly readable
+        # Real hand gripping a classic clipper — phone-grade to de-AI the plate
         hook = load_hook_plate(scalp)
         plate = cover_window(hook, zoom=zoom, focus_x=fx, focus_y=fy)
-        plate = grade(plate, contrast=1.18, bright=0.92, color=1.06)
+        plate = grade(plate, contrast=1.12, bright=0.94, color=0.98)
+        plate = phone_photo(plate, seed=i, strength=0.85)
         canvas = plate.convert("RGBA")
     elif t < STOP_END:
         canvas = Image.new("RGBA", (W, H), (6, 8, 12, 255))
@@ -612,36 +636,32 @@ def make_audio(path: Path):
 
 
 def build_hook_cover(scalp: Image.Image) -> Image.Image:
-    """Viral scroll-stop cover: real clipper-in-hand + BF chip."""
+    """Scroll-stop cover: blade-forward crop + lean offer (less sticker clutter)."""
     hook = load_hook_plate(scalp)
-    plate = cover_window(hook, zoom=1.42, focus_x=0.54, focus_y=0.34)
-    plate = grade(plate, contrast=1.20, bright=0.90, color=1.06)
+    # tighter on teeth/hand — stronger first-frame punch
+    plate = cover_window(hook, zoom=1.62, focus_x=0.60, focus_y=0.28)
+    plate = grade(plate, contrast=1.14, bright=0.93, color=0.97)
+    plate = phone_photo(plate, seed=7, strength=1.0)
     canvas = plate.convert("RGBA")
-    chip_block(canvas, int(H * 0.08), ["לגלח את זה", "ולגמור עם זה?"], size=64, opacity=1.0, style="hook", pop=1.0)
+    chip_block(canvas, int(H * 0.07), ["לגלח את זה", "ולגמור עם זה?"], size=60, opacity=1.0, style="hook", pop=1.0)
 
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    y = int(H * 0.72)
+    y = int(H * 0.78)
 
     def measure(text: str, size: int):
         bb = ImageDraw.Draw(Image.new("RGBA", (1, 1))).textbbox((0, 0), text, font=font(size))
         return bb[2] - bb[0], bb[3] - bb[1]
 
-    bf = "BLACK FRIDAY"
-    ww, hh = measure(bf, 40)
-    bfw, bfh = ww + 44, hh + 22
-    bfx = (W - bfw) // 2
-    d.rounded_rectangle((bfx, y, bfx + bfw, y + bfh), radius=12, fill=(196, 22, 32, 245))
-    draw_text(d, (W // 2, y + bfh // 2), bf, size=40, fill=(255, 255, 255, 255))
-    y += bfh + 14
+    # lean stack — price dominates, less banner spam
     price = "375₪"
-    ww, hh = measure(price, 100)
-    pw, ph = ww + 56, hh + 30
+    ww, hh = measure(price, 108)
+    pw, ph = ww + 56, hh + 28
     px = (W - pw) // 2
-    d.rounded_rectangle((px, y, px + pw, y + ph), radius=22, fill=(0, 0, 0, 245))
-    draw_text(d, (W // 2, y + ph // 2), price, size=100, fill=(255, 255, 255, 255))
-    y += ph + 14
-    draw_text(d, (W // 2, y), "6 בקבוקים · טיפות", size=34, fill=(255, 220, 80, 255))
+    d.rounded_rectangle((px, y, px + pw, y + ph), radius=22, fill=(0, 0, 0, 235))
+    draw_text(d, (W // 2, y + ph // 2), price, size=108, fill=(255, 255, 255, 255))
+    y += ph + 12
+    draw_text(d, (W // 2, y), "BLACK FRIDAY · 6 בקבוקים", size=32, fill=(255, 220, 80, 255))
     return Image.alpha_composite(canvas, layer).convert("RGB")
 
 
@@ -692,7 +712,7 @@ def render() -> Path:
     cover_path = OUT / "MinoxShop_MM_clipper_v8_COVER.jpg"
     cover.save(cover_path, quality=95)
 
-    print(f"Rendering {N} frames (v8 clear — hand+clipper hook, slower holds)…")
+    print(f"Rendering {N} frames (v8 de-AI — phone grain + tighter cover)…")
     for i in range(N):
         im = frame_at(i, scalp, bottles_p, foam_p, logo)
         im.save(frames / f"f_{i:05d}.png")

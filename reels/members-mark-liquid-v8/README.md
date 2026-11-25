@@ -2,10 +2,10 @@
 
 After IG upload feedback:
 - Hook is a real hand + classic barber clipper on scalp (`assets/clipper_hand_hook.jpg`) — instantly readable
-- Slower ~22s pace (longer hook / BF / foam holds)
-- Clean 6-bottle pack; BF stack clear of caps; logo only on CTA
-- Harder buzz → silence on «רגע» + stronger BF audio punch
-- Hook cover built-in
+- De-AI phone grade (grain / vignette / desat) so the hook feels less synthetic
+- Tighter blade-forward cover with lean price chip
+- Slower ~22s pace; clean 6-pack; logo CTA-only
+- Harder buzz → silence on «רגע» + BF punch
 
 ```bash
 python3 scripts/mm_clipper_v8_95_reel.py
