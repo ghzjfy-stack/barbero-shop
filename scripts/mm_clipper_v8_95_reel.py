@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
-W, H, FPS, DUR = 1080, 1920, 30, 22.0
+W, H, FPS, DUR = 1080, 1920, 30, 23.0
 N = int(round(FPS * DUR))
 COVER_HOLD_SEC = 0.8
 COVER_HOLD_N = int(round(COVER_HOLD_SEC * FPS))
@@ -61,18 +61,18 @@ def load_hook_plate(fallback: Image.Image) -> Image.Image:
 FONT = "/usr/share/fonts/truetype/croscore/Arimo-Bold.ttf"
 FONT_REG = "/usr/share/fonts/truetype/croscore/Arimo-Regular.ttf"
 
-# Beat map — slower holds so offer/foam are readable (was rushing at ~17.5s)
+# Beat map — slower holds; foam crossfade ~1s so the swap doesn't flash
 HOOK_END = 3.20
 STOP_END = 4.60
 PRODUCT_IN = 4.70
 ID_END = 7.80
 MONTHS_END = 10.00
-PRICE_END = 14.20
-FOAM_IN = 14.40
-FOAM_PEAK = 16.40
-FOAM_OUT = 18.40
-SHIP_END = 19.40
-FOAM_FADE = 0.35
+PRICE_END = 13.80
+FOAM_IN = 14.00
+FOAM_PEAK = 17.00
+FOAM_OUT = 19.20
+SHIP_END = 20.30
+FOAM_FADE = 1.05
 
 
 def font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
@@ -339,9 +339,9 @@ def chip_at(t: float):
     if PRICE_END <= t < FOAM_IN:
         return ["משלוח חינם", "עד הבית עם שליח"], 1.0, "dark", 46, pop_since(PRICE_END)
     if FOAM_IN <= t < FOAM_OUT:
-        return ["יש גם קצף במלאי", "אותו 5 אחוז · Member's Mark"], 1.0, "hook", 48, pop_since(FOAM_IN, 0.32)
+        return ["יש גם קצף במלאי", "אותו 5 אחוז · Member's Mark"], 1.0, "hook", 48, pop_since(FOAM_IN, 0.55)
     if FOAM_OUT <= t < SHIP_END:
-        return ["משלוח חינם עד הבית"], 1.0, "dark", 46, pop_since(FOAM_OUT, 0.22)
+        return ["משלוח חינם עד הבית"], 1.0, "dark", 46, pop_since(FOAM_OUT, 0.35)
     if SHIP_END <= t < DUR - 0.08:
         return ["הקישור בפרופיל", "עכשיו"], 1.0, "stamp", 52, pop_since(SHIP_END)
     return None
@@ -352,7 +352,7 @@ def foam_mix(t: float) -> float:
     if t < FOAM_IN or t > FOAM_OUT:
         return 0.0
     if t < FOAM_IN + FOAM_FADE:
-        return ease_out((t - FOAM_IN) / FOAM_FADE)
+        return ease_in_out((t - FOAM_IN) / FOAM_FADE)
     if t > FOAM_OUT - FOAM_FADE:
         return ease_in_out(1.0 - (t - (FOAM_OUT - FOAM_FADE)) / FOAM_FADE)
     return 1.0
@@ -404,8 +404,8 @@ def beat_camera(t: float):
     flash = 0.0
     if MONTHS_END <= t < MONTHS_END + 0.28:
         flash = 0.22
-    elif FOAM_IN <= t < FOAM_IN + 0.28:
-        flash = 0.12 * (1.0 - (t - FOAM_IN) / 0.28)
+    elif FOAM_IN <= t < FOAM_IN + 0.45:
+        flash = 0.08 * (1.0 - (t - FOAM_IN) / 0.45)
     return z, 0.5, 0.48, flash, 0.04
 
 
@@ -722,7 +722,7 @@ def render() -> Path:
     audio = OUT / "audio.wav"
     make_audio(audio)
 
-    mp4 = OUT / "MinoxShop_MM_clipper_v8_22s.mp4"
+    mp4 = OUT / "MinoxShop_MM_clipper_v8_23s.mp4"
     encode_mp4(frames, audio, mp4)
 
     yt_frames = OUT / "frames_yt"
@@ -747,8 +747,9 @@ def render() -> Path:
     encode_mp4(yt_frames, yt_audio, yt_mp4)
 
     ART.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_22s.mp4")
-    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_17s.mp4")  # alias for old download name
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_23s.mp4")
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_22s.mp4")  # alias
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_17s.mp4")  # alias
     shutil.copy2(yt_mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_YT.mp4")
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_COVER.jpg")
     shutil.copy2(mp4, ART / "mm_clipper_v8_demo.mp4")
@@ -759,8 +760,8 @@ def render() -> Path:
         ("product", 5.5),
         ("six", 8.5),
         ("price", 12.0),
-        ("foam", 16.4),
-        ("cta", 20.2),
+        ("foam", 17.0),
+        ("cta", 21.2),
     ):
         frame_at(int(sec * FPS), scalp, bottles_p, foam_p, logo).save(ART / f"mm_v8_preview_{label}.jpg", quality=92)
     cover.save(ART / "mm_v8_preview_cover.jpg", quality=92)
