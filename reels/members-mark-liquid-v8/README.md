@@ -1,8 +1,7 @@
 # Member's Mark liquid — clipper v8 (re-upload / 9.5 aim)
 
 After IG upload feedback:
-- Photoreal red clipper cutout (`assets/clipper_rgba.png`) — choked matte, no white fringe
-- No red laser stripe on hair — soft tip shadow only
+- Hook is a real hand + classic barber clipper on scalp (`assets/clipper_hand_hook.jpg`) — instantly readable
 - Slower ~22s pace (longer hook / BF / foam holds)
 - Clean 6-bottle pack; BF stack clear of caps; logo only on CTA
 - Harder buzz → silence on «רגע» + stronger BF audio punch
