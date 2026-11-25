@@ -18,7 +18,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
-W, H, FPS, DUR = 1080, 1920, 30, 23.0
+W, H, FPS, DUR = 1080, 1920, 30, 24.0
 N = int(round(FPS * DUR))
 COVER_HOLD_SEC = 0.8
 COVER_HOLD_N = int(round(COVER_HOLD_SEC * FPS))
@@ -61,17 +61,17 @@ def load_hook_plate(fallback: Image.Image) -> Image.Image:
 FONT = "/usr/share/fonts/truetype/croscore/Arimo-Bold.ttf"
 FONT_REG = "/usr/share/fonts/truetype/croscore/Arimo-Regular.ttf"
 
-# Beat map — slower holds; foam crossfade ~1s so the swap doesn't flash
+# Beat map — shipping text gets a real hold before yellow foam chip (was ~0.2s flash)
 HOOK_END = 3.20
 STOP_END = 4.60
 PRODUCT_IN = 4.70
 ID_END = 7.80
 MONTHS_END = 10.00
-PRICE_END = 13.80
-FOAM_IN = 14.00
-FOAM_PEAK = 17.00
-FOAM_OUT = 19.20
-SHIP_END = 20.30
+PRICE_END = 12.60
+FOAM_IN = 14.70
+FOAM_PEAK = 17.60
+FOAM_OUT = 20.00
+SHIP_END = 21.20
 FOAM_FADE = 1.05
 
 
@@ -337,7 +337,8 @@ def chip_at(t: float):
         # Black Friday persuasion — hold long
         return ["BLACK FRIDAY", "375₪", "מחיר שובר שוק"], 1.0, "bf", 52, pop_since(MONTHS_END, 0.35)
     if PRICE_END <= t < FOAM_IN:
-        return ["משלוח חינם", "עד הבית עם שליח"], 1.0, "dark", 46, pop_since(PRICE_END)
+        # ~2.1s readable hold — was a 0.2s flash before yellow foam
+        return ["משלוח חינם", "עד הבית עם שליח"], 1.0, "dark", 46, pop_since(PRICE_END, 0.40)
     if FOAM_IN <= t < FOAM_OUT:
         return ["יש גם קצף במלאי", "אותו 5 אחוז · Member's Mark"], 1.0, "hook", 48, pop_since(FOAM_IN, 0.55)
     if FOAM_OUT <= t < SHIP_END:
@@ -722,7 +723,7 @@ def render() -> Path:
     audio = OUT / "audio.wav"
     make_audio(audio)
 
-    mp4 = OUT / "MinoxShop_MM_clipper_v8_23s.mp4"
+    mp4 = OUT / "MinoxShop_MM_clipper_v8_24s.mp4"
     encode_mp4(frames, audio, mp4)
 
     yt_frames = OUT / "frames_yt"
@@ -747,7 +748,8 @@ def render() -> Path:
     encode_mp4(yt_frames, yt_audio, yt_mp4)
 
     ART.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_23s.mp4")
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_24s.mp4")
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_23s.mp4")  # alias
     shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_22s.mp4")  # alias
     shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_17s.mp4")  # alias
     shutil.copy2(yt_mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_YT.mp4")
@@ -760,8 +762,9 @@ def render() -> Path:
         ("product", 5.5),
         ("six", 8.5),
         ("price", 12.0),
-        ("foam", 17.0),
-        ("cta", 21.2),
+        ("ship_pre", 13.5),
+        ("foam", 17.5),
+        ("cta", 22.0),
     ):
         frame_at(int(sec * FPS), scalp, bottles_p, foam_p, logo).save(ART / f"mm_v8_preview_{label}.jpg", quality=92)
     cover.save(ART / "mm_v8_preview_cover.jpg", quality=92)
