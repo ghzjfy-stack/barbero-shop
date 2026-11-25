@@ -4,7 +4,7 @@ After IG upload feedback:
 - Hook is a real hand + classic barber clipper on scalp (`assets/clipper_hand_hook.jpg`) — instantly readable
 - De-AI phone grade (grain / vignette / desat) so the hook feels less synthetic
 - Tighter blade-forward cover with lean price chip
-- Slower ~23s pace; foam crossfade ~1s (no flash swap); clean 6-pack; logo CTA-only
+- ~24s pace; shipping text ~2s before yellow foam (was 0.2s flash); foam fade ~1s; clean 6-pack
 - Harder buzz → silence on «רגע» + BF punch
 
 ```bash
