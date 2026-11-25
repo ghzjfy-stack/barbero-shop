@@ -22,7 +22,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageFont
 
-W, H, FPS, DUR = 1080, 1920, 30, 17.5
+W, H, FPS, DUR = 1080, 1920, 30, 22.0
 N = int(round(FPS * DUR))
 COVER_HOLD_SEC = 0.8
 COVER_HOLD_N = int(round(COVER_HOLD_SEC * FPS))
@@ -49,19 +49,18 @@ def load_clipper() -> Image.Image | None:
 FONT = "/usr/share/fonts/truetype/croscore/Arimo-Bold.ttf"
 FONT_REG = "/usr/share/fonts/truetype/croscore/Arimo-Regular.ttf"
 
-# Beat map — BF readable, then foam held long enough to see
-HOOK_END = 2.15
-STOP_END = 3.35
-PRODUCT_IN = 3.45
-ID_END = 6.00
-MONTHS_END = 7.60
-PRICE_END = 11.00
-# Soft foam pop — short fades, long full-opaque hold (no muddy double-exposure)
-FOAM_IN = 11.15
-FOAM_PEAK = 12.80
-FOAM_OUT = 14.55
-SHIP_END = 15.30
-FOAM_FADE = 0.28
+# Beat map — slower holds so offer/foam are readable (was rushing at ~17.5s)
+HOOK_END = 3.20
+STOP_END = 4.60
+PRODUCT_IN = 4.70
+ID_END = 7.80
+MONTHS_END = 10.00
+PRICE_END = 14.20
+FOAM_IN = 14.40
+FOAM_PEAK = 16.40
+FOAM_OUT = 18.40
+SHIP_END = 19.40
+FOAM_FADE = 0.35
 
 
 def font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
@@ -266,13 +265,6 @@ def draw_red_clipper(canvas: Image.Image, cx: float, tip_y: float, *, scale: flo
     # tip = bottom-center of rotated bbox (blade teeth)
     px = cx - clip.width // 2
     py = tip_y - clip.height + 8
-    # tiny red motion smear only (never pale/white ghost trails)
-    if buzz > 0.45:
-        smear = Image.new("RGBA", clip.size, (0, 0, 0, 0))
-        sa = clip.split()[-1].point(lambda v: int(v * 0.14))
-        smear.paste((180, 18, 24, 255), box=(0, 0, clip.width, clip.height), mask=sa)
-        layer.alpha_composite(smear, (px - 5, py))
-        layer.alpha_composite(smear, (px + 5, py))
     # 1px dark holdout under the cutout kills residual halo on scalp
     hold = clip.split()[-1].filter(ImageFilter.MaxFilter(3))
     hold = hold.point(lambda v: 90 if v > 20 else 0)
@@ -283,24 +275,13 @@ def draw_red_clipper(canvas: Image.Image, cx: float, tip_y: float, *, scale: flo
     canvas.alpha_composite(layer)
 
 
-def red_cut_path(canvas: Image.Image, t: float, tip_y: float, mode: str = "both"):
-    """Threat laser under the blade tip + soft dark wake (no white shave blob)."""
+def tip_contact(canvas: Image.Image, tip_y: float, t: float):
+    """Soft dark contact under the blade only — no red laser stripe on the hair."""
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    x = int(W * 0.50 + 5 * math.sin(t * 22))
-    start_y = int(H * 0.24)
+    x = int(W * 0.50 + 4 * math.sin(t * 18))
     tip = int(tip_y)
-    if mode in ("wake", "both"):
-        wake_bot = max(start_y + 8, tip - 18)
-        if wake_bot > start_y:
-            for w, a in ((40, 22), (22, 40), (10, 58)):
-                d.line((x, start_y, x, wake_bot), fill=(28, 18, 14, a), width=w)
-    if mode in ("laser", "both"):
-        ahead = int(min(H * 0.78, tip + 200 + 36 * math.sin(t * 9)))
-        if ahead > tip + 10:
-            for w, a in ((14, 36), (6, 110), (2, 220)):
-                d.line((x, tip + 2, x, ahead), fill=(220, 28, 34, a), width=w)
-            d.ellipse((x - 7, tip - 2, x + 7, tip + 10), fill=(220, 32, 38, 70))
+    d.ellipse((x - 48, tip + 2, x + 48, tip + 36), fill=(12, 8, 6, 55))
     canvas.alpha_composite(layer)
 
 
@@ -441,22 +422,20 @@ def frame_at(i: int, scalp: Image.Image, bottles: Image.Image, foam: Image.Image
         plate = cover_window(scalp, zoom=zoom, focus_x=fx, focus_y=fy)
         plate = grade(plate, contrast=1.22, bright=0.88, color=1.08)
         canvas = plate.convert("RGBA")
-        progress = ease_in_out(min(1.0, t / 1.45))
+        # slower descent across the longer hook
+        progress = ease_in_out(min(1.0, t / 2.55))
         tip_y = H * (0.28 + 0.38 * progress)
-        enter = ease_out(min(1.0, t / 0.22))
-        # tip_y is blade teeth; enter slides the whole machine in from above
+        enter = ease_out(min(1.0, t / 0.35))
         clip_tip = tip_y + (1.0 - enter) * (-200)
-        clip_x = W * 0.50 + 10 * math.sin(t * 22)
-        # wake under the body first, then clipper, then laser in front of the teeth
-        red_cut_path(canvas, t, clip_tip, mode="wake")
+        clip_x = W * 0.50 + 8 * math.sin(t * 16)
+        tip_contact(canvas, clip_tip, t)
         draw_red_clipper(
             canvas,
             clip_x,
             clip_tip,
-            scale=1.55 + 0.10 * math.sin(t * 18),
-            buzz=1.0 + 0.55 * math.sin(t * 44),
+            scale=1.55 + 0.08 * math.sin(t * 14),
+            buzz=0.85 + 0.40 * math.sin(t * 36),
         )
-        red_cut_path(canvas, t, clip_tip, mode="laser")
     elif t < STOP_END:
         canvas = Image.new("RGBA", (W, H), (6, 8, 12, 255))
     else:
@@ -637,9 +616,8 @@ def build_hook_cover(scalp: Image.Image) -> Image.Image:
     plate = grade(plate, contrast=1.24, bright=0.87, color=1.08)
     canvas = plate.convert("RGBA")
     tip_y = H * 0.52
-    red_cut_path(canvas, 1.25, tip_y, mode="wake")
-    draw_red_clipper(canvas, W * 0.50, tip_y, scale=1.72, buzz=0.95)
-    red_cut_path(canvas, 1.25, tip_y, mode="laser")
+    tip_contact(canvas, tip_y, 1.25)
+    draw_red_clipper(canvas, W * 0.50, tip_y, scale=1.72, buzz=0.55)
     chip_block(canvas, int(H * 0.08), ["לגלח את זה", "ולגמור עם זה?"], size=64, opacity=1.0, style="hook", pop=1.0)
 
     layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -715,7 +693,7 @@ def render() -> Path:
     cover_path = OUT / "MinoxShop_MM_clipper_v8_COVER.jpg"
     cover.save(cover_path, quality=95)
 
-    print(f"Rendering {N} frames (v8 — 9.5 aim: 3D clipper, clean product, punch audio)…")
+    print(f"Rendering {N} frames (v8 pace — slower holds, no red stripe)…")
     for i in range(N):
         im = frame_at(i, scalp, bottles_p, foam_p, logo)
         im.save(frames / f"f_{i:05d}.png")
@@ -725,7 +703,7 @@ def render() -> Path:
     audio = OUT / "audio.wav"
     make_audio(audio)
 
-    mp4 = OUT / "MinoxShop_MM_clipper_v8_17s.mp4"
+    mp4 = OUT / "MinoxShop_MM_clipper_v8_22s.mp4"
     encode_mp4(frames, audio, mp4)
 
     yt_frames = OUT / "frames_yt"
@@ -750,19 +728,20 @@ def render() -> Path:
     encode_mp4(yt_frames, yt_audio, yt_mp4)
 
     ART.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_17s.mp4")
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_22s.mp4")
+    shutil.copy2(mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_17s.mp4")  # alias for old download name
     shutil.copy2(yt_mp4, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_YT.mp4")
     shutil.copy2(cover_path, ART / "DOWNLOAD_MinoxShop_MM_clipper_v8_COVER.jpg")
     shutil.copy2(mp4, ART / "mm_clipper_v8_demo.mp4")
     for label, sec in (
-        ("hook", 0.45),
-        ("clipper", 1.5),
-        ("stop", 2.7),
-        ("product", 4.5),
-        ("six", 6.7),
-        ("price", 9.0),
-        ("foam", 12.8),
-        ("cta", 16.0),
+        ("hook", 0.6),
+        ("clipper", 2.2),
+        ("stop", 3.8),
+        ("product", 5.5),
+        ("six", 8.5),
+        ("price", 12.0),
+        ("foam", 16.4),
+        ("cta", 20.2),
     ):
         frame_at(int(sec * FPS), scalp, bottles_p, foam_p, logo).save(ART / f"mm_v8_preview_{label}.jpg", quality=92)
     cover.save(ART / "mm_v8_preview_cover.jpg", quality=92)
