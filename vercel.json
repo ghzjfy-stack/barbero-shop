@@ -1,11 +1,26 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "rewrites": [
+    {
+      "source": "/((?!feeds/).*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/feeds/(.*)",
       "headers": [
-        { "key": "Content-Type", "value": "text/tab-separated-values; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=300" }
+        {
+          "key": "Content-Type",
+          "value": "text/tab-separated-values; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        }
       ]
     }
   ]
