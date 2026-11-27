@@ -91,34 +91,46 @@ def cover_window(im: Image.Image, *, zoom: float, focus_x: float, focus_y: float
     return r.crop((x, y, x + W, y + H))
 
 
+def knock_white(im: Image.Image, *, thresh: int = 238) -> Image.Image:
+    """Remove studio white so product sits on gradient, not a white card."""
+    rgba = im.convert("RGBA")
+    arr = np.asarray(rgba).astype(np.int16)
+    r, g, b, a = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2], arr[:, :, 3]
+    white = (r > thresh) & (g > thresh) & (b > thresh)
+    # soft edge: near-white gets partial alpha
+    near = (r > thresh - 18) & (g > thresh - 18) & (b > thresh - 18)
+    a = a.copy()
+    a[white] = 0
+    a[near & ~white] = np.minimum(a[near & ~white], 90)
+    arr[:, :, 3] = a
+    return Image.fromarray(arr.astype(np.uint8), "RGBA")
+
+
 def fit_fullbleed(
     im: Image.Image,
     *,
     zoom: float = 1.0,
     margin_x: float = 0.03,
-    margin_y: float = 0.16,
+    margin_y: float = 0.14,
 ) -> Image.Image:
     """Product on soft gradient — edge-to-edge frame, no white card."""
     zoom = max(0.9, zoom)
+    cut = knock_white(im)
     usable_w = int(W * (1 - 2 * margin_x) / zoom)
     usable_h = int(H * (1 - 2 * margin_y) / zoom)
-    scale = min(usable_w / im.width, usable_h / im.height)
-    nw, nh = max(1, int(im.width * scale)), max(1, int(im.height * scale))
-    r = im.resize((nw, nh), Image.Resampling.LANCZOS)
-    canvas = soft_bg()
-    # soft drop shadow under product
-    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    sd = ImageDraw.Draw(shadow)
+    scale = min(usable_w / cut.width, usable_h / cut.height)
+    nw, nh = max(1, int(cut.width * scale)), max(1, int(cut.height * scale))
+    r = cut.resize((nw, nh), Image.Resampling.LANCZOS)
+    canvas = soft_bg().convert("RGBA")
     px, py = (W - nw) // 2, (H - nh) // 2
-    sd.rounded_rectangle(
-        (px + 10, py + nh - 28, px + nw - 10, py + nh + 18),
-        radius=40,
-        fill=(40, 20, 60, 55),
-    )
-    shadow = shadow.filter(ImageFilter.GaussianBlur(28))
-    out = canvas.convert("RGBA")
-    out = Image.alpha_composite(out, shadow)
-    out.paste(r, (px, py))
+    # soft drop shadow under product silhouette
+    shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sh = r.split()[-1].point(lambda v: 70 if v > 20 else 0).filter(ImageFilter.GaussianBlur(22))
+    dark = Image.new("RGBA", r.size, (30, 14, 50, 255))
+    dark.putalpha(sh)
+    shadow.alpha_composite(dark, (px, py + 14))
+    out = Image.alpha_composite(canvas, shadow)
+    out.alpha_composite(r, (px, py))
     return out.convert("RGB")
 
 
@@ -325,21 +337,18 @@ def frame_at(i: int, cans: Image.Image, box: Image.Image, logo: Image.Image) -> 
     elif t < STOP_END:
         canvas = Image.new("RGBA", (W, H), (24, 12, 42, 255))
     else:
-        # Full-bleed: box first, then cans — both on soft gradient, no white card
-        src = box if t < MONTHS_END else cans
-        mx = 0.02 if src is box else 0.04
-        my = 0.14 if src is box else 0.18
-        plate = fit_fullbleed(
-            src,
-            zoom=1.0 + 0.035 * min(1.0, (t - PRODUCT_IN) / 7.0),
-            margin_x=mx,
-            margin_y=my,
-        )
-        plate = grade(plate, contrast=1.10, bright=1.0, color=1.04)
+        # True full-bleed crop into product (no studio-white card / shelf)
+        u = min(1.0, max(0.0, (t - PRODUCT_IN) / 7.0))
+        if t < MONTHS_END:
+            plate = cover_window(box, zoom=1.18 + 0.10 * u, focus_x=0.46, focus_y=0.48)
+        else:
+            plate = cover_window(cans, zoom=1.42 + 0.12 * u, focus_x=0.50, focus_y=0.40)
+        plate = grade(plate, contrast=1.12, bright=1.0, color=1.04)
+        plate = phone_photo(plate, seed=i + 17, strength=0.45)
         canvas = plate.convert("RGBA")
-        if src is cans:
+        if t >= MONTHS_END:
             draw_glints(canvas, t)
-        canvas = bottom_shadow(canvas, top=0.78, strength=0.35)
+        canvas = bottom_shadow(canvas, top=0.80, strength=0.30)
 
     canvas_rgb = apply_shake(canvas.convert("RGB"), shake, t)
     canvas_rgb = flash_white(canvas_rgb, flash)
