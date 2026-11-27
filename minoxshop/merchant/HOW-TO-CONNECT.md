@@ -6,16 +6,18 @@
 - גם ב־`minoxshop/merchant/google-merchant.tsv`
 
 ## שלב A — פיד שעובד עכשיו (בלי קוד Minox)
+ראה גם `SHOPPING-NOW.md` לצ׳קליסט מלא.
+
 ב-Merchant Center → Products → Data sources → Scheduled fetch:
 
 ```
-https://raw.githubusercontent.com/ghzjfy-stack/barbero-shop/cursor/minox-merchant-feed-host-75a4/public/feeds/minox-google-merchant.tsv
+https://raw.githubusercontent.com/ghzjfy-stack/barbero-shop/cursor/minox-shopping-now-75a4/public/feeds/minox-google-merchant.tsv
 ```
 
-אחרי שה-PR נכנס ל־main / barbero deploy:
+אחרי מיזוג ל־`cursor/fix-formatted-hero-75a4`:
 
 ```
-https://www.barbero.co.il/feeds/minox-google-merchant.tsv
+https://raw.githubusercontent.com/ghzjfy-stack/barbero-shop/cursor/fix-formatted-hero-75a4/public/feeds/minox-google-merchant.tsv
 ```
 
 (ה־`link` בפיד מצביע ל־`minox-shop.co.il/product/...` — זה תקין.)
